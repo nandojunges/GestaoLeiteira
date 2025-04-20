@@ -1,0 +1,16 @@
+# Ignora dependências
+node_modules/
+
+# Ignora arquivos de build
+dist/
+
+# Ignora variáveis de ambiente
+.env
+
+# Ignora arquivos de configuração de IDEs
+.vscode/
+.idea/
+
+# Ignora arquivos do sistema
+.DS_Store
+Thumbs.db
