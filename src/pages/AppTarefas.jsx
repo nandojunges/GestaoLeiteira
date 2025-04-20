@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
-
-// comentario!
+//teste
 function AppTarefas() {
   const [tarefas, setTarefas] = useState([]);
   const [novaTarefa, setNovaTarefa] = useState('');
