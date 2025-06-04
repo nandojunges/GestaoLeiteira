@@ -1,3 +1,4 @@
+// src/pages/Animais/LinhaDoTempoReprodutiva.jsx
 import React, { useEffect, useState } from "react";
 import {
   ResponsiveContainer,
@@ -6,7 +7,8 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Scatter
+  Scatter,
+  Cell
 } from "recharts";
 
 const icones = {
@@ -97,15 +99,9 @@ export default function LinhaDoTempoReprodutiva({ eventos = [] }) {
             tick={{ fontSize: 13 }}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#94a3b8", strokeDasharray: "3 3" }} />
-          <Scatter data={dados} shape="circle" fill="#3b82f6">
+          <Scatter data={dados} shape="circle">
             {dados.map((e, i) => (
-              <circle
-                key={i}
-                cx={0}
-                cy={0}
-                r={6}
-                fill={corPorTipo[e.tipo] || "#64748b"}
-              />
+              <Cell key={`cell-${i}`} fill={corPorTipo[e.tipo] || "#64748b"} />
             ))}
           </Scatter>
         </ScatterChart>

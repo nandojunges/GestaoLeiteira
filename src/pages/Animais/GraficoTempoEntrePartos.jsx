@@ -34,7 +34,7 @@ export default function GraficoTempoEntrePartos({ tempoEntrePartos }) {
         Tempo entre Partos (em meses)
       </h3>
 
-      <ResponsiveContainer width="100%" height={250}>
+      <ResponsiveContainer width="100%" height={60 + dados.length * 60}>
         <BarChart
           data={dados}
           margin={{ top: 40, right: 40, left: 40, bottom: 10 }}
@@ -45,35 +45,22 @@ export default function GraficoTempoEntrePartos({ tempoEntrePartos }) {
           <YAxis tick={{ fontSize: 14 }} />
           <Tooltip formatter={(value) => `${value} meses`} />
 
-          {/* Linha ideal */}
+          {/* ✅ Linha ideal */}
           <ReferenceLine
             y={13.5}
             stroke="#15803d"
             strokeDasharray="4 4"
             strokeWidth={2}
-            label={{
-              value: "Ideal (13,5 meses)",
-              position: "top",
-              fill: "#15803d",
-              fontSize: 12,
-              fontWeight: 600
-            }}
           />
 
-          {/* Linha da média real */}
+          {/* ✅ Linha da média — renderizada apenas uma vez */}
           {media !== null && (
             <ReferenceLine
               y={media}
-              stroke="#1e40af"
-              strokeDasharray="3 3"
-              strokeWidth={2}
-              label={{
-                value: `Média (${media.toFixed(1)} meses)`,
-                position: "top",
-                fill: "#1e40af",
-                fontSize: 12,
-                fontWeight: 600
-              }}
+              stroke="#60a5fa"
+              strokeDasharray="6 3"
+              strokeWidth={1.5}
+              label={() => null}
             />
           )}
 
@@ -85,11 +72,16 @@ export default function GraficoTempoEntrePartos({ tempoEntrePartos }) {
         </BarChart>
       </ResponsiveContainer>
 
-      {/* Legenda abaixo */}
+      {/* ✅ Legenda final */}
       <div style={{ display: "flex", justifyContent: "center", gap: "2rem", marginTop: "1rem" }}>
         <span style={{ color: "#10b981", fontWeight: "600" }}>🟢 Bom (&lt; 14)</span>
-        <span style={{ color: "#facc15", fontWeight: "600" }}>🟡 Limite (14–16)</span>
+        <span style={{ color: "#facc15", fontWeight: "600" }}>🟡 Limite (14&ndash;16)</span>
         <span style={{ color: "#ef4444", fontWeight: "600" }}>🔴 Ruim (&gt; 16)</span>
+        {media !== null && (
+          <span style={{ color: "#1e40af", fontWeight: "600" }}>
+            🔵 Média ({media.toFixed(1)} meses)
+          </span>
+        )}
       </div>
     </div>
   );

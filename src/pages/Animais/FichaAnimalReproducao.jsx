@@ -6,7 +6,7 @@ import GraficoTempoEntrePartos from "./GraficoTempoEntrePartos";
 import GraficoCurvaPrenhez from "./GraficoCurvaPrenhez";
 import GraficoIAPorCiclo from "./GraficoIAPorCiclo";
 import LinhaDoTempoReprodutiva from "./LinhaDoTempoReprodutiva";
-import { calcularDELAtual, calcularDELPorCiclo } from "./utilsAnimais";
+import { calcularDELPorCiclo } from "./utilsAnimais";
 import FichaAnimalResumoReprodutivo from "./FichaAnimalResumoReprodutivo";
 
 export default function FichaAnimalReproducao({ animal }) {
@@ -39,16 +39,18 @@ export default function FichaAnimalReproducao({ animal }) {
   const ciclos = useMemo(() => {
     const ia = [...(animal.inseminacoes || [])].map(i => ({ ...i, tipo: "IA" }));
     const partos = [...(animal.partos || [])].map(p => ({ ...p, tipo: "Parto" }));
-    const eventosReprodutivos = (animal.eventos || []).filter(e => e.tipo === "reproducao");
 
-    if (animal.iaAnteriores) ia.push(...animal.iaAnteriores.map(d => ({ data: d.data || d, tipo: "IA", touro: "—", inseminador: "—", obs: "—" })));
-    if (animal.ultimaIA) ia.push({ data: animal.ultimaIA, tipo: "IA", touro: "—", inseminador: "—", obs: "—" });
-    if (animal.partosAnteriores) partos.push(...animal.partosAnteriores.map(d => ({ data: d.data || d, tipo: "Parto", obs: "—" })));
-    if (animal.ultimoParto) partos.push({ data: animal.ultimoParto, tipo: "Parto", obs: "—" });
+    if (animal.iaAnteriores)
+      ia.push(...animal.iaAnteriores.map(d => ({ data: d.data || d, tipo: "IA", touro: "—", inseminador: "—", obs: "—" })));
+    if (animal.ultimaIA)
+      ia.push({ data: animal.ultimaIA, tipo: "IA", touro: "—", inseminador: "—", obs: "—" });
+    if (animal.partosAnteriores)
+      partos.push(...animal.partosAnteriores.map(d => ({ data: d.data || d, tipo: "Parto", obs: "—" })));
+    if (animal.ultimoParto)
+      partos.push({ data: animal.ultimoParto, tipo: "Parto", obs: "—" });
 
     ia.sort((a, b) => new Date(a.data.split("/").reverse().join("-")) - new Date(b.data.split("/").reverse().join("-")));
     partos.sort((a, b) => new Date(a.data.split("/").reverse().join("-")) - new Date(b.data.split("/").reverse().join("-")));
-    eventosReprodutivos.sort((a, b) => new Date(a.data.split("/").reverse().join("-")) - new Date(b.data.split("/").reverse().join("-")));
 
     const ciclosSeparados = [];
     let iParto = 0;
@@ -59,17 +61,28 @@ export default function FichaAnimalReproducao({ animal }) {
       }
       const cicloIA = [ia[i]];
       let j = i + 1;
-      while (j < ia.length && (!partos[iParto] || new Date(ia[j].data.split("/").reverse().join("-")) < new Date(partos[iParto].data.split("/").reverse().join("-")))) {
+      while (
+        j < ia.length &&
+        (!partos[iParto] || new Date(ia[j].data.split("/").reverse().join("-")) < new Date(partos[iParto].data.split("/").reverse().join("-")))
+      ) {
         cicloIA.push(ia[j]);
         j++;
       }
       i = j - 1;
       const parto = partos[iParto] || null;
-      const eventos = eventosReprodutivos.filter(e => {
-        const d = new Date(e.data.split("/").reverse().join("-"));
-        return d >= new Date(cicloIA[0].data.split("/").reverse().join("-")) && (!parto || d <= new Date(parto.data.split("/").reverse().join("-")));
-      });
-      ciclosSeparados.push({ ia: cicloIA, parto, eventos });
+
+      const inicio = new Date(cicloIA[0].data.split("/").reverse().join("-"));
+      const fim = parto ? new Date(parto.data.split("/").reverse().join("-")) : hoje;
+      const secagens = (animal.secagensAnteriores || []).filter(s => {
+        const d = new Date(s.data.split("/").reverse().join("-"));
+        return d >= inicio && d <= fim;
+      }).map(s => ({ ...s, tipo: "Secagem" }));
+
+      const eventos = [...cicloIA, ...(parto ? [parto] : []), ...secagens].sort(
+        (a, b) => new Date(a.data.split("/").reverse().join("-")) - new Date(b.data.split("/").reverse().join("-"))
+      );
+
+      ciclosSeparados.push({ ia: cicloIA, parto, eventos, secagens });
       if (parto) iParto++;
     }
 
@@ -115,9 +128,11 @@ export default function FichaAnimalReproducao({ animal }) {
         }
       });
       if (ciclo.parto) eventos.push({ tipo: "Parto", data: ciclo.parto.data, subtipo: "", obs: ciclo.parto.obs || "—" });
-      (ciclo.eventos || []).forEach((e) => eventos.push({ tipo: e.tipo, data: e.data, subtipo: e.subtipo || "", obs: e.obs || "" }));
+      (ciclo.secagens || []).forEach((s) => {
+        if (s?.data) eventos.push({ tipo: "Secagem", data: s.data, subtipo: s.subtipo || "", obs: s.obs || "—" });
+      });
     });
-    return eventos.sort((a, b) => new Date(b.data.split("/").reverse().join("-")) - new Date(a.data.split("/").reverse().join("-")));
+    return eventos.sort((a, b) => new Date(a.data.split("/").reverse().join("-")) - new Date(b.data.split("/").reverse().join("-")));
   }, [animal, ciclosEditados, ciclos]);
 
   return (
@@ -150,37 +165,32 @@ export default function FichaAnimalReproducao({ animal }) {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
                 <thead>
                   <tr style={{ background: "#f0f0f0" }}>
-                    <th style={th}>Data</th>
-                    <th style={th}>Evento</th>
-                    <th style={th}>Touro / Inseminador</th>
-                    <th style={th}>Observações</th>
+                    <th>Data</th>
+                    <th>Evento</th>
+                    <th>Touro / Inseminador</th>
+                    <th>Observações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {dadosIA.map((ia, idx) => (
-                    <tr key={`ia-${i}-${idx}`}>
-                      <td style={td}>{ia.data}</td>
-                      <td style={td}>Inseminação</td>
-                      <td style={td}>{emEdicao ? (<><input type="text" value={ia.touro || ""} onChange={(e) => editarCampo(i, idx, "touro", e.target.value)} placeholder="Touro" style={{ width: "45%", marginRight: "0.5rem" }} /><input type="text" value={ia.inseminador || ""} onChange={(e) => editarCampo(i, idx, "inseminador", e.target.value)} placeholder="Inseminador" style={{ width: "45%" }} /></>) : (`${ia.touro || "—"} / ${ia.inseminador || "—"}`)}</td>
-                      <td style={td}>{emEdicao ? (<input type="text" value={ia.obs || ""} onChange={(e) => editarCampo(i, idx, "obs", e.target.value)} placeholder="Observação" style={{ width: "100%" }} />) : (ia.obs || "—")}</td>
+                  {c.eventos.map((evento, idx) => (
+                    <tr key={`evento-${i}-${idx}`}>
+                      <td>{evento.data}</td>
+                      <td>{evento.tipo === "IA" ? "Inseminação" : evento.tipo}</td>
+                      <td>
+                        {evento.tipo === "IA" && emEdicao ? (
+                          <>
+                            <input type="text" value={evento.touro || ""} onChange={(e) => editarCampo(i, idx, "touro", e.target.value)} placeholder="Touro" style={{ width: "45%", marginRight: "0.5rem" }} />
+                            <input type="text" value={evento.inseminador || ""} onChange={(e) => editarCampo(i, idx, "inseminador", e.target.value)} placeholder="Inseminador" style={{ width: "45%" }} />
+                          </>
+                        ) : evento.tipo === "IA" ? `${evento.touro || "—"} / ${evento.inseminador || "—"}` : "—"}
+                      </td>
+                      <td>
+                        {evento.tipo === "IA" && emEdicao ? (
+                          <input type="text" value={evento.obs || ""} onChange={(e) => editarCampo(i, idx, "obs", e.target.value)} placeholder="Observação" style={{ width: "100%" }} />
+                        ) : evento.obs || "—"}
+                      </td>
                     </tr>
                   ))}
-                  {c.eventos?.map((ev, eidx) => (
-                    <tr key={`ev-${i}-${eidx}`}>
-                      <td style={td}>{ev.data}</td>
-                      <td style={td}>{ev.subtipo || ev.tipo}</td>
-                      <td style={td}>—</td>
-                      <td style={td}>{ev.obs || "—"}</td>
-                    </tr>
-                  ))}
-                  {c.parto && (
-                    <tr key={`parto-${i}`}>
-                      <td style={td}>{c.parto.data}</td>
-                      <td style={td}>Parto</td>
-                      <td style={td}>—</td>
-                      <td style={td}>{c.parto.obs || "—"}</td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
@@ -190,6 +200,3 @@ export default function FichaAnimalReproducao({ animal }) {
     </div>
   );
 }
-
-const th = { padding: "0.5rem", textAlign: "left", borderBottom: "1px solid #ccc" };
-const td = { padding: "0.4rem 0.5rem", borderBottom: "1px solid #eee" };

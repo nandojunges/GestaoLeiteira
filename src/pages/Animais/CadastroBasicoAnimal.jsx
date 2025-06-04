@@ -92,6 +92,15 @@ export default function CadastroBasicoAnimal({ animais, onAtualizar }) {
       idade,
       categoria,
       criadoEm: new Date().toISOString(),
+      statusReprodutivo: "pos-parto", // ✅ campo adicionado
+      ultimaAcao: {
+        tipo: "parto",
+        data: nascimento // você pode ajustar para a data real do parto
+      },
+      proximaAcao: {
+        tipo: "fim_pev",
+        dataPrevista: "" // você pode calcular aqui se quiser
+      },
       ...complementares,
     };
 
@@ -143,7 +152,6 @@ export default function CadastroBasicoAnimal({ animais, onAtualizar }) {
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', fontFamily: 'Poppins, sans-serif', padding: '0 1rem 1rem', marginTop: '-1rem' }}>
       <div style={{ backgroundColor: '#fff', padding: '2rem', borderRadius: '1rem', boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
-        
         {mensagemSucesso && (
           <div style={{
             backgroundColor: '#ecfdf5',

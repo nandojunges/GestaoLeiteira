@@ -72,6 +72,19 @@ export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
     setErroFormulario(false);
     const dados = { vaca, dataSecagem, plano, principioAtivo, nomeComercial, carenciaLeite, carenciaCarne, responsavel, observacoes };
     localStorage.setItem("secagem_" + vaca.numero, JSON.stringify(dados));
+
+    // Atualizar status da vaca para "seca"
+    const animais = JSON.parse(localStorage.getItem("animais")) || [];
+    const atualizados = animais.map((a) => {
+      if (a.numero === vaca.numero) {
+        a.status = "seca";
+        a.statusReprodutivo = "seca"; // Ajuste adicional para manter coerência
+      }
+      return a;
+    });
+    localStorage.setItem("animais", JSON.stringify(atualizados));
+    window.dispatchEvent(new Event("animaisAtualizados"));
+
     onAplicar(dados);
   };
 
@@ -171,7 +184,6 @@ export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
   );
 }
 
-// estilos
 const overlay = { position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0,0,0,0.6)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999 };
 const modal = { background: "#fff", borderRadius: "1rem", width: "720px", maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", fontFamily: "Poppins, sans-serif" };
 const header = { background: "#1e40af", color: "white", padding: "1rem 1.5rem", fontWeight: "bold", fontSize: "1.1rem", borderTopLeftRadius: "1rem", borderTopRightRadius: "1rem" };

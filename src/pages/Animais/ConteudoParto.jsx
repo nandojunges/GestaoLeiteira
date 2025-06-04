@@ -1,43 +1,39 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AcaoParto from './AcaoParto';
+import { carregarAnimaisDoLocalStorage } from '../Animais/utilsAnimais';
 import '../../styles/botoes.css';
 import '../../styles/tabelaModerna.css';
 
-export default function ConteudoParto({ vacas }) {
+export default function ConteudoParto() {
+  const [vacas, setVacas] = useState([]);
   const [colunasVisiveis, setColunasVisiveis] = useState({
-    numero: true,
-    brinco: true,
-    lactacoes: true,
-    del: true,
-    categoria: true,
-    idade: true,
-    ultimaIA: true,
-    ultimoParto: true,
-    raca: true,
-    pai: true,
-    mae: true,
-    dataPrevistaParto: true,
-    acoes: true
+    numero: true, brinco: true, lactacoes: true, del: true,
+    categoria: true, idade: true, ultimaIA: true, ultimoParto: true,
+    raca: true, pai: true, mae: true, dataPrevistaParto: true, acoes: true
   });
-  const [mostrarFiltros, setMostrarFiltros] = useState(false);
+
   const [mostrarModalParto, setMostrarModalParto] = useState(false);
   const [vacaSelecionada, setVacaSelecionada] = useState(null);
   const [colunaHover, setColunaHover] = useState(null);
   const [mostrarInfo, setMostrarInfo] = useState(false);
 
+  // ⏬ Atualiza local ao montar e após evento de parto
+  useEffect(() => {
+    const atualizar = () => setVacas(carregarAnimaisDoLocalStorage());
+    atualizar();
+    window.addEventListener("animaisAtualizados", atualizar);
+    return () => window.removeEventListener("animaisAtualizados", atualizar);
+  }, []);
+
   const hoje = new Date();
 
   const vacasFiltradas = vacas.filter(v => {
-    if ((v.sexo || '').toLowerCase() !== 'femea' || !v.dataPrevistaParto) return false;
+    if ((v.sexo || '').toLowerCase() !== 'femea' || !v.dataPrevistaParto || v.status === "lactacao") return false;
     const [dia, mes, ano] = v.dataPrevistaParto.split('/').map(Number);
     const dataParto = new Date(ano, mes - 1, dia);
     const diff = Math.floor((dataParto - hoje) / (1000 * 60 * 60 * 24));
-    return diff <= 10; // mostra até 10 dias antes e também atrasadas
+    return diff <= 10;
   });
-
-  const alternarColuna = (coluna) => {
-    setColunasVisiveis({ ...colunasVisiveis, [coluna]: !colunasVisiveis[coluna] });
-  };
 
   const abrirModalParto = (vaca) => {
     setVacaSelecionada(vaca);
@@ -75,7 +71,8 @@ export default function ConteudoParto({ vacas }) {
 
       {mostrarInfo && (
         <div className="text-sm text-gray-700 bg-blue-50 border border-blue-200 rounded p-3 mb-4">
-          Esta aba mostra automaticamente as vacas com parto previsto nos próximos 10 dias. Vacas com parto atrasado também permanecem visíveis até que o parto seja lançado manualmente.
+          Esta aba mostra automaticamente as vacas com parto previsto nos próximos 10 dias.
+          Vacas com parto atrasado também permanecem visíveis até que o parto seja lançado manualmente.
         </div>
       )}
 
@@ -144,10 +141,6 @@ export default function ConteudoParto({ vacas }) {
         <AcaoParto
           vaca={vacaSelecionada}
           onFechar={() => setMostrarModalParto(false)}
-          onRegistrar={(dados) => {
-            console.log('✅ Parto registrado:', dados);
-            setMostrarModalParto(false);
-          }}
         />
       )}
     </div>

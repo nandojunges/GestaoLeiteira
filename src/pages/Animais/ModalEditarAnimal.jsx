@@ -40,9 +40,38 @@ export default function ModalEditarAnimal({ animal, onFechar, onSalvar }) {
   };
 
   const salvar = () => {
-    const todos = carregarAnimaisDoLocalStorage();
-    const atualizados = todos.map((a) => (a.numero === dados.numero ? dados : a));
-    salvarAnimaisNoLocalStorage(atualizados);
+    const animais = carregarAnimaisDoLocalStorage();
+    const bezerros = JSON.parse(localStorage.getItem("bezerros") || "[]");
+
+    let foiBezerro = false;
+
+    // ✅ Garante que statusReprodutivo seja mantido ou criado se não existir
+    const dadosCorrigidos = {
+      ...dados,
+      statusReprodutivo: dados.statusReprodutivo || "pos-parto",
+    };
+
+    const atualizadosBezerros = bezerros.map((b) => {
+      if (b.numero === dados.numero) {
+        foiBezerro = true;
+        return dadosCorrigidos;
+      }
+      return b;
+    });
+
+    const atualizadosAnimais = animais.map((a) => {
+      if (a.numero === dados.numero) {
+        return dadosCorrigidos;
+      }
+      return a;
+    });
+
+    if (foiBezerro) {
+      localStorage.setItem("bezerros", JSON.stringify(atualizadosBezerros));
+    } else {
+      salvarAnimaisNoLocalStorage(atualizadosAnimais);
+    }
+
     window.dispatchEvent(new Event("animaisAtualizados"));
     onSalvar();
   };
@@ -191,7 +220,6 @@ export default function ModalEditarAnimal({ animal, onFechar, onSalvar }) {
   );
 }
 
-// estilos
 const overlay = { position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0,0,0,0.6)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999 };
 const modal = { background: "#fff", borderRadius: "1rem", width: "720px", maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", fontFamily: "Poppins, sans-serif" };
 const header = { background: "#1e40af", color: "white", padding: "1rem 1.5rem", fontWeight: "bold", fontSize: "1.1rem", borderTopLeftRadius: "1rem", borderTopRightRadius: "1rem", textAlign: "center" };

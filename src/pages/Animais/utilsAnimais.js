@@ -1,9 +1,9 @@
-// 🧮 CATEGORIA POR IDADE
+// 🧮 CALCULAR CATEGORIA POR IDADE
 export function calcularCategoria(dataNascimento) {
-  if (!dataNascimento) return "";
+  if (!dataNascimento || typeof dataNascimento !== "string") return "";
 
   const [dia, mes, ano] = dataNascimento.split("/");
-  const nascimento = new Date(ano, mes - 1, dia); // ✅ forma segura
+  const nascimento = new Date(ano, mes - 1, dia);
   const hoje = new Date();
 
   const diffEmMeses =
@@ -16,7 +16,7 @@ export function calcularCategoria(dataNascimento) {
   return "Vaca";
 }
 
-// 📦 LOCAL STORAGE
+// 📦 LOCAL STORAGE: Carregar e salvar lista completa de animais
 export function carregarAnimaisDoLocalStorage() {
   const salvos = localStorage.getItem("animais");
   return salvos ? JSON.parse(salvos) : [];
@@ -27,6 +27,7 @@ export function salvarAnimaisNoLocalStorage(animais) {
   window.dispatchEvent(new Event("animaisAtualizados"));
 }
 
+// 🔍 Buscar animal por ID
 export function buscarAnimalPorId(id) {
   const animais = carregarAnimaisDoLocalStorage();
   return animais.find((a) => a.id === id);
@@ -34,21 +35,26 @@ export function buscarAnimalPorId(id) {
 
 // ✅ CALCULAR DEL ATUAL COM BASE NA DATA DO ÚLTIMO PARTO
 export function calcularDELAtual(ultimoParto, dataReferencia = new Date()) {
-  if (!ultimoParto || ultimoParto.length !== 10) return null;
-  const [dia, mes, ano] = ultimoParto.split('/');
-  const dataParto = new Date(ano, mes - 1, dia); // ✅ seguro
+  if (!ultimoParto || typeof ultimoParto !== "string" || ultimoParto.length !== 10) return null;
+  const [dia, mes, ano] = ultimoParto.split("/");
+  const dataParto = new Date(ano, mes - 1, dia);
   const diff = Math.floor((dataReferencia - dataParto) / (1000 * 60 * 60 * 24));
   return diff >= 0 ? diff : 0;
 }
 
-// ✅ CALCULAR DEL POR CICLO (corrigido para todas as lactações)
+// ✅ Alias para facilitar uso em outros lugares
+export const calcularDEL = calcularDELAtual;
+
+// ✅ CALCULAR DEL POR CICLO (corrigido com proteções extras)
 export function calcularDELPorCiclo(ciclos, secagens = [], hoje = new Date()) {
-  return ciclos.map((c, index) => {
+  return (ciclos || []).map((c, index) => {
     const dataParto = c.parto?.data;
-    if (!dataParto) return { ciclo: index + 1, dias: null };
+    if (!dataParto || typeof dataParto !== "string") {
+      return { ciclo: index + 1, dias: null };
+    }
 
     const [diaP, mesP, anoP] = dataParto.split("/");
-    const parto = new Date(anoP, mesP - 1, diaP); // ✅ seguro
+    const parto = new Date(anoP, mesP - 1, diaP);
 
     let secagem = null;
     const proximoPartoData = ciclos[index + 1]?.parto?.data;
@@ -57,19 +63,22 @@ export function calcularDELPorCiclo(ciclos, secagens = [], hoje = new Date()) {
       : null;
 
     for (let s of secagens) {
+      if (typeof s !== "string" || !s.includes("/")) continue;
       const [ds, ms, ys] = s.split("/");
-      const d = new Date(ys, ms - 1, ds); // ✅ seguro
+      const d = new Date(ys, ms - 1, ds);
       if (d > parto && (!proximoParto || d < proximoParto)) {
         secagem = d;
         break;
       }
     }
 
+    // Se não encontrar secagem e houver próximo parto, estima 60 dias antes do parto
     if (!secagem && proximoParto) {
       secagem = new Date(proximoParto);
       secagem.setDate(secagem.getDate() - 60);
     }
 
+    // Se ainda não encontrar secagem, considera data de hoje
     if (!secagem) secagem = hoje;
 
     const dias = Math.floor((secagem - parto) / (1000 * 60 * 60 * 24));
@@ -80,23 +89,23 @@ export function calcularDELPorCiclo(ciclos, secagens = [], hoje = new Date()) {
   });
 }
 
-// 📊 DEL MÉDIO
+// 📊 CALCULAR DEL MÉDIO
 export function calcularDELMedio(ciclos, secagens = [], hoje = new Date()) {
   const delPorCiclo = calcularDELPorCiclo(ciclos, secagens, hoje);
-  const valores = delPorCiclo.map(c => c.dias).filter(d => typeof d === 'number');
+  const valores = delPorCiclo.map(c => c.dias).filter(d => typeof d === "number");
   return valores.length ? Math.round(valores.reduce((a, b) => a + b, 0) / valores.length) : null;
 }
 
-// ✅ FORMATADOR DE DATA EM ESTILO BRASILEIRO
+// 📆 FORMATADOR DE DATA PARA ESTILO BRASILEIRO
 export function formatarDataBR(data) {
   if (!data || !(data instanceof Date)) return "";
-  const dia = String(data.getDate()).padStart(2, '0');
-  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const dia = String(data.getDate()).padStart(2, "0");
+  const mes = String(data.getMonth() + 1).padStart(2, "0");
   const ano = data.getFullYear();
   return `${dia}/${mes}/${ano}`;
 }
 
-// ✅ FORMATAR E VALIDAR DATAS DIGITADAS EM FORMATO dd/mm/aaaa
+// 📝 FORMATAR E VALIDAR DATAS DIGITADAS EM FORMATO dd/mm/aaaa
 export function formatarDataDigitada(valor) {
   const limpo = valor.replace(/\D/g, "").slice(0, 8);
   const dia = limpo.slice(0, 2);
@@ -106,7 +115,7 @@ export function formatarDataDigitada(valor) {
 
   if (dataFormatada.length === 10) {
     const [d, m, a] = dataFormatada.split("/").map(Number);
-    const data = new Date(a, m - 1, d); // ✅ segura
+    const data = new Date(a, m - 1, d);
     if (data.getDate() !== d || data.getMonth() !== m - 1 || data.getFullYear() !== a) {
       return ""; // data inválida
     }

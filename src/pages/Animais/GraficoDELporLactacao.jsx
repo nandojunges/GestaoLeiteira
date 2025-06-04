@@ -18,10 +18,11 @@ export default function GraficoDELporLactacao({ delPorCiclo }) {
     dias: item.dias ?? 0
   }));
 
+  // ✅ Cores por faixa de DEL
   const corPorDEL = (dias) => {
-    if (dias < 200) return "#10b981"; // verde
-    if (dias <= 300) return "#facc15"; // amarelo
-    return "#ef4444"; // vermelho
+    if (dias <= 305) return "#10b981";     // 🟢 Verde — Ideal
+    if (dias <= 400) return "#facc15";     // 🟡 Amarelo — Alerta
+    return "#ef4444";                      // 🔴 Vermelho — Crítico
   };
 
   const mediaDEL = dados.length
@@ -97,12 +98,15 @@ export default function GraficoDELporLactacao({ delPorCiclo }) {
         </BarChart>
       </ResponsiveContainer>
 
-      {/* 🔻 LEGENDA PERSONALIZADA ABAIXO */}
+      {/* 🔻 LEGENDA PERSONALIZADA */}
       <div style={{ display: "flex", justifyContent: "center", gap: "2rem", marginTop: "1rem" }}>
-        <span style={{ color: "#15803d", fontWeight: "600" }}>🟢 Ideal (305 dias)</span>
-        <span style={{ color: "#dc2626", fontWeight: "600" }}>🔴 Limite Crítico (400 dias)</span>
-        <span style={{ color: "#1e40af", fontWeight: "600" }}>🔵 Média ({Math.round(mediaDEL)} dias)</span>
-      </div>
+  <span style={{ color: "#15803d", fontWeight: "600" }}>🟢 Ideal (&le; 305 dias)</span>
+  <span style={{ color: "#facc15", fontWeight: "600" }}>🟡 Alerta (306&ndash;400 dias)</span>
+  <span style={{ color: "#dc2626", fontWeight: "600" }}>🔴 Crítico (&gt; 400 dias)</span>
+  <span style={{ color: "#1e40af", fontWeight: "600" }}>
+    🔵 Média ({Math.round(mediaDEL)} dias)
+  </span>
+</div>
     </div>
   );
 }

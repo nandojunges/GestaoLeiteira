@@ -100,3 +100,30 @@
   align-items: center;
   flex-wrap: wrap;
 }
+
+.input-medir {
+  width: 80px;
+  padding: 6px 10px;          /* padding equilibrado */
+  font-size: 0.95rem;
+  line-height: 1.25;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  text-align: center;
+  appearance: none;
+  -moz-appearance: textfield;
+  box-sizing: border-box;
+  height: auto;               /* evita estourar com height fixa */
+}
+
+.input-medir::-webkit-outer-spin-button,
+.input-medir::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-medir:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+  outline: none;
+}

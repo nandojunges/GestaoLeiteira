@@ -1,6 +1,20 @@
 import React from "react";
 
 export default function ConteudoRelatorio() {
+  const atualizarVacasComPartos = () => {
+    const animais = JSON.parse(localStorage.getItem("animais") || "[]");
+    const atualizados = animais.map((a) => {
+      // Atualiza para "pos-parto" se a vaca já tem um parto registrado
+      if (a.ultimoParto) {
+        a.statusReprodutivo = "pos-parto";
+      }
+      return a;
+    });
+    localStorage.setItem("animais", JSON.stringify(atualizados));
+    window.dispatchEvent(new Event("animaisAtualizados"));
+    alert("✅ Vacas atualizadas com status de parto (pós-parto)!");
+  };
+
   const restaurarPlantel = async () => {
     try {
       const resposta = await fetch("/vacas_plantel_corrigido.json");
@@ -22,6 +36,30 @@ export default function ConteudoRelatorio() {
         <li>Relatório de Vendas</li>
         <li>Outros relatórios técnicos</li>
       </ul>
+
+      <button
+        onClick={atualizarVacasComPartos}
+        style={{
+          backgroundColor: "#3b82f6",
+          color: "white",
+          padding: "0.6rem 1.2rem",
+          borderRadius: "0.5rem",
+          fontWeight: "600",
+          fontSize: "1rem",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+          transition: "background-color 0.3s",
+          marginBottom: "1rem",
+          display: "block",
+        }}
+        onMouseOver={(e) =>
+          (e.currentTarget.style.backgroundColor = "#2563eb")
+        }
+        onMouseOut={(e) =>
+          (e.currentTarget.style.backgroundColor = "#3b82f6")
+        }
+      >
+        🔄 Atualizar Vacas com Dados de Parto
+      </button>
 
       <button
         onClick={restaurarPlantel}
