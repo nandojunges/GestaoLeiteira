@@ -1,0 +1,104 @@
+import React, { useEffect, useState } from "react";
+import "../../styles/tabelaModerna.css";
+import "../../styles/botoes.css";
+
+export default function ListaLotes({ onAbrirCadastro }) {
+  const [lotes, setLotes] = useState([]);
+  const [colunaHover, setColunaHover] = useState(null);
+
+  const carregar = () => {
+    const dados = JSON.parse(localStorage.getItem("lotes") || "[]");
+    setLotes(dados);
+  };
+
+  useEffect(() => {
+    carregar();
+    window.addEventListener("lotesAtualizados", carregar);
+    return () => window.removeEventListener("lotesAtualizados", carregar);
+  }, []);
+
+  const numeroVacas = (lote) => {
+    const medicoes = JSON.parse(localStorage.getItem("medicoesLeite") || "[]");
+    const ultima = medicoes[medicoes.length - 1];
+    return ultima?.vacas?.filter((v) => v.lote === lote.nome).length || 0;
+  };
+
+  const alternarAtivo = (index) => {
+    const atualizados = [...lotes];
+    atualizados[index].ativo = !atualizados[index].ativo;
+    setLotes(atualizados);
+    localStorage.setItem("lotes", JSON.stringify(atualizados));
+    window.dispatchEvent(new Event("lotesAtualizados"));
+  };
+
+  const excluir = (index) => {
+    if (!window.confirm("Deseja excluir este lote?")) return;
+    const atualizados = lotes.filter((_, i) => i !== index);
+    setLotes(atualizados);
+    localStorage.setItem("lotes", JSON.stringify(atualizados));
+    window.dispatchEvent(new Event("lotesAtualizados"));
+  };
+
+  const titulos = ["Nome", "Nº de Vacas", "Função", "Status", "Ação"];
+
+  return (
+    <div className="w-full px-8 py-6 font-sans">
+      <div style={{ marginBottom: "10px" }}>
+        <button className="botao-acao" onClick={onAbrirCadastro}>
+          + Cadastrar Lote
+        </button>
+      </div>
+      <table className="tabela-padrao">
+        <thead>
+          <tr>
+            {titulos.map((titulo, idx) => (
+              <th
+                key={idx}
+                onMouseEnter={() => setColunaHover(idx)}
+                onMouseLeave={() => setColunaHover(null)}
+                className={colunaHover === idx ? "coluna-hover" : ""}
+              >
+                {titulo}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {lotes.length === 0 ? (
+            <tr>
+              <td colSpan={titulos.length} style={{ textAlign: "center" }}>
+                Nenhum lote cadastrado.
+              </td>
+            </tr>
+          ) : (
+            lotes.map((l, index) => (
+              <tr key={index}>
+                <td>{l.nome || "—"}</td>
+                <td>{numeroVacas(l)}</td>
+                <td>{l.funcao || "—"}</td>
+                <td>{l.ativo ? "Ativo" : "Inativo"}</td>
+                <td>
+                  <div style={{ display: "flex", gap: "0.4rem" }}>
+                    <button
+                      className="botao-editar"
+                      onClick={() => alternarAtivo(index)}
+                    >
+                      {l.ativo ? "Inativar" : "Ativar"}
+                    </button>
+                    <button
+                      className="botao-editar"
+                      onClick={() => excluir(index)}
+                      style={{ borderColor: "#dc3545", color: "#dc3545" }}
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
