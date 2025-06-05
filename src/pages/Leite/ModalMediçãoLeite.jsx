@@ -10,7 +10,9 @@ export default function ModalMedicaoLeite({ data, vacas, onFechar, onSalvar }) {
   const [dataMedicao, setDataMedicao] = useState(data);
   const inputRefs = useRef({});
   const [colunaHover, setColunaHover] = useState(null);
+  const [lotes, setLotes] = useState([]);
 
+  // Carrega medição existente
   useEffect(() => {
     const chave = `medicaoLeite_${dataMedicao}`;
     const existente = localStorage.getItem(chave);
@@ -29,6 +31,21 @@ export default function ModalMedicaoLeite({ data, vacas, onFechar, onSalvar }) {
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [dataMedicao, onFechar]);
+
+  // Carrega lotes usados para lactação
+  useEffect(() => {
+    const carregarLotes = () => {
+      const armazenados = JSON.parse(localStorage.getItem("lotes") || "[]");
+      setLotes(
+        armazenados
+          .filter((l) => l.funcao === "Lactação")
+          .map((l) => ({ ativo: true, ...l }))
+      );
+    };
+    carregarLotes();
+    window.addEventListener("lotesAtualizados", carregarLotes);
+    return () => window.removeEventListener("lotesAtualizados", carregarLotes);
+  }, []);
 
   const calcularTotal = ({ manha, tarde, terceira }) => {
     const m = parseFloat((manha || "0").replace(",", ".")) || 0;
@@ -53,28 +70,25 @@ export default function ModalMedicaoLeite({ data, vacas, onFechar, onSalvar }) {
       const totalNum = parseFloat((atualizado.total || "0").replace(",", ".")) || 0;
 
       const sugestao = (() => {
-        if (totalNum >= 20 && del < 100) return { acao: "Manter", motivo: "Alta produção e início da lactação", lote: "Lote 1" };
-        if (totalNum < 8 && del > 250) return { acao: "Secar", motivo: "Baixa produção e DEL avançado", lote: "Secar" };
+        if (totalNum >= 20 && del < 100)
+          return { acao: "Manter", motivo: "Alta produção e início da lactação", lote: "Lote 1" };
+        if (totalNum < 8 && del > 250)
+          return { acao: "Secar", motivo: "Baixa produção e DEL avançado", lote: "Secar" };
         return { acao: "Mover", motivo: "Produção intermediária", lote: "Lote 2" };
       })();
 
       atualizado.loteSugerido = sugestao.lote;
       atualizado.motivoSugestao = sugestao.motivo;
 
-      // Se está editando o lote manual
       if (campo === "lote") atualizado.lote = valor;
 
-      // Decide se a ação final será manter ou mover, com base no lote manual vs. sugerido
       if (atualizado.lote && atualizado.lote === atualizado.loteSugerido) {
         atualizado.acaoSugerida = "Manter";
       } else if (atualizado.lote && atualizado.lote !== atualizado.loteSugerido) {
         atualizado.acaoSugerida = "Mover";
       } else {
-        // Se não tem lote manual, segue a sugestão
         atualizado.acaoSugerida = sugestao.acao;
       }
-
-      console.log("DEBUG:", { numero, del, totalNum, sugestao, atualizado });
 
       return { ...prev, [numeroStr]: atualizado };
     });
@@ -96,14 +110,26 @@ export default function ModalMedicaoLeite({ data, vacas, onFechar, onSalvar }) {
       const total = parseFloat((dados.total || "0").replace(",", ".")) || 0;
       const del = calcularDEL(animal.ultimoParto || "");
 
-      const atualizado = { ...animal, lote: dados.lote || dados.loteSugerido || animal.lote, mediaLeite: total, del };
+      const atualizado = {
+        ...animal,
+        lote: dados.lote || dados.loteSugerido || animal.lote,
+        mediaLeite: total,
+        del
+      };
 
       if (!atualizado.leite) atualizado.leite = [];
       const indexExistente = atualizado.leite.findIndex(l => l.data === dataMedicao);
+      const lancamento = {
+        data: dataMedicao,
+        litros: total,
+        obs: dados.obs || "",
+        lactacao: animal.lactacaoAtual || 1
+      };
+
       if (indexExistente !== -1) {
-        atualizado.leite[indexExistente] = { ...atualizado.leite[indexExistente], litros: total, obs: dados.obs || "", lactacao: animal.lactacaoAtual || 1 };
+        atualizado.leite[indexExistente] = lancamento;
       } else {
-        atualizado.leite.push({ data: dataMedicao, litros: total, obs: dados.obs || "", lactacao: animal.lactacaoAtual || 1 });
+        atualizado.leite.push(lancamento);
       }
 
       return atualizado;
@@ -200,6 +226,7 @@ export default function ModalMedicaoLeite({ data, vacas, onFechar, onSalvar }) {
             colunaHover={colunaHover}
             setColunaHover={setColunaHover}
             calcularDEL={calcularDEL}
+            lotes={lotes}
           />
 
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
