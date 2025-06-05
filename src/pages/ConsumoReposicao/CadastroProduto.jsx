@@ -210,13 +210,38 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
       principioAtivo: listaPrincipios.join(", ")
     };
 
+    if (!atualizado.agrupamento && atualizado.categoria) {
+      let agrupamento = "";
+      if (["Ração", "Aditivos", "Suplementos"].includes(atualizado.categoria))
+        agrupamento = "Cozinha";
+      else if (
+        ["Detergentes", "Ácido", "Alcalino", "Sanitizante"].includes(
+          atualizado.categoria
+        )
+      )
+        agrupamento = "Higiene e Limpeza";
+      else if (
+        [
+          "Antibiótico",
+          "Antiparasitário",
+          "AINE",
+          "AIE",
+          "Hormônio",
+          "Vitaminas"
+        ].includes(atualizado.categoria)
+      )
+        agrupamento = "Farmácia";
+      else agrupamento = "Materiais Gerais";
+      atualizado.agrupamento = agrupamento;
+    }
+
     const produtosExistentes = JSON.parse(localStorage.getItem("produtos") || "[]");
     const atualizados = [...produtosExistentes, atualizado];
     localStorage.setItem("produtos", JSON.stringify(atualizados));
 
     alert("✅ Produto '" + produto.nomeComercial + "' cadastrado com sucesso!");
     window.dispatchEvent(new Event("produtosAtualizados"));
-    onSalvar();
+    onSalvar(atualizado);
   };
   return (
     <div style={overlay}>

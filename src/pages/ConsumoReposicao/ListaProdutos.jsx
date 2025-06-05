@@ -102,7 +102,12 @@ export default function ListaProdutos({ categoriaFiltro }) {
             produtos.map((p, index) => {
               if (!p) return null;
               const agrupamento = p.agrupamento || "";
-              if (categoriaFiltro !== "Todos" && agrupamento !== categoriaFiltro) return null;
+              if (
+                categoriaFiltro !== "Todos" &&
+                agrupamento &&
+                agrupamento !== categoriaFiltro
+              )
+                return null;
 
               const valorUnitario = calcularValorUnitario(p);
               const alertaEstoque = verificarAlertaEstoque(p);
