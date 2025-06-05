@@ -111,24 +111,20 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
   const atualizarCampo = (campo, valor) => {
     let novoProduto = { ...produto, [campo]: valor };
 
-    if (campo === "quantidade") {
-      const qt = parseFloat(valor);
-      const total = parseFloat(produto.valorTotal);
-      if (!isNaN(qt) && !isNaN(total)) {
-        novoProduto.valorUnitario = (total / qt).toFixed(2);
-      }
-    } else if (campo === "valorTotal") {
-      const qt = parseFloat(produto.quantidade);
-      const total = parseFloat(valor);
-      if (!isNaN(qt) && !isNaN(total)) {
-        novoProduto.valorUnitario = (total / qt).toFixed(2);
-      }
-    } else if (campo === "valorUnitario") {
-      const qt = parseFloat(produto.quantidade);
-      const unit = parseFloat(valor);
-      if (!isNaN(qt) && !isNaN(unit)) {
-        novoProduto.valorTotal = (qt * unit).toFixed(2);
-      }
+    const qt = parseFloat(campo === "quantidade" ? valor : novoProduto.quantidade);
+    const total = parseFloat(campo === "valorTotal" ? valor : novoProduto.valorTotal);
+    const unit = parseFloat(campo === "valorUnitario" ? valor : novoProduto.valorUnitario);
+
+    if (!isNaN(qt) && !isNaN(total) && campo !== "valorUnitario") {
+      novoProduto.valorUnitario = (total / qt).toFixed(2);
+    }
+
+    if (!isNaN(qt) && !isNaN(unit) && campo !== "valorTotal") {
+      novoProduto.valorTotal = (qt * unit).toFixed(2);
+    }
+
+    if (!isNaN(total) && !isNaN(unit) && campo !== "quantidade") {
+      novoProduto.quantidade = (total / unit).toFixed(2);
     }
 
     if (campo === "categoria") {
@@ -197,8 +193,21 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
   };
 
   const salvar = () => {
-    if (!produto.valorUnitario || !produto.quantidade) {
-      alert("Preencha valor e quantidade para calcular corretamente.");
+    let { quantidade, valorUnitario, valorTotal } = produto;
+    const q = parseFloat(quantidade);
+    const u = parseFloat(valorUnitario);
+    const t = parseFloat(valorTotal);
+
+    if (!isNaN(q) && !isNaN(u) && isNaN(t)) {
+      valorTotal = (q * u).toFixed(2);
+    } else if (!isNaN(q) && !isNaN(t) && isNaN(u)) {
+      valorUnitario = (t / q).toFixed(2);
+    } else if (!isNaN(t) && !isNaN(u) && isNaN(q)) {
+      quantidade = (t / u).toFixed(2);
+    }
+
+    if ([q, u, t].filter(v => !isNaN(v)).length < 2) {
+      alert("Informe ao menos dois valores entre quantidade, valor total e valor unit\u00e1rio.");
       return;
     }
 
@@ -206,6 +215,9 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
 
     const atualizado = {
       ...produto,
+      quantidade,
+      valorUnitario,
+      valorTotal,
       principiosAtivos: [...listaPrincipios],
       principioAtivo: listaPrincipios.join(", ")
     };
@@ -483,11 +495,11 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
             </div>
 
             <div>
-              <label>Quantidade</label>
+              <label>Quantidade ({produto.unidade || 'unidade'})</label>
               <input
                 ref={(el) => (refs.current[1] = el)}
                 type="number"
-                placeholder="Ex: 100"
+                placeholder={`Ex: 10 ${produto.unidade || ''}`}
                 value={produto.quantidade}
                 onChange={(e) => atualizarCampo("quantidade", e.target.value)}
                 onKeyDown={(e) => handleEnter(e, 1)}
@@ -515,15 +527,31 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
             </div>
 
             <div>
-              <label>Valor por Unidade (R$)</label>
+              <label>Valor Unitário (R$)</label>
               <input
                 type="number"
                 step="0.01"
-                placeholder="Ex: 1.25"
+                placeholder="Informe ou será calculado"
                 value={produto.valorUnitario}
                 onChange={(e) => atualizarCampo("valorUnitario", e.target.value)}
                 style={input()}
               />
+            </div>
+
+            <div>
+              <label>Valor Total (R$)</label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Informe ou será calculado"
+                value={produto.valorTotal}
+                onChange={(e) => atualizarCampo("valorTotal", e.target.value)}
+                style={input()}
+              />
+            </div>
+
+            <div style={{ gridColumn: "1 / -1", fontSize: "0.85rem", color: "#555" }}>
+              Informe dois dos três campos de quantidade, valor unitário ou total. O restante será calculado automaticamente.
             </div>
 
             <div>
