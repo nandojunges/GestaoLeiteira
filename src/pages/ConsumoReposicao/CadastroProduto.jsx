@@ -202,10 +202,12 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
       return;
     }
 
+    const listaPrincipios = principiosAtivos.filter(Boolean);
+
     const atualizado = {
       ...produto,
-      principiosAtivos: principiosAtivos.filter(Boolean),
-      principioAtivo: principiosAtivos.filter(Boolean).join(", ")
+      principiosAtivos: [...listaPrincipios],
+      principioAtivo: listaPrincipios.join(", ")
     };
 
     const produtosExistentes = JSON.parse(localStorage.getItem("produtos") || "[]");
