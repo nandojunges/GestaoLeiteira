@@ -9,7 +9,7 @@ export default function NavegacaoPrincipal({ abaAtiva, setAbaAtiva }) {
     { id: 'bezerras', label: '🍼 BEZERRAS', title: 'Controle das bezerras', visivelPara: ['admin', 'funcionario'] },
     { id: 'reproducao', label: '🧬 REPRODUÇÃO', title: 'Reprodução e fertilidade', visivelPara: ['admin', 'funcionario'] },
     { id: 'leite', label: '🧀 LEITE', title: 'Controle leiteiro', visivelPara: ['admin', 'funcionario'] },
-    { id: 'estoque', label: '📦 ESTOQUE', title: 'Gestão de estoque', visivelPara: ['admin', 'funcionario'] },
+    { id: 'consumoreposicao', label: '📦 CONSUMO E REPOSIÇÃO', title: 'Gestão de estoque', visivelPara: ['admin', 'funcionario'] },
     { id: 'financeiro', label: '💰 FINANCEIRO', title: 'Relatórios financeiros', visivelPara: ['admin', 'funcionario'] },
     { id: 'calendario', label: '📅 CALENDÁRIO', title: 'Agenda de atividades', visivelPara: ['admin', 'funcionario'] },
     { id: 'ajustes', label: '⚙️ AJUSTES', title: 'Configurações do sistema', visivelPara: ['admin', 'funcionario'] },

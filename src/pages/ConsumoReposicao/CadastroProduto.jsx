@@ -15,6 +15,7 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
     agrupamento: "",
     nomeHormônio: "",
     doseDispositivo: "",
+    principiosAtivos: [],
     principioAtivo: "",
     carenciaLeite: "",
     carenciaCarne: "",
@@ -28,6 +29,9 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
   const [mostrarPrincipioAtivo, setMostrarPrincipioAtivo] = useState(false);
   const [mostrarDoseDispositivo, setMostrarDoseDispositivo] = useState(false);
   const [opcoesApresentacao, setOpcoesApresentacao] = useState([]);
+  const [novaApresentacao, setNovaApresentacao] = useState("");
+  const [mostrarNovaApresentacao, setMostrarNovaApresentacao] = useState(false);
+  const [principiosAtivos, setPrincipiosAtivos] = useState([""]); 
   const [semCarenciaLeite, setSemCarenciaLeite] = useState(false);
   const [semCarenciaCarne, setSemCarenciaCarne] = useState(false);
   const [semValidade, setSemValidade] = useState(false);
@@ -53,6 +57,18 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
     "Ivermectina", "Doramectina", "Eprinomectina", "Moxidectina",
     "Albendazol", "Levamisol", "Outros"
   ];
+  const principiosAtivosAIE = [
+    "Dexametasona",
+    "Flumetasona",
+    "Prednisolona",
+    "Outros"
+  ];
+  const principiosAtivosAINE = [
+    "Flunixina meglumina",
+    "Meloxicam",
+    "Carprofeno",
+    "Outros"
+  ];
 
   const apresentacoesPorCategoria = {
     "Ração": ["Saco 40kg", "BigBag", "A granel"],
@@ -61,6 +77,7 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
     "Antibiótico": ["Frasco", "Ampola"],
     "Antiparasitário": ["Frasco", "Ampola"],
     "AINE": ["Frasco", "Ampola"],
+    "AIE": ["Frasco", "Ampola"],
     "Vitaminas": ["Frasco", "Ampola"]
   };
 
@@ -125,7 +142,12 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
       setMostrarHormonal(valor === "Hormônio");
       setMostrarAIEInfo(valor === "AIE");
       setMostrarCarencia(["Antibiótico", "Antiparasitário"].includes(valor));
-      setMostrarPrincipioAtivo(["Antibiótico", "Antiparasitário"].includes(valor));
+      setMostrarPrincipioAtivo(["Antibiótico", "Antiparasitário", "AIE", "AINE"].includes(valor));
+      if (["Antibiótico", "Antiparasitário", "AIE", "AINE"].includes(valor)) {
+        setPrincipiosAtivos([""]);
+        novoProduto.principiosAtivos = [""];
+        novoProduto.principioAtivo = "";
+      }
       setOpcoesApresentacao(apresentacoesPorCategoria[valor] || []);
     }
 
@@ -138,14 +160,56 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
     setProduto(novoProduto);
   };
 
+  const adicionarPrincipio = () => {
+    const novos = [...principiosAtivos, ""];
+    setPrincipiosAtivos(novos);
+    setProduto({ ...produto, principiosAtivos: novos });
+  };
+
+  const removerPrincipio = (index) => {
+    const novos = principiosAtivos.filter((_, i) => i !== index);
+    setPrincipiosAtivos(novos);
+    setProduto({
+      ...produto,
+      principiosAtivos: novos,
+      principioAtivo: novos.filter(Boolean).join(", ")
+    });
+  };
+
+  const atualizarPrincipio = (index, valor) => {
+    const novos = [...principiosAtivos];
+    novos[index] = valor;
+    setPrincipiosAtivos(novos);
+    setProduto({
+      ...produto,
+      principiosAtivos: novos,
+      principioAtivo: novos.filter(Boolean).join(", ")
+    });
+  };
+
+  const removerApresentacao = (valor) => {
+    const atualizadas = opcoesApresentacao.filter((a) => a !== valor);
+    setOpcoesApresentacao(atualizadas);
+    const base = apresentacoesPorCategoria[produto.categoria] || [];
+    const somenteCustom = atualizadas.filter((a) => !base.includes(a));
+    localStorage.setItem(`apresentacoes_${produto.categoria}`, JSON.stringify(somenteCustom));
+    if (produto.apresentacao === valor) atualizarCampo("apresentacao", "");
+  };
+
   const salvar = () => {
     if (!produto.valorUnitario || !produto.quantidade) {
       alert("Preencha valor e quantidade para calcular corretamente.");
       return;
     }
 
+    const atualizado = {
+      ...produto,
+      principiosAtivos: principiosAtivos.filter(Boolean),
+      principioAtivo: principiosAtivos.filter(Boolean).join(", ")
+    };
+
     const produtosExistentes = JSON.parse(localStorage.getItem("produtos") || "[]");
-    const atualizados = [...produtosExistentes, produto];
+    const atualizados = [...produtosExistentes, atualizado];
     localStorage.setItem("produtos", JSON.stringify(atualizados));
 
     alert("✅ Produto '" + produto.nomeComercial + "' cadastrado com sucesso!");
@@ -228,16 +292,37 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
             )}
 
             {mostrarPrincipioAtivo && (
-              <div style={{ gridColumn: "1 / -1" }}>
+              <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <label>Princípio Ativo</label>
-                <Select
-                  options={(produto.categoria === "Antibiótico" ? principiosAtivosAntibioticos : principiosAtivosAntiparasitarios).map((p) => ({ value: p, label: p }))}
-                  value={produto.principioAtivo ? { value: produto.principioAtivo, label: produto.principioAtivo } : null}
-                  onChange={(option) => atualizarCampo("principioAtivo", option.value)}
-                  className="react-select-container"
-                  classNamePrefix="react-select"
-                  placeholder="Selecione..."
-                />
+                {principiosAtivos.map((pa, idx) => (
+                  <div
+                    key={idx}
+                    style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}
+                  >
+                    <div style={{ flex: 1, minWidth: "300px" }}>
+                      <Select
+                        options={
+                          produto.categoria === "Antibiótico"
+                            ? principiosAtivosAntibioticos.map((p) => ({ value: p, label: p }))
+                            : produto.categoria === "Antiparasitário"
+                            ? principiosAtivosAntiparasitarios.map((p) => ({ value: p, label: p }))
+                            : produto.categoria === "AIE"
+                            ? principiosAtivosAIE.map((p) => ({ value: p, label: p }))
+                            : principiosAtivosAINE.map((p) => ({ value: p, label: p }))
+                        }
+                        value={pa ? { value: pa, label: pa } : null}
+                        onChange={(option) => atualizarPrincipio(idx, option.value)}
+                        className="react-select-container"
+                        classNamePrefix="react-select"
+                        placeholder="Selecione..."
+                      />
+                    </div>
+                    <button onClick={adicionarPrincipio} style={botaoAdicionar}>+</button>
+                    {idx > 0 && (
+                      <button onClick={() => removerPrincipio(idx)} style={botaoRemover}>x</button>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
 
@@ -298,20 +383,53 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
                 />
               </div>
               <button
-                onClick={() => {
-                  const novaApresentacao = prompt("Digite a nova apresentação para a categoria selecionada:");
-                  if (novaApresentacao) {
-                    const atualizadas = [...opcoesApresentacao, novaApresentacao];
-                    setOpcoesApresentacao(atualizadas);
-                    localStorage.setItem(`apresentacoes_${produto.categoria}`, JSON.stringify(atualizadas));
-                  }
-                }}
+               onClick={() => setMostrarNovaApresentacao(!mostrarNovaApresentacao)}
                 style={{ background: "#2563eb", color: "white", border: "none", padding: "0.4rem 0.8rem", borderRadius: "0.4rem", cursor: "pointer" }}
               >
                 +
               </button>
             </div>
-
+            {mostrarNovaApresentacao && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "0.5rem" }}>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <input
+                    type="text"
+                    placeholder="Nova apresentação"
+                    value={novaApresentacao}
+                    onChange={(e) => setNovaApresentacao(e.target.value)}
+                    style={input()}
+                  />
+                  <button
+                    onClick={() => {
+                      if (novaApresentacao.trim() !== "") {
+                        const atualizadas = [...opcoesApresentacao, novaApresentacao];
+                        setOpcoesApresentacao(atualizadas);
+                        localStorage.setItem(`apresentacoes_${produto.categoria}`, JSON.stringify(atualizadas.filter((a) => !(apresentacoesPorCategoria[produto.categoria] || []).includes(a))));
+                        atualizarCampo("apresentacao", novaApresentacao);
+                        setNovaApresentacao("");
+                      }
+                    }}
+                    style={{ background: "#2563eb", color: "white", border: "none", padding: "0.4rem 0.8rem", borderRadius: "0.4rem", cursor: "pointer" }}
+                  >
+                    Salvar
+                  </button>
+                </div>
+                {(() => {
+                  const base = apresentacoesPorCategoria[produto.categoria] || [];
+                  const custom = opcoesApresentacao.filter((a) => !base.includes(a));
+                  return custom.length ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                      {custom.map((ap, i) => (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          <span>{ap}</span>
+                          <button onClick={() => removerApresentacao(ap)} style={{ background: "#dc2626", color: "#fff", border: "none", borderRadius: "0.25rem", cursor: "pointer", padding: "0 0.4rem" }}>x</button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null;
+                })()}
+              </div>
+            )}
             {["Antibiótico", "Antiparasitário", "Hormônio", "AINE", "Vitaminas"].includes(produto.categoria) && (
               <div>
                 <label>Volume (mL ou L)</label>
@@ -470,4 +588,23 @@ const botaoConfirmar = {
   borderRadius: "0.5rem",
   cursor: "pointer",
   fontWeight: "600"
+};
+
+const botaoAdicionar = {
+  background: "#2563eb",
+  color: "#fff",
+  border: "none",
+  borderRadius: "0.4rem",
+  cursor: "pointer",
+  width: "38px",
+  height: "38px"
+};
+
+const botaoRemover = {
+  background: "#dc2626",
+  color: "#fff",
+  border: "none",
+  borderRadius: "0.4rem",
+  cursor: "pointer",
+  padding: "0 0.6rem"
 };

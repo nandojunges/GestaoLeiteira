@@ -1,20 +1,21 @@
 import React from 'react';
 
-export default function SubAbasAnimais({
-  abaSelecionada,
-  setAbaSelecionada,
-  larguraAba = '130px',
+export default function SubAbasConsumoReposicao({
+  abaAtiva,
+  setAbaAtiva,
+  larguraAba = '160px',
   alturaAba = '32px',
   espacoEntreAbas = '4px',
-  espacoVerticalSuperior = '30px',
+  espacoVerticalSuperior = '12px',
   espacoInferior = '-5px',
   bordaArredondada = '5px',
 }) {
   const subAbas = [
-    { id: 'plantel', label: '🐄 Plantel' },
-    { id: 'secagem', label: '🧴 Secagem' },
-    { id: 'pre-parto', label: '🔔 Pré-parto' },
-    { id: 'parto', label: '👶 Parto' },
+    { id: 'estoque', label: '📦 Estoque' },
+    { id: 'cadastroLotes', label: '➕ Cadastro de Lotes' },
+    { id: 'dietas', label: '🥣 Dietas' },
+    { id: 'limpeza', label: '🧼 Limpeza' },
+    { id: 'calendarioSanitario', label: '📅 Calendário Sanitário' },
   ];
 
   return (
@@ -29,17 +30,17 @@ export default function SubAbasAnimais({
         {subAbas.map((aba) => (
           <button
             key={aba.id}
-            onClick={() => setAbaSelecionada(aba.id)}
+            onClick={() => setAbaAtiva(aba.id)}
             style={{
               width: larguraAba,
               height: alturaAba,
               borderRadius: bordaArredondada,
               marginRight: espacoEntreAbas,
               transition: 'all 0.2s ease',
-              fontWeight: abaSelecionada === aba.id ? '700' : '500',
-              backgroundColor: abaSelecionada === aba.id ? '#DBEAFE' : '#F3F4F6',
-              color: abaSelecionada === aba.id ? '#1e3a8a' : '#374151',
-              boxShadow: abaSelecionada === aba.id ? '0 2px 6px rgba(30, 58, 138, 0.3)' : 'none',
+              fontWeight: abaAtiva === aba.id ? '700' : '500',
+              backgroundColor: abaAtiva === aba.id ? '#DBEAFE' : '#F3F4F6',
+              color: abaAtiva === aba.id ? '#1e3a8a' : '#374151',
+              boxShadow: abaAtiva === aba.id ? '0 2px 6px rgba(30, 58, 138, 0.3)' : 'none',
             }}
             className="text-sm hover:bg-blue-100 hover:scale-[1.02] active:scale-[0.98]"
           >

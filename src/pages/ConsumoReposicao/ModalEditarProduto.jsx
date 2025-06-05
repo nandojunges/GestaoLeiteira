@@ -2,9 +2,21 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Select from "react-select";
 
-export default function ModalEditarProduto({ produto, onFechar, onSalvar }) {
+export default function ModalEditarProduto({ produto, indice, onFechar, onSalvar }) {
   const [editado, setEditado] = useState(produto);
   const [categorias, setCategorias] = useState([]);
+  const apresentacoesPorCategoria = {
+    "Ração": ["Saco 40kg", "BigBag", "A granel"],
+    "Hormônio": ["Frasco", "Ampola", "Dispositivo"],
+    "Aditivos": ["Saco", "Pote", "Envelope"],
+    "Antibiótico": ["Frasco", "Ampola"],
+    "Antiparasitário": ["Frasco", "Ampola"],
+    "AINE": ["Frasco", "Ampola"],
+    "Vitaminas": ["Frasco", "Ampola"],
+  };
+  const [opcoesApresentacao, setOpcoesApresentacao] = useState([]);
+  const [novaApresentacao, setNovaApresentacao] = useState("");
+  const [mostrarNovaApresentacao, setMostrarNovaApresentacao] = useState(false);
   const camposRef = useRef([]);
 
   useEffect(() => {
@@ -22,23 +34,54 @@ export default function ModalEditarProduto({ produto, onFechar, onSalvar }) {
       setCategorias(opcoes);
     };
 
+    const carregarApresentacoes = (cat) => {
+      if (!cat) return;
+      const base = apresentacoesPorCategoria[cat] || [];
+      const salvas = JSON.parse(localStorage.getItem(`apresentacoes_${cat}`) || "[]");
+      setOpcoesApresentacao([...new Set([...base, ...salvas])]);
+    };
+
     window.addEventListener("keydown", escFunction);
     carregarCategorias();
+    carregarApresentacoes(produto.categoria);
     camposRef.current[0]?.focus();
 
     return () => window.removeEventListener("keydown", escFunction);
-  }, [onFechar]);
+  }, [onFechar, produto.categoria]);
+
+  useEffect(() => {
+    const cat = editado.categoria;
+    if (cat) {
+      const base = apresentacoesPorCategoria[cat] || [];
+      const salvas = JSON.parse(localStorage.getItem(`apresentacoes_${cat}`) || "[]");
+      setOpcoesApresentacao([...new Set([...base, ...salvas])]);
+    }
+  }, [editado.categoria]);
 
   const atualizar = (campo, valor) => {
-    setEditado((prev) => ({ ...prev, [campo]: valor }));
+    if (campo === "categoria") {
+      let agrupamento = "";
+      if (["Ração", "Aditivos", "Suplementos"].includes(valor)) agrupamento = "Cozinha";
+      else if (["Detergentes", "Ácido", "Alcalino", "Sanitizante"].includes(valor)) agrupamento = "Higiene e Limpeza";
+      else if (["Antibiótico", "Antiparasitário", "AINE", "AIE", "Hormônio", "Vitaminas"].includes(valor)) agrupamento = "Farmácia";
+      else agrupamento = "Materiais Gerais";
+      setEditado((prev) => ({ ...prev, categoria: valor, agrupamento }));
+vepyr-codex/criar-aba-de-
+o01rv-codex/criar-aba-de-estoque
+      const base = apresentacoesPorCategoria[valor] || [];
+      const salvas = JSON.parse(localStorage.getItem(`apresentacoes_${valor}`) || "[]");
+      setOpcoesApresentacao([...new Set([...base, ...salvas])]);
+    } else {
+      setEditado((prev) => ({ ...prev, [campo]: valor }));
+    }
   };
 
   const salvarAlteracoes = () => {
     const lista = JSON.parse(localStorage.getItem("produtos") || "[]");
-    const novaLista = lista.map((p) =>
-      p.nomeComercial === produto.nomeComercial ? editado : p
-    );
-    localStorage.setItem("produtos", JSON.stringify(novaLista));
+    if (indice != null && indice >= 0 && indice < lista.length) {
+      lista[indice] = editado;
+    }
+    localStorage.setItem("produtos", JSON.stringify(lista));
     window.dispatchEvent(new Event("produtosAtualizados"));
     onSalvar();
   };
@@ -93,6 +136,58 @@ export default function ModalEditarProduto({ produto, onFechar, onSalvar }) {
                 }),
               }}
             />
+          </div>
+
+          <div style={estilos.campo}>
+            <label>Apresentação</label>
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <Select
+                options={opcoesApresentacao.map((a) => ({ value: a, label: a }))}
+                value={editado.apresentacao ? { value: editado.apresentacao, label: editado.apresentacao } : null}
+                onChange={(op) => atualizar("apresentacao", op?.value || "")}
+                placeholder="Selecione..."
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    marginTop: "0.3rem",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                  }),
+                }}
+              />
+              <button
+                onClick={() => setMostrarNovaApresentacao(!mostrarNovaApresentacao)}
+                style={{ backgroundColor: "#2563eb", color: "white", border: "none", borderRadius: "8px", padding: "0.4rem 0.8rem", fontWeight: "bold", cursor: "pointer" }}
+              >
+                +
+              </button>
+            </div>
+            {mostrarNovaApresentacao && (
+              <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem" }}>
+                <input
+                  type="text"
+                  placeholder="Nova apresentação"
+                  value={novaApresentacao}
+                  onChange={(e) => setNovaApresentacao(e.target.value)}
+                  style={estilos.input}
+                />
+                <button
+                  onClick={() => {
+                    if (novaApresentacao.trim() !== "") {
+                      const atualizadas = [...opcoesApresentacao, novaApresentacao];
+                      setOpcoesApresentacao(atualizadas);
+                      localStorage.setItem(`apresentacoes_${editado.categoria}`, JSON.stringify(atualizadas));
+                      setEditado((prev) => ({ ...prev, apresentacao: novaApresentacao }));
+                      setNovaApresentacao("");
+                      setMostrarNovaApresentacao(false);
+                    }
+                  }}
+                  style={{ backgroundColor: "#16a34a", color: "white", border: "none", borderRadius: "8px", padding: "0.4rem 0.8rem", fontWeight: "bold", cursor: "pointer" }}
+                >
+                  Salvar
+                </button>
+              </div>
+            )}
           </div>
 
           {[

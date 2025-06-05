@@ -6,7 +6,7 @@ import Animais from '../pages/Animais/index.jsx';
 import Bezerras from '../pages/Bezerras/index.jsx';
 import Reproducao from '../pages/Reproducao/index.jsx';
 import Leite from '../pages/Leite/index.jsx';
-import Estoque from '../pages/Estoque/index.jsx';
+import ConsumoReposicao from '../pages/ConsumoReposicao/index.jsx';
 import Financeiro from '../pages/Financeiro/index.jsx';
 import Calendario from '../pages/Calendario/index.jsx'; // ✅ IMPORTADO
 import Ajustes from '../pages/Ajustes/index.jsx';
@@ -22,7 +22,7 @@ export default function SistemaBase() {
     if (abaAtiva === 'bezerras') return <Bezerras />;
     if (abaAtiva === 'reproducao') return <Reproducao />;
     if (abaAtiva === 'leite') return <Leite />;
-    if (abaAtiva === 'estoque') return <Estoque />;
+    if (abaAtiva === 'consumoreposicao') return <ConsumoReposicao />;
     if (abaAtiva === 'financeiro') return <Financeiro />;
     if (abaAtiva === 'calendario') return <Calendario />; // ✅ ADICIONADO
     if (abaAtiva === 'ajustes') return <Ajustes />;
