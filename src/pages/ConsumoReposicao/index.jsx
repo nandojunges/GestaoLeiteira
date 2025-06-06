@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import SubAbasConsumoReposicao from "./SubAbasConsumoReposicao";
 import Estoque from "./Estoque";
 import CadastroLotes from "./CadastroLotes";
-import Dietas from "./Dietas";
+import ListaDietas from "./ListaDietas";
 import Limpeza from "./Limpeza";
 import CalendarioSanitario from "./CalendarioSanitario";
 
@@ -16,7 +16,7 @@ export default function ConsumoReposicao() {
       case "cadastroLotes":
         return <CadastroLotes />;
       case "dietas":
-        return <Dietas />;
+        return <ListaDietas />;
       case "limpeza":
         return <Limpeza />;
       case "calendarioSanitario":
