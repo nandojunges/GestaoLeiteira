@@ -3,9 +3,11 @@ import Select from "react-select";
 
 export default function CadastroDietas({ onFechar, onSalvar }) {
   const [produtos, setProdutos] = useState([]);
-  const [numVacas, setNumVacas] = useState("");
+  const [lotes, setLotes] = useState([]);
+  const [lote, setLote] = useState("");
+  const [numVacas, setNumVacas] = useState(0);
   const [ingredientes, setIngredientes] = useState([
-    { produto: null, quantidade: "", unidade: "" }
+    { produto: null, quantidade: "" }
   ]);
   const [custoTotal, setCustoTotal] = useState(0);
   const [custoVacaDia, setCustoVacaDia] = useState(0);
@@ -18,6 +20,31 @@ export default function CadastroDietas({ onFechar, onSalvar }) {
     setProdutos(filtrar);
   }, []);
 
+  useEffect(() => {
+    const carregarLotes = () => {
+      const armazenados = JSON.parse(localStorage.getItem("lotes") || "[]");
+      setLotes(armazenados.filter((l) => l && l.ativo));
+    };
+    carregarLotes();
+    window.addEventListener("lotesAtualizados", carregarLotes);
+    return () => window.removeEventListener("lotesAtualizados", carregarLotes);
+  }, []);
+
+  useEffect(() => {
+    const contar = () => {
+      if (!lote) {
+        setNumVacas(0);
+        return;
+      }
+      const animais = JSON.parse(localStorage.getItem("animais") || "[]");
+      const total = animais.filter((a) => a.lote === lote).length;
+      setNumVacas(total);
+    };
+    contar();
+    window.addEventListener("animaisAtualizados", contar);
+    return () => window.removeEventListener("animaisAtualizados", contar);
+  }, [lote]);
+
   const atualizarIngrediente = (index, campo, valor) => {
     const novos = [...ingredientes];
     novos[index] = { ...novos[index], [campo]: valor };
@@ -25,7 +52,7 @@ export default function CadastroDietas({ onFechar, onSalvar }) {
   };
 
   const adicionarIngrediente = () => {
-    setIngredientes([...ingredientes, { produto: null, quantidade: "", unidade: "" }]);
+    setIngredientes([...ingredientes, { produto: null, quantidade: "" }]);
   };
 
   const removerIngrediente = (index) => {
@@ -54,7 +81,11 @@ export default function CadastroDietas({ onFechar, onSalvar }) {
   }, [ingredientes, numVacas, produtos]);
 
   const salvar = () => {
-    onSalvar?.({ ingredientes, numVacas, custoTotal, custoVacaDia });
+    if (!lote) {
+      alert("Selecione um lote.");
+      return;
+    }
+    onSalvar?.({ lote, ingredientes, numVacas, custoTotal, custoVacaDia });
     onFechar?.();
   };
 
@@ -64,15 +95,30 @@ export default function CadastroDietas({ onFechar, onSalvar }) {
         <div style={header}>🥣 Cadastro de Dieta</div>
         <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
-            <label>Nº de Vacas</label>
-            <input
-              type="number"
-              value={numVacas}
-              onChange={(e) => setNumVacas(e.target.value)}
-              style={input()}
+            <label>Lote *</label>
+            <Select
+              options={lotes.map((l) => ({ value: l.nome, label: l.nome }))}
+              value={lote ? { value: lote, label: lote } : null}
+              onChange={(op) => setLote(op?.value || "")}
+              className="react-select-container"
+              classNamePrefix="react-select"
+              placeholder="Selecione..."
             />
           </div>
+          {lote && (
+            <div>
+              <label>Nº de Vacas</label>
+              <input value={numVacas} readOnly style={input(true)} />
+            </div>
+          )}
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <div style={{ display: "flex", gap: "0.5rem", fontWeight: "600" }}>
+              <div style={{ flex: 1 }}>Ingrediente</div>
+              <div style={{ width: "110px", textAlign: "center" }}>Quantidade (kg/vaca)</div>
+              <div style={{ width: "110px", textAlign: "center" }}>Preço unitário (R$)</div>
+              <div style={{ width: "110px", textAlign: "center" }}>Total parcial (R$)</div>
+              <div style={{ width: "32px" }}></div>
+            </div>
             {ingredientes.map((ing, idx) => (
               <div key={idx} style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                 <div style={{ flex: 1 }}>
@@ -87,19 +133,12 @@ export default function CadastroDietas({ onFechar, onSalvar }) {
                 </div>
                 <input
                   type="number"
-                  placeholder="Qtd/vaca"
+                  placeholder="Quantidade (kg/vaca)"
                   value={ing.quantidade}
                   onChange={(e) => atualizarIngrediente(idx, "quantidade", e.target.value)}
-                  style={{ ...input(), width: "90px" }}
+                  style={{ ...input(), width: "110px" }}
                 />
-                <input
-                  type="text"
-                  placeholder="Unidade"
-                  value={ing.unidade}
-                  onChange={(e) => atualizarIngrediente(idx, "unidade", e.target.value)}
-                  style={{ ...input(), width: "80px" }}
-                />
-                <div style={{ width: "100px", textAlign: "center" }}>
+                <div style={{ width: "110px", textAlign: "center" }}>
                   {(() => {
                     const prod = produtos.find((p) => p.nomeComercial === ing.produto);
                     if (!prod) return "—";
@@ -111,6 +150,22 @@ export default function CadastroDietas({ onFechar, onSalvar }) {
                         ? parseFloat(prod.valorTotal) / parseFloat(prod.quantidade)
                         : 0;
                     return `R$ ${valor.toFixed(2)}`;
+                  })()}
+                </div>
+                <div style={{ width: "110px", textAlign: "center" }}>
+                  {(() => {
+                    const prod = produtos.find((p) => p.nomeComercial === ing.produto);
+                    if (!prod) return "—";
+                    const unit = parseFloat(prod.valorUnitario);
+                    const valor =
+                      !isNaN(unit) && unit > 0
+                        ? unit
+                        : prod.valorTotal && prod.quantidade
+                        ? parseFloat(prod.valorTotal) / parseFloat(prod.quantidade)
+                        : 0;
+                    const qt = parseFloat(ing.quantidade);
+                    if (isNaN(qt) || isNaN(numVacas)) return "—";
+                    return `R$ ${(qt * numVacas * valor).toFixed(2)}`;
                   })()}
                 </div>
                 <button onClick={() => removerIngrediente(idx)} style={botaoRemover}>x</button>
@@ -145,7 +200,7 @@ const overlay = {
 const modal = {
   backgroundColor: "#fff",
   borderRadius: "1rem",
-  width: "520px",
+  width: "720px",
   maxHeight: "90vh",
   overflowY: "auto",
   fontFamily: "Poppins, sans-serif",
@@ -164,11 +219,12 @@ const header = {
   textAlign: "center",
 };
 
-const input = () => ({
+const input = (readOnly = false) => ({
   padding: "0.6rem",
   border: "1px solid #ccc",
   borderRadius: "0.5rem",
   width: "100%",
+  backgroundColor: readOnly ? "#f3f4f6" : "#fff",
 });
 
 const botaoCancelar = {
