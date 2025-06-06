@@ -1,20 +1,24 @@
 import React, { useState } from "react";
 import SubAbasConsumoReposicao from "./SubAbasConsumoReposicao";
 import Estoque from "./Estoque";
-import CadastroLotes from "./CadastroLotes";
+import ListaLotes from "./ListaLotes"; // ✅ Substitui CadastroLotes aqui
+import CadastroLotes from "./CadastroLotes"; // ✅ Será aberto apenas via botão
 import ListaDietas from "./ListaDietas";
 import Limpeza from "./Limpeza";
 import CalendarioSanitario from "./CalendarioSanitario";
 
 export default function ConsumoReposicao() {
   const [abaInterna, setAbaInterna] = useState("estoque");
+  const [mostrarCadastroLote, setMostrarCadastroLote] = useState(false); // ✅ novo
 
   const renderizarConteudo = () => {
     switch (abaInterna) {
       case "estoque":
         return <Estoque />;
       case "cadastroLotes":
-        return <CadastroLotes />;
+        return (
+          <ListaLotes onAbrirCadastro={() => setMostrarCadastroLote(true)} />
+        ); // ✅ renderiza ListaLotes
       case "dietas":
         return <ListaDietas />;
       case "limpeza":
@@ -35,6 +39,13 @@ export default function ConsumoReposicao() {
         espacoInferior="0px"
       />
       <div className="pt-4">{renderizarConteudo()}</div>
+
+      {mostrarCadastroLote && (
+        <CadastroLotes
+          onFechar={() => setMostrarCadastroLote(false)}
+          onSalvar={() => setMostrarCadastroLote(false)}
+        />
+      )}
     </div>
   );
 }
