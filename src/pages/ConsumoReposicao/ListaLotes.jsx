@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
+import ModalInfoLote from "./ModalInfoLote";
 
 export default function ListaLotes({ onAbrirCadastro }) {
   const [lotes, setLotes] = useState([]);
   const [colunaHover, setColunaHover] = useState(null);
+  const [modalLote, setModalLote] = useState(null);
 
   const carregar = () => {
     const dados = JSON.parse(localStorage.getItem("lotes") || "[]");
@@ -23,6 +25,76 @@ export default function ListaLotes({ onAbrirCadastro }) {
     return ultima?.vacas?.filter((v) => v.lote === lote.nome).length || 0;
   };
 
+  const nivelProdutivo = (lote) => {
+    const animais = (JSON.parse(localStorage.getItem("animais") || "[]")).filter(
+      (a) => a.lote === lote.nome
+    );
+    switch (lote.funcao) {
+      case "Lactação": {
+        const leite = JSON.parse(localStorage.getItem("leite") || "[]");
+        const medias = animais.map((a) => {
+          const ult = leite
+            .filter((l) => l.numeroAnimal === a.numero)
+            .sort((x, y) => new Date(y.data) - new Date(x.data))[0];
+          return parseFloat(ult?.litros) || 0;
+        });
+        if (!medias.length) return "—";
+        const media = medias.reduce((a, b) => a + b, 0) / medias.length;
+        return media.toFixed(1) + " L";
+      }
+      case "Pré-parto": {
+        const hoje = new Date();
+        const dias = animais
+          .map((a) => {
+            if (!a.dataPrevistaParto) return null;
+            const [d, m, y] = a.dataPrevistaParto.split("/");
+            const data = new Date(y, m - 1, d);
+            return Math.round((data - hoje) / (1000 * 60 * 60 * 24));
+          })
+          .filter((n) => n != null);
+        if (!dias.length) return "—";
+        const media = dias.reduce((a, b) => a + b, 0) / dias.length;
+        return Math.round(media) + " dias";
+      }
+      case "Secagem": {
+        const tratados = animais.filter((a) =>
+          localStorage.getItem("secagem_" + a.numero)
+        );
+        return tratados.length;
+      }
+      case "Novilhas": {
+        const idades = animais
+          .map((a) => {
+            if (!a.dataNascimento) return null;
+            const [d, m, y] = a.dataNascimento.split("/");
+            const nasc = new Date(y, m - 1, d);
+            const hoje = new Date();
+            return (
+              (hoje.getFullYear() - nasc.getFullYear()) * 12 +
+              (hoje.getMonth() - nasc.getMonth())
+            );
+          })
+          .filter((n) => n != null);
+        if (!idades.length) return "—";
+        const media = idades.reduce((a, b) => a + b, 0) / idades.length;
+        return Math.round(media) + " meses";
+      }
+      case "Descarte": {
+        const descartes = animais.filter((a) => a.saida);
+        return descartes.length;
+      }
+      case "Tratamento": {
+        const total = animais.reduce(
+          (acc, a) => acc + ((a.tratamentos || []).length || 0),
+          0
+        );
+        return total;
+      }
+      default:
+        return "";
+    }
+  };
+
   const alternarAtivo = (index) => {
     const atualizados = [...lotes];
     atualizados[index].ativo = !atualizados[index].ativo;
@@ -39,7 +111,20 @@ export default function ListaLotes({ onAbrirCadastro }) {
     window.dispatchEvent(new Event("lotesAtualizados"));
   };
 
-  const titulos = ["Nome", "Nº de Vacas", "Função", "Status", "Ação"];
+  const abrirModal = (lote) => {
+    setModalLote({ nome: lote.nome, funcao: lote.funcao });
+  };
+
+  const fecharModal = () => setModalLote(null);
+
+  const titulos = [
+    "Nome",
+    "Nº de Vacas",
+    "Função",
+    "Nível Produtivo",
+    "Status",
+    "Ação",
+  ];
 
   return (
     <div className="w-full px-8 py-6 font-sans">
@@ -74,8 +159,17 @@ export default function ListaLotes({ onAbrirCadastro }) {
             lotes.map((l, index) => (
               <tr key={index}>
                 <td>{l.nome || "—"}</td>
-                <td>{numeroVacas(l)}</td>
+                <td>
+                  {numeroVacas(l)}
+                  <button
+                    onClick={() => abrirModal(l)}
+                    style={{ marginLeft: "0.4rem" }}
+                  >
+                    ℹ️
+                  </button>
+                </td>
                 <td>{l.funcao || "—"}</td>
+                <td>{nivelProdutivo(l)}</td>
                 <td>{l.ativo ? "Ativo" : "Inativo"}</td>
                 <td>
                   <div style={{ display: "flex", gap: "0.4rem" }}>
@@ -99,6 +193,13 @@ export default function ListaLotes({ onAbrirCadastro }) {
           )}
         </tbody>
       </table>
+      {modalLote && (
+        <ModalInfoLote
+          nomeDoLote={modalLote.nome}
+          funcaoDoLote={modalLote.funcao}
+          onFechar={fecharModal}
+        />
+      )}
     </div>
   );
 }

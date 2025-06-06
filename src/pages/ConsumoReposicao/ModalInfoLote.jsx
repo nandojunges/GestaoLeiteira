@@ -1,0 +1,169 @@
+import React, { useEffect, useState } from "react";
+import { calcularDEL } from "../Animais/utilsAnimais";
+import "../../styles/tabelaModerna.css";
+
+export default function ModalInfoLote({ nomeDoLote, funcaoDoLote, onFechar }) {
+  const [animais, setAnimais] = useState([]);
+
+  useEffect(() => {
+    const lista = JSON.parse(localStorage.getItem("animais") || "[]");
+    setAnimais(lista.filter((a) => a.lote === nomeDoLote));
+    const esc = (e) => e.key === "Escape" && onFechar?.();
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [nomeDoLote, onFechar]);
+
+  const leite = JSON.parse(localStorage.getItem("leite") || "[]");
+
+  const colunas = (() => {
+    switch (funcaoDoLote) {
+      case "Lactação":
+        return ["Nº", "Brinco", "DEL", "Último Leite"];
+      case "Pré-parto":
+        return ["Nº", "Brinco", "Previsão", "Dias"];
+      case "Secagem":
+        return ["Nº", "Brinco", "Data", "Carência"];
+      case "Novilhas":
+        return ["Nº", "Brinco", "Idade", "Categoria"];
+      case "Descarte":
+        return ["Nº", "Brinco", "Motivo", "Saída"];
+      case "Tratamento":
+        return ["Nº", "Brinco", "Data", "Principio", "Resp."];
+      default:
+        return ["Nº", "Brinco", "Categoria", "Idade"];
+    }
+  })();
+
+  const obterCelulas = (a) => {
+    switch (funcaoDoLote) {
+      case "Lactação": {
+        const del = calcularDEL(a.ultimoParto || "");
+        const ult = leite
+          .filter((l) => l.numeroAnimal === a.numero)
+          .sort((x, y) => new Date(y.data) - new Date(x.data))[0];
+        return [a.numero || "—", a.brinco || "—", del ?? "—", ult?.litros || "—"];
+      }
+      case "Pré-parto": {
+        const prev = a.dataPrevistaParto;
+        let dias = "—";
+        if (prev) {
+          const [d, m, y] = prev.split("/");
+          const data = new Date(y, m - 1, d);
+          dias = Math.round((data - new Date()) / (1000 * 60 * 60 * 24));
+        }
+        return [a.numero || "—", a.brinco || "—", prev || "—", dias];
+      }
+      case "Secagem": {
+        const info = JSON.parse(localStorage.getItem("secagem_" + a.numero) || "null");
+        const carencia = info ? `${info.carenciaLeite || ""}/${info.carenciaCarne || ""}`.replace(/\/$/, "") : "—";
+        return [a.numero || "—", a.brinco || "—", info?.data || "—", carencia || "—"];
+      }
+      case "Novilhas": {
+        let idade = "—";
+        let cat = a.categoria || "—";
+        if (a.dataNascimento) {
+          const [d, m, y] = a.dataNascimento.split("/");
+          const nasc = new Date(y, m - 1, d);
+          const hoje = new Date();
+          idade =
+            (hoje.getFullYear() - nasc.getFullYear()) * 12 +
+            (hoje.getMonth() - nasc.getMonth());
+        }
+        return [a.numero || "—", a.brinco || "—", idade, cat];
+      }
+      case "Descarte": {
+        const mot = a.saida?.motivo || "—";
+        const data = a.saida?.data || "—";
+        return [a.numero || "—", a.brinco || "—", mot, data];
+      }
+      case "Tratamento": {
+        const t = (a.tratamentos || []).slice(-1)[0];
+        return [
+          a.numero || "—",
+          a.brinco || "—",
+          t?.data || "—",
+          t?.principioAtivo || "—",
+          t?.responsavel || "—",
+        ];
+      }
+      default:
+        let idade = "—";
+        if (a.dataNascimento) {
+          const [d, m, y] = a.dataNascimento.split("/");
+          const nasc = new Date(y, m - 1, d);
+          const hoje = new Date();
+          idade =
+            (hoje.getFullYear() - nasc.getFullYear()) * 12 +
+            (hoje.getMonth() - nasc.getMonth());
+        }
+        return [a.numero || "—", a.brinco || "—", a.categoria || "—", idade];
+    }
+  };
+
+  return (
+    <div style={overlay} onClick={onFechar}>
+      <div style={modal} onClick={(e) => e.stopPropagation()}>
+        <div style={header}>📋 {nomeDoLote} — {funcaoDoLote}</div>
+        <div style={{ padding: "1rem", overflowY: "auto" }}>
+          <table className="tabela-padrao">
+            <thead>
+              <tr>
+                {colunas.map((c, i) => (
+                  <th key={i}>{c}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {animais.length === 0 ? (
+                <tr>
+                  <td colSpan={colunas.length} style={{ textAlign: "center" }}>
+                    Nenhum animal encontrado.
+                  </td>
+                </tr>
+              ) : (
+                animais.map((a, i) => (
+                  <tr key={i}>
+                    {obterCelulas(a).map((cel, j) => (
+                      <td key={j}>{cel}</td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const overlay = {
+  position: "fixed",
+  inset: 0,
+  backgroundColor: "rgba(0,0,0,0.6)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 9999,
+};
+
+const modal = {
+  background: "#fff",
+  borderRadius: "1rem",
+  width: "720px",
+  maxHeight: "90vh",
+  overflow: "hidden",
+  display: "flex",
+  flexDirection: "column",
+  fontFamily: "Poppins, sans-serif",
+};
+
+const header = {
+  background: "#1e40af",
+  color: "white",
+  padding: "1rem 1.5rem",
+  fontWeight: "bold",
+  fontSize: "1.1rem",
+  borderTopLeftRadius: "1rem",
+  borderTopRightRadius: "1rem",
+};
