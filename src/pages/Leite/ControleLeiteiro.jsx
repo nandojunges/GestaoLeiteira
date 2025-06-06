@@ -35,19 +35,21 @@ export default function ControleLeiteiro() {
     return Object.keys(localStorage)
       .filter((key) => key.startsWith("medicaoLeite_"))
       .map((key) => key.replace("medicaoLeite_", ""))
-      .sort();
+      .sort((a, b) => new Date(a) - new Date(b));
   };
 
   const irParaAnterior = () => {
     const todas = getDatasComMedicao();
-    const idx = todas.indexOf(dataAtual);
-    if (idx > 0) setDataAtual(todas[idx - 1]);
+    const anterior = todas
+      .filter((d) => new Date(d) < new Date(dataAtual))
+      .pop();
+    if (anterior) setDataAtual(anterior);
   };
 
   const irParaProxima = () => {
     const todas = getDatasComMedicao();
-    const idx = todas.indexOf(dataAtual);
-    if (idx >= 0 && idx < todas.length - 1) setDataAtual(todas[idx + 1]);
+    const proxima = todas.find((d) => new Date(d) > new Date(dataAtual));
+    if (proxima) setDataAtual(proxima);
   };
 
   const abrirModalMedicao = () => setModalMedicaoAberto(true);
@@ -63,6 +65,14 @@ export default function ControleLeiteiro() {
   const chave = `medicaoLeite_${dataAtual}`;
   const registro = JSON.parse(localStorage.getItem(chave) || "{}");
   const medicoesDoDia = registro.dados || {};
+
+  const datasDisponiveis = getDatasComMedicao();
+  const temAnterior = datasDisponiveis.some(
+    (d) => new Date(d) < new Date(dataAtual)
+  );
+  const temProxima = datasDisponiveis.some(
+    (d) => new Date(d) > new Date(dataAtual)
+  );
 
   return (
     <div className="w-full px-8 py-6 font-sans">
@@ -87,40 +97,44 @@ export default function ControleLeiteiro() {
             }}
           />
 
-          {[{ dir: "left", action: irParaAnterior }, { dir: "right", action: irParaProxima }].map(
-            ({ dir, action }, idx) => (
-              <button
-                key={idx}
-                onClick={action}
+          {[
+            { dir: "left", action: irParaAnterior, disabled: !temAnterior },
+            { dir: "right", action: irParaProxima, disabled: !temProxima },
+          ].map(({ dir, action, disabled }, idx) => (
+            <button
+              key={idx}
+              onClick={action}
+              disabled={disabled}
+              style={{
+                width: "42px",
+                height: "42px",
+                backgroundColor: "#2563eb",
+                color: "white",
+                fontSize: "18px",
+                border: "none",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background 0.2s",
+                opacity: disabled ? 0.6 : 1,
+                cursor: disabled ? "not-allowed" : "pointer",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1e40af")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
+            >
+              <span
                 style={{
-                  width: "42px",
-                  height: "42px",
-                  backgroundColor: "#2563eb",
-                  color: "white",
+                  display: "inline-block",
+                  transform: dir === "left" ? "rotate(180deg)" : "none",
                   fontSize: "18px",
-                  border: "none",
-                  borderRadius: "8px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "background 0.2s",
+                  lineHeight: "1",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1e40af")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
               >
-                <span
-                  style={{
-                    display: "inline-block",
-                    transform: dir === "left" ? "rotate(180deg)" : "none",
-                    fontSize: "18px",
-                    lineHeight: "1",
-                  }}
-                >
-                  ▶
-                </span>
-              </button>
-            )
-          )}
+                ▶
+              </span>
+            </button>
+          ))}
         </div>
       </div>
 
