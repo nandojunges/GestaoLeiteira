@@ -18,7 +18,7 @@ export default function ModalInfoLote({ nomeDoLote, funcaoDoLote, onFechar }) {
   const colunas = (() => {
     switch (funcaoDoLote) {
       case "Lactação":
-        return ["Nº", "Brinco", "DEL", "Último Leite"];
+        return ["Nº", "Brinco", "DEL", "Última Produção (L)"];
       case "Pré-parto":
         return ["Nº", "Brinco", "Previsão", "Dias"];
       case "Secagem":

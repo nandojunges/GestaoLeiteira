@@ -25,75 +25,7 @@ export default function ListaLotes({ onAbrirCadastro }) {
     return ultima?.vacas?.filter((v) => v.lote === lote.nome).length || 0;
   };
 
-  const nivelProdutivo = (lote) => {
-    const animais = (JSON.parse(localStorage.getItem("animais") || "[]")).filter(
-      (a) => a.lote === lote.nome
-    );
-    switch (lote.funcao) {
-      case "Lactação": {
-        const leite = JSON.parse(localStorage.getItem("leite") || "[]");
-        const medias = animais.map((a) => {
-          const ult = leite
-            .filter((l) => l.numeroAnimal === a.numero)
-            .sort((x, y) => new Date(y.data) - new Date(x.data))[0];
-          return parseFloat(ult?.litros) || 0;
-        });
-        if (!medias.length) return "—";
-        const media = medias.reduce((a, b) => a + b, 0) / medias.length;
-        return media.toFixed(1) + " L";
-      }
-      case "Pré-parto": {
-        const hoje = new Date();
-        const dias = animais
-          .map((a) => {
-            if (!a.dataPrevistaParto) return null;
-            const [d, m, y] = a.dataPrevistaParto.split("/");
-            const data = new Date(y, m - 1, d);
-            return Math.round((data - hoje) / (1000 * 60 * 60 * 24));
-          })
-          .filter((n) => n != null);
-        if (!dias.length) return "—";
-        const media = dias.reduce((a, b) => a + b, 0) / dias.length;
-        return Math.round(media) + " dias";
-      }
-      case "Secagem": {
-        const tratados = animais.filter((a) =>
-          localStorage.getItem("secagem_" + a.numero)
-        );
-        return tratados.length;
-      }
-      case "Novilhas": {
-        const idades = animais
-          .map((a) => {
-            if (!a.dataNascimento) return null;
-            const [d, m, y] = a.dataNascimento.split("/");
-            const nasc = new Date(y, m - 1, d);
-            const hoje = new Date();
-            return (
-              (hoje.getFullYear() - nasc.getFullYear()) * 12 +
-              (hoje.getMonth() - nasc.getMonth())
-            );
-          })
-          .filter((n) => n != null);
-        if (!idades.length) return "—";
-        const media = idades.reduce((a, b) => a + b, 0) / idades.length;
-        return Math.round(media) + " meses";
-      }
-      case "Descarte": {
-        const descartes = animais.filter((a) => a.saida);
-        return descartes.length;
-      }
-      case "Tratamento": {
-        const total = animais.reduce(
-          (acc, a) => acc + ((a.tratamentos || []).length || 0),
-          0
-        );
-        return total;
-      }
-      default:
-        return "";
-    }
-  };
+  const nivelProdutivo = (lote) => lote.nivelProducao || "—";
 
   const alternarAtivo = (index) => {
     const atualizados = [...lotes];
