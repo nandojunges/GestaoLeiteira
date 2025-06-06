@@ -1,6 +1,115 @@
 import React, { useEffect, useRef, useState } from "react";
 import Select from "react-select";
 
+// Constantes fixas
+const CATEGORIAS = [
+  "Ração",
+  "Aditivos",
+  "Suplementos",
+  "Detergentes",
+  "Ácido",
+  "Alcalino",
+  "Sanitizante",
+  "Antibiótico",
+  "Antiparasitário",
+  "AINE",
+  "AIE",
+  "Hormônio",
+  "Vitaminas",
+  "Luvas",
+  "Materiais Diversos"
+];
+
+const HORMONIOS = [
+  "GnRH",
+  "Prostaglandina",
+  "eCG",
+  "hCG",
+  "Progesterona injetável",
+  "Benzoato de estradiol",
+  "Cipionato de estradiol",
+  "Dispositivo de Progesterona"
+];
+
+const ANALOGOS_GNRH = ["Buserelina", "Gonadorelina", "Lecirelina", "Deslorelina"];
+
+const PRINCIPIOS_ATIVOS_ANTIBIOTICOS = [
+  "Penicilina",
+  "Amoxicilina",
+  "Cefalexina",
+  "Enrofloxacina",
+  "Florfenicol",
+  "Ceftiofur",
+  "Tulathromicina",
+  "Outros"
+];
+
+const PRINCIPIOS_ATIVOS_ANTIPARASITARIOS = [
+  "Ivermectina",
+  "Doramectina",
+  "Eprinomectina",
+  "Moxidectina",
+  "Albendazol",
+  "Levamisol",
+  "Outros"
+];
+
+const PRINCIPIOS_ATIVOS_AIE = [
+  "Dexametasona",
+  "Flumetasona",
+  "Prednisolona",
+  "Outros"
+];
+
+const PRINCIPIOS_ATIVOS_AINE = [
+  "Flunixina meglumina",
+  "Meloxicam",
+  "Carprofeno",
+  "Outros"
+];
+
+const APRESENTACOES_POR_CATEGORIA = {
+  Ração: ["Saco 40kg", "BigBag", "A granel"],
+  Hormônio: ["Frasco", "Ampola", "Dispositivo"],
+  Aditivos: ["Saco", "Pote", "Envelope"],
+  Antibiótico: ["Frasco", "Ampola"],
+  Antiparasitário: ["Frasco", "Ampola"],
+  AINE: ["Frasco", "Ampola"],
+  AIE: ["Frasco", "Ampola"],
+  Vitaminas: ["Frasco", "Ampola"]
+};
+
+const UNIDADES = ["kg", "litros", "mL", "unidade"];
+
+const obterAgrupamento = (categoria) => {
+  if (["Ração", "Aditivos", "Suplementos"].includes(categoria)) return "Cozinha";
+  if (["Detergentes", "Ácido", "Alcalino", "Sanitizante"].includes(categoria))
+    return "Higiene e Limpeza";
+  if (
+    ["Antibiótico", "Antiparasitário", "AINE", "AIE", "Hormônio", "Vitaminas"].includes(
+      categoria
+    )
+  )
+    return "Farmácia";
+  return "Materiais Gerais";
+};
+
+const calcularPrecos = (prod, campo) => {
+  const qt = parseFloat(prod.quantidade);
+  const total = parseFloat(prod.valorTotal);
+  const unit = parseFloat(prod.valorUnitario);
+
+  if (!isNaN(qt) && !isNaN(unit) && campo !== "valorTotal") {
+    prod.valorTotal = (qt * unit).toFixed(2);
+  }
+
+  if (!isNaN(qt) && !isNaN(total) && campo !== "valorUnitario") {
+    prod.valorUnitario = (total / qt).toFixed(2);
+  }
+
+  return prod;
+};
+
 export default function CadastroProduto({ onFechar, onSalvar }) {
   const [produto, setProduto] = useState({
     nomeComercial: "",
@@ -11,7 +120,6 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
     volume: "",
     validade: "",
     analogo: "",
-    doseUsada: "",
     agrupamento: "",
     nomeHormônio: "",
     doseDispositivo: "",
@@ -27,7 +135,6 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
   const [mostrarAIEInfo, setMostrarAIEInfo] = useState(false);
   const [mostrarCarencia, setMostrarCarencia] = useState(false);
   const [mostrarPrincipioAtivo, setMostrarPrincipioAtivo] = useState(false);
-  const [mostrarDoseDispositivo, setMostrarDoseDispositivo] = useState(false);
   const [opcoesApresentacao, setOpcoesApresentacao] = useState([]);
   const [novaApresentacao, setNovaApresentacao] = useState("");
   const [mostrarNovaApresentacao, setMostrarNovaApresentacao] = useState(false);
@@ -37,61 +144,18 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
   const [semValidade, setSemValidade] = useState(false);
   const refs = useRef([]);
 
-  const categorias = [
-    "Ração", "Aditivos", "Suplementos", "Detergentes", "Ácido", "Alcalino",
-    "Sanitizante", "Antibiótico", "Antiparasitário", "AINE", "AIE", "Hormônio",
-    "Vitaminas", "Luvas", "Materiais Diversos"
-  ];
-
-  const hormonios = [
-    "GnRH", "Prostaglandina", "eCG", "hCG", "Progesterona injetável",
-    "Benzoato de estradiol", "Cipionato de estradiol", "Dispositivo de Progesterona"
-  ];
-
-  const analogosGnRH = ["Buserelina", "Gonadorelina", "Lecirelina", "Deslorelina"];
-  const principiosAtivosAntibioticos = [
-    "Penicilina", "Amoxicilina", "Cefalexina", "Enrofloxacina", "Florfenicol",
-    "Ceftiofur", "Tulathromicina", "Outros"
-  ];
-  const principiosAtivosAntiparasitarios = [
-    "Ivermectina", "Doramectina", "Eprinomectina", "Moxidectina",
-    "Albendazol", "Levamisol", "Outros"
-  ];
-  const principiosAtivosAIE = [
-    "Dexametasona",
-    "Flumetasona",
-    "Prednisolona",
-    "Outros"
-  ];
-  const principiosAtivosAINE = [
-    "Flunixina meglumina",
-    "Meloxicam",
-    "Carprofeno",
-    "Outros"
-  ];
-
-  const apresentacoesPorCategoria = {
-    "Ração": ["Saco 40kg", "BigBag", "A granel"],
-    "Hormônio": ["Frasco", "Ampola", "Dispositivo"],
-    "Aditivos": ["Saco", "Pote", "Envelope"],
-    "Antibiótico": ["Frasco", "Ampola"],
-    "Antiparasitário": ["Frasco", "Ampola"],
-    "AINE": ["Frasco", "Ampola"],
-    "AIE": ["Frasco", "Ampola"],
-    "Vitaminas": ["Frasco", "Ampola"]
-  };
-
-  const unidades = ["kg", "litros", "mL", "unidade"];
 
   useEffect(() => {
     refs.current[0]?.focus();
     const esc = (e) => e.key === "Escape" && onFechar();
     window.addEventListener("keydown", esc);
 
-    categorias.forEach((cat) => {
+    CATEGORIAS.forEach((cat) => {
       const salvas = JSON.parse(localStorage.getItem(`apresentacoes_${cat}`) || "[]");
       if (salvas.length) {
-        apresentacoesPorCategoria[cat] = [...new Set([...(apresentacoesPorCategoria[cat] || []), ...salvas])];
+        APRESENTACOES_POR_CATEGORIA[cat] = [
+          ...new Set([...(APRESENTACOES_POR_CATEGORIA[cat] || []), ...salvas])
+        ];
       }
     });
 
@@ -111,48 +175,32 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
   const atualizarCampo = (campo, valor) => {
     let novoProduto = { ...produto, [campo]: valor };
 
-    const qt = parseFloat(campo === "quantidade" ? valor : novoProduto.quantidade);
-    const total = parseFloat(campo === "valorTotal" ? valor : novoProduto.valorTotal);
-    const unit = parseFloat(campo === "valorUnitario" ? valor : novoProduto.valorUnitario);
-
-    if (!isNaN(qt) && !isNaN(total) && campo !== "valorUnitario") {
-      novoProduto.valorUnitario = (total / qt).toFixed(2);
-    }
-
-    if (!isNaN(qt) && !isNaN(unit) && campo !== "valorTotal") {
-      novoProduto.valorTotal = (qt * unit).toFixed(2);
-    }
-
-    if (!isNaN(total) && !isNaN(unit) && campo !== "quantidade") {
-      novoProduto.quantidade = (total / unit).toFixed(2);
-    }
-
     if (campo === "categoria") {
-      let agrupamento = "";
-      if (["Ração", "Aditivos", "Suplementos"].includes(valor)) agrupamento = "Cozinha";
-      else if (["Detergentes", "Ácido", "Alcalino", "Sanitizante"].includes(valor)) agrupamento = "Higiene e Limpeza";
-      else if (["Antibiótico", "Antiparasitário", "AINE", "AIE", "Hormônio", "Vitaminas"].includes(valor)) agrupamento = "Farmácia";
-      else agrupamento = "Materiais Gerais";
-
+      const agrupamento = obterAgrupamento(valor);
       novoProduto.agrupamento = agrupamento;
       setMostrarHormonal(valor === "Hormônio");
       setMostrarAIEInfo(valor === "AIE");
       setMostrarCarencia(["Antibiótico", "Antiparasitário"].includes(valor));
-      setMostrarPrincipioAtivo(["Antibiótico", "Antiparasitário", "AIE", "AINE"].includes(valor));
+      setMostrarPrincipioAtivo([
+        "Antibiótico",
+        "Antiparasitário",
+        "AIE",
+        "AINE"
+      ].includes(valor));
       if (["Antibiótico", "Antiparasitário", "AIE", "AINE"].includes(valor)) {
         setPrincipiosAtivos([""]);
         novoProduto.principiosAtivos = [""];
         novoProduto.principioAtivo = "";
       }
-      setOpcoesApresentacao(apresentacoesPorCategoria[valor] || []);
+      setOpcoesApresentacao(APRESENTACOES_POR_CATEGORIA[valor] || []);
     }
 
+    novoProduto = calcularPrecos(novoProduto, campo);
     setProduto(novoProduto);
   };
 
   const atualizarHormônio = (valor) => {
-    let novoProduto = { ...produto, nomeHormônio: valor };
-    setMostrarDoseDispositivo(valor === "Dispositivo de Progesterona");
+    const novoProduto = { ...produto, nomeHormônio: valor };
     setProduto(novoProduto);
   };
 
@@ -186,7 +234,7 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
   const removerApresentacao = (valor) => {
     const atualizadas = opcoesApresentacao.filter((a) => a !== valor);
     setOpcoesApresentacao(atualizadas);
-    const base = apresentacoesPorCategoria[produto.categoria] || [];
+    const base = APRESENTACOES_POR_CATEGORIA[produto.categoria] || [];
     const somenteCustom = atualizadas.filter((a) => !base.includes(a));
     localStorage.setItem(`apresentacoes_${produto.categoria}`, JSON.stringify(somenteCustom));
     if (produto.apresentacao === valor) atualizarCampo("apresentacao", "");
@@ -275,7 +323,7 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
             <div>
               <label>Categoria</label>
               <Select
-                options={categorias.map((c) => ({ value: c, label: c }))}
+                options={CATEGORIAS.map((c) => ({ value: c, label: c }))}
                 value={produto.categoria ? { value: produto.categoria, label: produto.categoria } : null}
                 onChange={(option) => atualizarCampo("categoria", option.value)}
                 className="react-select-container"
@@ -288,7 +336,7 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
               <div>
                 <label>Nome do Hormônio</label>
                 <Select
-                  options={hormonios.map((h) => ({ value: h, label: h }))}
+                  options={HORMONIOS.map((h) => ({ value: h, label: h }))}
                   value={produto.nomeHormônio ? { value: produto.nomeHormônio, label: produto.nomeHormônio } : null}
                   onChange={(option) => atualizarHormônio(option.value)}
                   className="react-select-container"
@@ -302,7 +350,7 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
               <div>
                 <label>Análogo</label>
                 <Select
-                  options={analogosGnRH.map((a) => ({ value: a, label: a }))}
+                  options={ANALOGOS_GNRH.map((a) => ({ value: a, label: a }))}
                   value={produto.analogo ? { value: produto.analogo, label: produto.analogo } : null}
                   onChange={(option) => atualizarCampo("analogo", option.value)}
                   className="react-select-container"
@@ -342,12 +390,12 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
                       <Select
                         options={
                           produto.categoria === "Antibiótico"
-                            ? principiosAtivosAntibioticos.map((p) => ({ value: p, label: p }))
+                            ? PRINCIPIOS_ATIVOS_ANTIBIOTICOS.map((p) => ({ value: p, label: p }))
                             : produto.categoria === "Antiparasitário"
-                            ? principiosAtivosAntiparasitarios.map((p) => ({ value: p, label: p }))
+                            ? PRINCIPIOS_ATIVOS_ANTIPARASITARIOS.map((p) => ({ value: p, label: p }))
                             : produto.categoria === "AIE"
-                            ? principiosAtivosAIE.map((p) => ({ value: p, label: p }))
-                            : principiosAtivosAINE.map((p) => ({ value: p, label: p }))
+                            ? PRINCIPIOS_ATIVOS_AIE.map((p) => ({ value: p, label: p }))
+                            : PRINCIPIOS_ATIVOS_AINE.map((p) => ({ value: p, label: p }))
                         }
                         value={pa ? { value: pa, label: pa } : null}
                         onChange={(option) => atualizarPrincipio(idx, option.value)}
@@ -443,7 +491,14 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
                       if (novaApresentacao.trim() !== "") {
                         const atualizadas = [...opcoesApresentacao, novaApresentacao];
                         setOpcoesApresentacao(atualizadas);
-                        localStorage.setItem(`apresentacoes_${produto.categoria}`, JSON.stringify(atualizadas.filter((a) => !(apresentacoesPorCategoria[produto.categoria] || []).includes(a))));
+                        localStorage.setItem(
+                          `apresentacoes_${produto.categoria}`,
+                          JSON.stringify(
+                            atualizadas.filter(
+                              (a) => !(APRESENTACOES_POR_CATEGORIA[produto.categoria] || []).includes(a)
+                            )
+                          )
+                        );
                         atualizarCampo("apresentacao", novaApresentacao);
                         setNovaApresentacao("");
                       }
@@ -454,7 +509,7 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
                   </button>
                 </div>
                 {(() => {
-                  const base = apresentacoesPorCategoria[produto.categoria] || [];
+                  const base = APRESENTACOES_POR_CATEGORIA[produto.categoria] || [];
                   const custom = opcoesApresentacao.filter((a) => !base.includes(a));
                   return custom.length ? (
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
@@ -485,7 +540,7 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
             <div>
               <label>Unidade</label>
               <Select
-                options={unidades.map((u) => ({ value: u, label: u }))}
+                options={UNIDADES.map((u) => ({ value: u, label: u }))}
                 value={produto.unidade ? { value: produto.unidade, label: produto.unidade } : null}
                 onChange={(option) => atualizarCampo("unidade", option.value)}
                 className="react-select-container"
