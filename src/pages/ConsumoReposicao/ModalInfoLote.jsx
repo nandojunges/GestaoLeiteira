@@ -13,7 +13,10 @@ export default function ModalInfoLote({ nomeDoLote, funcaoDoLote, onFechar }) {
     return () => window.removeEventListener("keydown", esc);
   }, [nomeDoLote, onFechar]);
 
-  const leite = JSON.parse(localStorage.getItem("leite") || "[]");
+  const parseData = (d) => {
+    if (!d) return null;
+    return new Date(d.includes("/") ? d.split("/").reverse().join("-") : d);
+  };
 
   const colunas = (() => {
     switch (funcaoDoLote) {
@@ -38,10 +41,11 @@ export default function ModalInfoLote({ nomeDoLote, funcaoDoLote, onFechar }) {
     switch (funcaoDoLote) {
       case "Lactação": {
         const del = calcularDEL(a.ultimoParto || "");
-        const ult = leite
-          .filter((l) => l.numeroAnimal === a.numero)
-          .sort((x, y) => new Date(y.data) - new Date(x.data))[0];
-        return [a.numero || "—", a.brinco || "—", del ?? "—", ult?.litros || "—"];
+        const ult = Array.isArray(a.leite)
+          ? [...a.leite].sort((x, y) => parseData(y.data) - parseData(x.data))[0]
+          : null;
+        const litros = ult && typeof ult.litros !== "undefined" ? ult.litros : "—";
+        return [a.numero || "—", a.brinco || "—", del ?? "—", litros];
       }
       case "Pré-parto": {
         const prev = a.dataPrevistaParto;
