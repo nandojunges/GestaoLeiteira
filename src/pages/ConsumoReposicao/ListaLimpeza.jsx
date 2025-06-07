@@ -146,19 +146,16 @@ export default function ListaLimpeza({ onEditar }) {
     const etapas = c.etapas || [
       { produto: c.produto, quantidade: c.quantidade, unidade: c.unidade, condicao: { tipo: "sempre" } }
     ];
-    let custo = 0;
-    etapas.forEach((e) => {
-      if (!e || !e.produto) return;
-      const prod = produtos.find((p) => p.nomeComercial === e.produto);
-      if (!prod) return;
-      const valorUnit = prod.valorTotal && prod.quantidade && prod.volume
-        ? parseFloat(prod.valorTotal) / (parseFloat(prod.quantidade) * convToMl(prod.volume, prod.unidade))
-        : 0;
-      const cond = parseCond(e.condicao);
-      const consumoMl = convToMl(e.quantidade, e.unidade) * vezesPorDia(cond, freq);
-      custo += valorUnit * consumoMl;
+    let custoTotal = 0;
+    etapas.forEach((etapa) => {
+      if (!etapa || !etapa.produto) return;
+      const produto = produtos.find((p) => p.nomeComercial === etapa.produto);
+      const precoUnitario = produto?.valorUnitario ? parseFloat(produto.valorUnitario) : 0;
+      const vezesDia = vezesPorDia(parseCond(etapa.condicao), freq);
+      const consumo = parseFloat(etapa.quantidade || 0) * vezesDia;
+      custoTotal += consumo * precoUnitario;
     });
-    return custo > 0 ? `R$ ${custo.toFixed(2)}` : "—";
+    return custoTotal > 0 ? `R$ ${custoTotal.toFixed(2)}` : "—";
   };
 
   const detalharPlano = (c) => {
@@ -215,7 +212,7 @@ export default function ListaLimpeza({ onEditar }) {
 
   return (
     <>
-      <table className="tabela-padrao">
+      <table className="tabela-padrao" style={{ tableLayout: "auto", width: "100%" }}>
         <thead>
           <tr>
             {titulos.map((t, idx) => (
@@ -224,6 +221,21 @@ export default function ListaLimpeza({ onEditar }) {
                 onMouseEnter={() => setColunaHover(idx)}
                 onMouseLeave={() => setColunaHover(null)}
                 className={colunaHover === idx ? "coluna-hover" : ""}
+                style={{
+                  whiteSpace: "nowrap",
+                  width:
+                    t === "Ação"
+                      ? "110px"
+                      : t === "Tipo"
+                      ? "80px"
+                      : t === "Frequência"
+                      ? "90px"
+                      : t === "Dias da semana"
+                      ? "120px"
+                      : t === "Etapas"
+                      ? "200px"
+                      : "auto",
+                }}
               >
                 {t}
               </th>
@@ -242,12 +254,12 @@ export default function ListaLimpeza({ onEditar }) {
               <React.Fragment key={index}>
                 <tr>
                   <td>{c.nome || "—"}</td>
-                  <td>{c.tipo || "—"}</td>
-                  <td>{c.frequencia ? `${c.frequencia}x/dia` : "—"}</td>
-                  <td>{c.diasSemana?.map((d) => DIAS[d]).join(", ")}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{c.tipo || "—"}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{c.frequencia ? `${c.frequencia}x/dia` : "—"}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{c.diasSemana?.map((d) => DIAS[d]).join(", ")}</td>
                   <td>{calcularDuracao(c)}</td>
                   <td>{calcularCustoDiario(c)}</td>
-                  <td>
+                  <td style={{ maxWidth: "200px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {(c.etapas || [
                       {
                         produto: c.produto,
@@ -255,13 +267,13 @@ export default function ListaLimpeza({ onEditar }) {
                         unidade: c.unidade,
                         condicao: c.condicao || { tipo: "sempre" }
                       }
-                    ]).map((e, i) => (
-                      <div key={i}>
-                        {e.produto} - {e.quantidade} {e.unidade} ({typeof e.condicao === "object" ? e.condicao.tipo : e.condicao || "sempre"})
-                      </div>
-                    ))}
+                    ])
+                      .map(
+                        (e) => `${e.produto} - ${e.quantidade} ${e.unidade} (${typeof e.condicao === "object" ? e.condicao.tipo : e.condicao || "sempre"})`
+                      )
+                      .join(", ")}
                   </td>
-                  <td>
+                  <td style={{ whiteSpace: "nowrap" }}>
                     <div style={{ display: "flex", gap: "0.4rem" }}>
                       <button className="botao-editar" onClick={() => onEditar(c, index)}>Editar</button>
                       <button className="botao-editar" onClick={() => excluir(index)} style={{ borderColor: "#dc3545", color: "#dc3545" }}>Excluir</button>
