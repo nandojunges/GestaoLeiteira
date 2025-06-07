@@ -106,9 +106,9 @@ o01rv-codex/criar-aba-de-estoque
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 40 }}
       >
-        <h2 style={estilos.titulo}>✏️ Editar Produto</h2>
+        <div style={estilos.cabecalho}>Editar Produto</div>
 
-        <div>
+        <div style={estilos.conteudo}>
           <div style={estilos.campo}>
             <label>Nome Comercial</label>
             <input
@@ -235,16 +235,28 @@ const estilos = {
   },
   modal: {
     backgroundColor: "#fff",
-    padding: "2rem",
     borderRadius: "16px",
     width: "90%",
     maxWidth: "500px",
+    maxHeight: "90vh",
     boxShadow: "0 5px 25px rgba(0,0,0,0.3)",
+    display: "flex",
+    flexDirection: "column",
+    overflowY: "auto",
   },
-  titulo: {
-    fontSize: "1.5rem",
-    marginBottom: "1.5rem",
+  cabecalho: {
+    backgroundColor: "#1d4ed8",
+    color: "white",
     textAlign: "center",
+    padding: "0.75rem 1rem",
+    fontSize: "1.25rem",
+    fontWeight: "bold",
+    borderTopLeftRadius: "16px",
+    borderTopRightRadius: "16px",
+  },
+  conteudo: {
+    padding: "2rem",
+    flex: "1 1 auto",
   },
   campo: {
     marginBottom: "1rem",
