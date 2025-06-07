@@ -3,6 +3,7 @@ import CadastroProduto from "./CadastroProduto";
 import AjustesEstoque from "./AjustesEstoque";
 import ModalEditarProduto from "./ModalEditarProduto";
 import Select from "react-select";
+import ModalConfirmacao from "../../components/ModalConfirmacao";
 import "../../styles/botoes.css";
 import "../../styles/tabelaModerna.css";
 
@@ -205,48 +206,21 @@ export default function Estoque() {
       )}
 
       {produtoParaExcluir && (
-        <div style={{
-          position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)",
-          display: "flex", justifyContent: "center", alignItems: "center", zIndex: 999
-        }}>
-          <div style={{
-            backgroundColor: "#fff", padding: "2rem", borderRadius: "16px",
-            width: "90%", maxWidth: "400px", boxShadow: "0 8px 24px rgba(0,0,0,0.2)"
-          }}>
-            <h3 style={{ fontSize: "1.2rem", marginBottom: "1rem" }}>❗ Confirmar Exclusão</h3>
-            <p style={{ fontSize: "1rem", marginBottom: "1.5rem" }}>
-              Deseja realmente excluir o produto <strong>{produtoParaExcluir.nomeComercial || "sem nome"}</strong>?
-            </p>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
-              <button
-                onClick={() => setProdutoParaExcluir(null)}
-                style={{
-                  backgroundColor: "#ccc", color: "#000", padding: "0.5rem 1rem",
-                  borderRadius: "8px", fontWeight: "bold", cursor: "pointer"
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  const lista = JSON.parse(localStorage.getItem("produtos") || "[]");
-                  const novaLista = lista.filter(
-                    (p) => JSON.stringify(p) !== JSON.stringify(produtoParaExcluir)
-                  );
-                  localStorage.setItem("produtos", JSON.stringify(novaLista));
-                  window.dispatchEvent(new Event("produtosAtualizados"));
-                  setProdutoParaExcluir(null);
-                }}
-                style={{
-                  backgroundColor: "#dc3545", color: "#fff", padding: "0.5rem 1rem",
-                  borderRadius: "8px", fontWeight: "bold", border: "none", cursor: "pointer"
-                }}
-              >
-                Confirmar
-              </button>
-            </div>
-          </div>
-        </div>
+        <ModalConfirmacao
+          mensagem={`Deseja realmente excluir o produto \u201c${
+            produtoParaExcluir.nomeComercial || "sem nome"
+          }\u201d?`}
+          onCancelar={() => setProdutoParaExcluir(null)}
+          onConfirmar={() => {
+            const lista = JSON.parse(localStorage.getItem("produtos") || "[]");
+            const novaLista = lista.filter(
+              (p) => JSON.stringify(p) !== JSON.stringify(produtoParaExcluir)
+            );
+            localStorage.setItem("produtos", JSON.stringify(novaLista));
+            window.dispatchEvent(new Event("produtosAtualizados"));
+            setProdutoParaExcluir(null);
+          }}
+        />
       )}
     </div>
   );
