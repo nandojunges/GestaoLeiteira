@@ -167,22 +167,19 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
                     placeholder="Selecione..."
                   />
                 </div>
-                <div style={{ marginBottom: "0.5rem", display: "flex", gap: "8px" }}>
-                  <div style={{ flex: 1 }}>
-                    <label>Quantidade *</label>
+                <div style={{ marginBottom: "0.5rem" }}>
+                  <label>Quantidade *</label>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                     <input
                       type="number"
                       value={e.quantidade}
                       onChange={ev => atualizarEtapa(idx, "quantidade", ev.target.value)}
-                      style={{ ...input(), width: "100%" }}
+                      style={{ ...input(), flex: 1 }}
                     />
-                  </div>
-                  <div style={{ width: "110px" }}>
-                    <label>Unidade</label>
                     <select
                       value={e.unidade}
                       onChange={ev => atualizarEtapa(idx, "unidade", ev.target.value)}
-                      style={input()}
+                      style={{ ...input(), width: "110px" }}
                     >
                       <option value="mL">mL</option>
                       <option value="litros">litros</option>
