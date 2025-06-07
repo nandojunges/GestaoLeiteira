@@ -32,7 +32,8 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
           quantidade: e.quantidade || "",
           unidade: e.unidade || "mL",
           condicaoTipo: tipo,
-          intervalo: intervalo
+          intervalo: intervalo,
+          complementar: !!e.complementar
         };
       });
     }
@@ -43,12 +44,13 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
           quantidade: ciclo.quantidade || "",
           unidade: ciclo.unidade || "mL",
           condicaoTipo: "sempre",
-          intervalo: ""
+          intervalo: "",
+          complementar: false
         }
       ];
     }
     return [
-      { produto: null, quantidade: "", unidade: "mL", condicaoTipo: "sempre", intervalo: "" }
+      { produto: null, quantidade: "", unidade: "mL", condicaoTipo: "sempre", intervalo: "", complementar: false }
     ];
   });
   const [produtos, setProdutos] = useState([]);
@@ -74,7 +76,7 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
   const adicionarEtapa = () => {
     setEtapas((prev) => [
       ...prev,
-      { produto: null, quantidade: "", unidade: "mL", condicaoTipo: "sempre", intervalo: "" }
+      { produto: null, quantidade: "", unidade: "mL", condicaoTipo: "sempre", intervalo: "", complementar: false }
     ]);
   };
 
@@ -105,7 +107,8 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
           produto: e.produto,
           quantidade: parseFloat(e.quantidade),
           unidade: e.unidade,
-          condicao: cond
+          condicao: cond,
+          complementar: !!e.complementar
         };
       })
     };
@@ -211,6 +214,16 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
                       </>
                     )}
                   </div>
+                </div>
+                <div style={{ marginBottom: "0.5rem" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                    <input
+                      type="checkbox"
+                      checked={!!e.complementar}
+                      onChange={ev => atualizarEtapa(idx, "complementar", ev.target.checked)}
+                    />
+                    <span>Esta etapa é complementar (aplicada após outro produto na mesma ordenha)</span>
+                  </label>
                 </div>
                 {etapas.length > 1 && (
                   <button
