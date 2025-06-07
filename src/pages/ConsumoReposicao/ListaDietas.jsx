@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import CadastroDietas from "./CadastroDietas";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
-import ModalConfirmacao from "../../components/ModalConfirmacao";
+import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
 
 export default function ListaDietas() {
   const [dietas, setDietas] = useState([]);
@@ -192,7 +192,7 @@ export default function ListaDietas() {
       )}
 
       {dietaParaExcluir && (
-        <ModalConfirmacao
+        <ModalConfirmarExclusao
           mensagem="Deseja realmente excluir esta dieta?"
           onCancelar={() => setDietaParaExcluir(null)}
           onConfirmar={() => {

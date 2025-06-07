@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
 
 export default function RelatorioMedicamentos({ onFechar }) {
   const [medicamentos, setMedicamentos] = useState({});
@@ -102,19 +103,12 @@ export default function RelatorioMedicamentos({ onFechar }) {
         </div>
       </div>
 
-      {/* Modal de Confirmação */}
       {confirmarExclusao && (
-        <div style={confirmBackdrop}>
-          <div style={confirmBox}>
-            <p style={{ fontWeight: "bold", fontSize: "1rem" }}>
-              Tem certeza que deseja excluir <u>{confirmarExclusao}</u>?
-            </p>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "1.25rem" }}>
-              <button onClick={() => setConfirmarExclusao(null)} style={btnCinza}>Cancelar</button>
-              <button onClick={() => excluir(confirmarExclusao)} style={btnVermelho}>Confirmar</button>
-            </div>
-          </div>
-        </div>
+        <ModalConfirmarExclusao
+          mensagem={`Tem certeza que deseja excluir \u201c${confirmarExclusao}\u201d?`}
+          onCancelar={() => setConfirmarExclusao(null)}
+          onConfirmar={() => excluir(confirmarExclusao)}
+        />
       )}
     </div>
   );
@@ -159,13 +153,3 @@ const btnFechar = {
   ...btnCinza, padding: "0.6rem 1.2rem", fontWeight: "500"
 };
 
-// Modal confirmação
-const confirmBackdrop = {
-  position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.6)",
-  display: "flex", justifyContent: "center", alignItems: "center", zIndex: 10001
-};
-
-const confirmBox = {
-  background: "#fff", padding: "2rem", borderRadius: "1rem", width: "400px",
-  fontFamily: "Poppins, sans-serif", textAlign: "center"
-};

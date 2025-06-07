@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import ModalCadastroProtocolo from "./ModalCadastroProtocolo";
+import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 
@@ -8,15 +9,15 @@ export default function ProtocolosReprodutivos() {
   const [protocolos, setProtocolos] = useState([]);
   const [colunaHover, setColunaHover] = useState(null);
   const [protocoloExpandido, setProtocoloExpandido] = useState(null);
+  const [protocoloExcluir, setProtocoloExcluir] = useState(null);
 
   const salvarProtocolo = (novoProtocolo) => {
     setProtocolos([...protocolos, novoProtocolo]);
   };
 
-  const excluirProtocolo = (index) => {
-    if (window.confirm("Tem certeza que deseja excluir este protocolo?")) {
-      setProtocolos(protocolos.filter((_, i) => i !== index));
-    }
+  const removerProtocolo = (index) => {
+    setProtocolos(protocolos.filter((_, i) => i !== index));
+    setProtocoloExcluir(null);
   };
 
   const editarProtocolo = (index) => {
@@ -90,7 +91,7 @@ export default function ProtocolosReprodutivos() {
                         ✏️ Editar
                       </button>
                       <button
-                        onClick={() => excluirProtocolo(index)}
+                        onClick={() => setProtocoloExcluir(index)}
                         className="botao-acao pequeno"
                       >
                         🗑️ Excluir
@@ -122,6 +123,14 @@ export default function ProtocolosReprodutivos() {
         <ModalCadastroProtocolo
           onFechar={() => setModalAberto(false)}
           onSalvar={salvarProtocolo}
+        />
+      )}
+
+      {protocoloExcluir !== null && (
+        <ModalConfirmarExclusao
+          mensagem="Tem certeza que deseja excluir este protocolo?"
+          onCancelar={() => setProtocoloExcluir(null)}
+          onConfirmar={() => removerProtocolo(protocoloExcluir)}
         />
       )}
     </div>

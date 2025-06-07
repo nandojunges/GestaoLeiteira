@@ -61,3 +61,17 @@
 .botao-cancelar:active {
   transform: scale(0.98);
 }
+
+.botao-excluir {
+  background-color: #e63946;
+  color: white;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.botao-excluir:hover {
+  background-color: #d62828;
+}
