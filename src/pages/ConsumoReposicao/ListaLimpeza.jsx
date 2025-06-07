@@ -7,6 +7,7 @@ const DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 export default function ListaLimpeza({ onEditar }) {
   const [ciclos, setCiclos] = useState([]);
   const [colunaHover, setColunaHover] = useState(null);
+  const [planoAtivo, setPlanoAtivo] = useState(null);
 
   const carregar = () => {
     const lista = JSON.parse(localStorage.getItem("ciclosLimpeza") || "[]");
@@ -26,6 +27,29 @@ export default function ListaLimpeza({ onEditar }) {
     const u = unidade.toLowerCase();
     if (u.startsWith("litro") || u === "l") return v * 1000;
     return v;
+  };
+
+  const parseCond = (c) => {
+    if (!c) return { tipo: "sempre" };
+    if (typeof c === "object") return c;
+    if (c === "sempre") return { tipo: "sempre" };
+    const m = c.match(/a cada\s*(\d+)/i);
+    if (m) return { tipo: "cada", intervalo: parseInt(m[1]) };
+    if (c.toLowerCase().includes("manhã")) return { tipo: "manha" };
+    if (c.toLowerCase().includes("tarde")) return { tipo: "tarde" };
+    return { tipo: "sempre" };
+  };
+
+  const vezesPorDia = (cond, freq) => {
+    switch (cond.tipo) {
+      case "cada":
+        return freq / (cond.intervalo || 1);
+      case "manha":
+      case "tarde":
+        return 1;
+      default:
+        return freq;
+    }
   };
 
   const processarConsumo = (lista) => {
@@ -48,25 +72,28 @@ export default function ListaLimpeza({ onEditar }) {
         if (!c.diasSemana?.includes(diaSemana)) return;
         const freq = parseInt(c.frequencia || 1);
         for (let exec = 0; exec < freq; exec++) {
+          const horario = exec === 0 ? "manha" : exec === 1 ? "tarde" : `ord${exec+1}`;
           const etapas = c.etapas || [
             {
               produto: c.produto,
               quantidade: c.quantidade,
               unidade: c.unidade,
-              condicao: "sempre"
+              condicao: { tipo: "sempre" }
             }
           ];
           etapas.forEach((e, ei) => {
             if (!e || !e.produto) return;
             const key = `${ci}-${ei}`;
             contadores[key] = (contadores[key] || 0) + 1;
+            const cond = parseCond(e.condicao);
             let aplicar = true;
-            if (e.condicao && e.condicao !== "sempre") {
-              const m = e.condicao.match(/a cada\s*(\d+)/i);
-              if (m) {
-                const intervalo = parseInt(m[1]);
-                aplicar = contadores[key] % intervalo === 0;
-              }
+            if (cond.tipo === "cada") {
+              const inter = cond.intervalo || 1;
+              aplicar = contadores[key] % inter === 0;
+            } else if (cond.tipo === "manha") {
+              aplicar = horario === "manha";
+            } else if (cond.tipo === "tarde") {
+              aplicar = horario === "tarde";
             }
             if (!aplicar) return;
             const idx = produtos.findIndex((p) => p.nomeComercial === e.produto);
@@ -89,6 +116,84 @@ export default function ListaLimpeza({ onEditar }) {
     window.dispatchEvent(new Event("produtosAtualizados"));
   };
 
+  const calcularDuracao = (c) => {
+    const produtos = JSON.parse(localStorage.getItem("produtos") || "[]");
+    const freq = parseInt(c.frequencia || 1);
+    const etapas = c.etapas || [
+      { produto: c.produto, quantidade: c.quantidade, unidade: c.unidade, condicao: { tipo: "sempre" } }
+    ];
+    const consumo = {};
+    etapas.forEach((e) => {
+      if (!e || !e.produto) return;
+      const cond = parseCond(e.condicao);
+      const ml = convToMl(e.quantidade, e.unidade) * vezesPorDia(cond, freq);
+      consumo[e.produto] = (consumo[e.produto] || 0) + ml;
+    });
+    let dias = Infinity;
+    Object.entries(consumo).forEach(([nome, cons]) => {
+      const prod = produtos.find((p) => p.nomeComercial === nome);
+      if (!prod) return;
+      const estoque = convToMl(prod.volume || 0, prod.unidade) * parseFloat(prod.quantidade || 0);
+      if (cons > 0) dias = Math.min(dias, estoque / cons);
+    });
+    if (!isFinite(dias) || dias === Infinity) return "—";
+    return `${Math.floor(dias)} dias restantes`;
+  };
+
+  const calcularCustoDiario = (c) => {
+    const produtos = JSON.parse(localStorage.getItem("produtos") || "[]");
+    const freq = parseInt(c.frequencia || 1);
+    const etapas = c.etapas || [
+      { produto: c.produto, quantidade: c.quantidade, unidade: c.unidade, condicao: { tipo: "sempre" } }
+    ];
+    let custo = 0;
+    etapas.forEach((e) => {
+      if (!e || !e.produto) return;
+      const prod = produtos.find((p) => p.nomeComercial === e.produto);
+      if (!prod) return;
+      const valorUnit = prod.valorTotal && prod.quantidade && prod.volume
+        ? parseFloat(prod.valorTotal) / (parseFloat(prod.quantidade) * convToMl(prod.volume, prod.unidade))
+        : 0;
+      const cond = parseCond(e.condicao);
+      const consumoMl = convToMl(e.quantidade, e.unidade) * vezesPorDia(cond, freq);
+      custo += valorUnit * consumoMl;
+    });
+    return custo > 0 ? `R$ ${custo.toFixed(2)}` : "—";
+  };
+
+  const detalharPlano = (c) => {
+    const freq = parseInt(c.frequencia || 1);
+    const etapas = c.etapas || [
+      { produto: c.produto, quantidade: c.quantidade, unidade: c.unidade, condicao: { tipo: "sempre" } }
+    ];
+    const cont = etapas.map(() => 0);
+    let linhas = [];
+    for (let d = 0; d < 7; d++) {
+      if (!c.diasSemana?.includes(d)) continue;
+      let partes = [];
+      for (let exec = 0; exec < freq; exec++) {
+        const horario = freq === 1 ? "" : exec === 0 ? "Manhã" : exec === 1 ? "Tarde" : `Ordenha ${exec + 1}`;
+        let itens = [];
+        etapas.forEach((e, i) => {
+          cont[i] += 1;
+          const cond = parseCond(e.condicao);
+          let aplicar = true;
+          if (cond.tipo === "cada") aplicar = cont[i] % (cond.intervalo || 1) === 0;
+          else if (cond.tipo === "manha") aplicar = horario === "Manhã";
+          else if (cond.tipo === "tarde") aplicar = horario === "Tarde";
+          if (aplicar) {
+            let texto = `${e.quantidade} ${e.unidade} ${e.produto}`;
+            if (cond.tipo === "cada") texto += ` (condicional: ${cond.intervalo}ª ordenha)`;
+            itens.push(texto);
+          }
+        });
+        if (itens.length) partes.push(`- ${horario || `Ordenha ${exec + 1}`}: ${itens.join(" + ")}`);
+      }
+      if (partes.length) linhas.push(`➡ ${DIAS[d]}:\n${partes.join("\n")}`);
+    }
+    return linhas.join("\n");
+  };
+
   const excluir = (index) => {
     if (!window.confirm("Deseja excluir este ciclo?")) return;
     const atualizados = ciclos.filter((_, i) => i !== index);
@@ -102,6 +207,8 @@ export default function ListaLimpeza({ onEditar }) {
     "Tipo",
     "Frequência",
     "Dias da semana",
+    "Duração estimada",
+    "Custo diário",
     "Etapas",
     "Ação",
   ];
@@ -131,35 +238,53 @@ export default function ListaLimpeza({ onEditar }) {
           </tr>
         ) : (
           ciclos.map((c, index) => (
-            <tr key={index}>
-              <td>{c.nome || "—"}</td>
-              <td>{c.tipo || "—"}</td>
-              <td>{c.frequencia ? `${c.frequencia}x/dia` : "—"}</td>
-              <td>{c.diasSemana?.map((d) => DIAS[d]).join(", ")}</td>
-              <td>
-                {(c.etapas || [
-                  { produto: c.produto, quantidade: c.quantidade, unidade: c.unidade, condicao: c.condicao || "sempre" }
-                ]).map((e, i) => (
-                  <div key={i}>
-                    {e.produto} - {e.quantidade} {e.unidade} ({e.condicao || "sempre"})
+            <React.Fragment key={index}>
+              <tr>
+                <td>{c.nome || "—"}</td>
+                <td>{c.tipo || "—"}</td>
+                <td>{c.frequencia ? `${c.frequencia}x/dia` : "—"}</td>
+                <td>{c.diasSemana?.map((d) => DIAS[d]).join(", ")}</td>
+                <td>{calcularDuracao(c)}</td>
+                <td>{calcularCustoDiario(c)}</td>
+                <td>
+                  {(c.etapas || [
+                    { produto: c.produto, quantidade: c.quantidade, unidade: c.unidade, condicao: c.condicao || { tipo: "sempre" } }
+                  ]).map((e, i) => (
+                    <div key={i}>
+                      {e.produto} - {e.quantidade} {e.unidade} ({typeof e.condicao === "object" ? e.condicao.tipo : e.condicao || "sempre"})
+                    </div>
+                  ))}
+                </td>
+                <td>
+                  <div style={{ display: "flex", gap: "0.4rem" }}>
+                    <button className="botao-editar" onClick={() => onEditar(c, index)}>
+                      Editar
+                    </button>
+                    <button
+                      className="botao-editar"
+                      onClick={() => excluir(index)}
+                      style={{ borderColor: "#dc3545", color: "#dc3545" }}
+                    >
+                      Excluir
+                    </button>
+                    <button
+                      className="botao-editar"
+                      onClick={() => setPlanoAtivo(planoAtivo === index ? null : index)}
+                      style={{ borderColor: "#6b7280", color: "#6b7280" }}
+                    >
+                      {planoAtivo === index ? "Fechar" : "Ver plano"}
+                    </button>
                   </div>
-                ))}
-              </td>
-              <td>
-                <div style={{ display: "flex", gap: "0.4rem" }}>
-                  <button className="botao-editar" onClick={() => onEditar(c, index)}>
-                    Editar
-                  </button>
-                  <button
-                    className="botao-editar"
-                    onClick={() => excluir(index)}
-                    style={{ borderColor: "#dc3545", color: "#dc3545" }}
-                  >
-                    Excluir
-                  </button>
-                </div>
-              </td>
-            </tr>
+                </td>
+              </tr>
+              {planoAtivo === index && (
+                <tr>
+                  <td colSpan={titulos.length}>
+                    <pre style={{ whiteSpace: "pre-wrap" }}>{detalharPlano(c)}</pre>
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
           ))
         )}
       </tbody>

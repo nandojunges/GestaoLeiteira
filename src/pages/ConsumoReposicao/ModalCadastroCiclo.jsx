@@ -9,23 +9,48 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
   const [tipo, setTipo] = useState(ciclo?.tipo || "");
   const [diasSemana, setDiasSemana] = useState(ciclo?.diasSemana || []);
   const [frequencia, setFrequencia] = useState(ciclo?.frequencia || 1);
-  const [frequenciaCond, setFrequenciaCond] = useState(ciclo?.frequenciaCond || "");
-  const [etapas, setEtapas] = useState(
-    ciclo?.etapas ||
-      (ciclo?.produto
-        ? [
-            {
-              produto: ciclo.produto,
-              quantidade: ciclo.quantidade || "",
-              unidade: ciclo.unidade || "mL",
-              condicaoTipo: "sempre",
-              intervalo: ""
-            }
-          ]
-        : [
-            { produto: null, quantidade: "", unidade: "mL", condicaoTipo: "sempre", intervalo: "" }
-          ])
-  );
+  const [etapas, setEtapas] = useState(() => {
+    if (ciclo?.etapas) {
+      return ciclo.etapas.map((e) => {
+        let tipo = "sempre";
+        let intervalo = "";
+        const c = e.condicao;
+        if (c) {
+          if (typeof c === "object") {
+            tipo = c.tipo || "sempre";
+            if (tipo === "cada") intervalo = c.intervalo || "";
+          } else if (typeof c === "string") {
+            if (c.match(/a cada\s*(\d+)/i)) {
+              tipo = "cada";
+              intervalo = c.match(/a cada\s*(\d+)/i)[1];
+            } else if (c.toLowerCase().includes("manhã")) tipo = "manha";
+            else if (c.toLowerCase().includes("tarde")) tipo = "tarde";
+          }
+        }
+        return {
+          produto: e.produto,
+          quantidade: e.quantidade || "",
+          unidade: e.unidade || "mL",
+          condicaoTipo: tipo,
+          intervalo: intervalo
+        };
+      });
+    }
+    if (ciclo?.produto) {
+      return [
+        {
+          produto: ciclo.produto,
+          quantidade: ciclo.quantidade || "",
+          unidade: ciclo.unidade || "mL",
+          condicaoTipo: "sempre",
+          intervalo: ""
+        }
+      ];
+    }
+    return [
+      { produto: null, quantidade: "", unidade: "mL", condicaoTipo: "sempre", intervalo: "" }
+    ];
+  });
   const [produtos, setProdutos] = useState([]);
 
   useEffect(() => {
@@ -73,16 +98,16 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
       tipo,
       diasSemana,
       frequencia: parseInt(frequencia),
-      frequenciaCond,
-      etapas: etapas.map((e) => ({
-        produto: e.produto,
-        quantidade: parseFloat(e.quantidade),
-        unidade: e.unidade,
-        condicao:
-          e.condicaoTipo === "sempre"
-            ? "sempre"
-            : `a cada ${e.intervalo} ordenhas`
-      }))
+      etapas: etapas.map((e) => {
+        const cond = { tipo: e.condicaoTipo };
+        if (e.condicaoTipo === "cada") cond.intervalo = parseInt(e.intervalo || 1);
+        return {
+          produto: e.produto,
+          quantidade: parseFloat(e.quantidade),
+          unidade: e.unidade,
+          condicao: cond
+        };
+      })
     };
     onSalvar?.(registro, indice);
   };
@@ -127,10 +152,6 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
             </select>
           </div>
           <div>
-            <label>Frequência condicional</label>
-            <input value={frequenciaCond} onChange={e => setFrequenciaCond(e.target.value)} placeholder="Ex: a cada 3 ordenhas" style={input()} />
-          </div>
-          <div>
             <label className="mb-1 block">Etapas de Limpeza</label>
             {etapas.map((e, idx) => (
               <div key={idx} style={{ border: "1px solid #ddd", borderRadius: "0.5rem", padding: "0.8rem", marginBottom: "0.5rem" }}>
@@ -146,7 +167,7 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
                     placeholder="Selecione..."
                   />
                 </div>
-                <div style={{ marginBottom: "0.5rem", display: "flex", gap: "0.5rem" }}>
+                <div style={{ marginBottom: "0.5rem", display: "flex", gap: "8px" }}>
                   <div style={{ flex: 1 }}>
                     <label>Quantidade *</label>
                     <input
@@ -174,10 +195,12 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
                     <select
                       value={e.condicaoTipo}
                       onChange={ev => atualizarEtapa(idx, "condicaoTipo", ev.target.value)}
-                      style={{ ...input(), width: "150px" }}
+                      style={{ ...input(), width: "170px" }}
                     >
                       <option value="sempre">Sempre</option>
-                      <option value="cada">A cada</option>
+                      <option value="cada">A cada X ordenhas</option>
+                      <option value="manha">Somente de manhã</option>
+                      <option value="tarde">Somente à tarde</option>
                     </select>
                     {e.condicaoTipo === "cada" && (
                       <>
