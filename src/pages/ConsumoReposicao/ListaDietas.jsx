@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import CadastroDietas from "./CadastroDietas";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
+import ModalConfirmacao from "../../components/ModalConfirmacao";
 
 export default function ListaDietas() {
   const [dietas, setDietas] = useState([]);
@@ -9,6 +10,7 @@ export default function ListaDietas() {
   const [colunaHover, setColunaHover] = useState(null);
   const [dietaEditar, setDietaEditar] = useState(null);
   const [indiceEditar, setIndiceEditar] = useState(null);
+  const [dietaParaExcluir, setDietaParaExcluir] = useState(null);
 
   const carregar = () => {
     const armazenadas = JSON.parse(localStorage.getItem("dietas") || "[]");
@@ -119,19 +121,7 @@ export default function ListaDietas() {
                     </button>
                     <button
                       className="botao-editar"
-                      onClick={() => {
-                        if (window.confirm("Deseja excluir esta dieta?")) {
-                          const atualizadas = dietas.filter((_, i) => i !== idx);
-                          localStorage.setItem(
-                            "dietas",
-                            JSON.stringify(atualizadas)
-                          );
-                          setDietas(atualizadas);
-                          window.dispatchEvent(
-                            new Event("dietasAtualizadas")
-                          );
-                        }
-                      }}
+                      onClick={() => setDietaParaExcluir({ dieta: d, indice: idx })}
                       style={{ borderColor: "#dc3545", color: "#dc3545" }}
                     >
                       🗑️ Excluir
@@ -198,6 +188,20 @@ export default function ListaDietas() {
           onSalvar={salvarDieta}
           dieta={dietaEditar}
           indice={indiceEditar}
+        />
+      )}
+
+      {dietaParaExcluir && (
+        <ModalConfirmacao
+          mensagem="Deseja realmente excluir esta dieta?"
+          onCancelar={() => setDietaParaExcluir(null)}
+          onConfirmar={() => {
+            const atualizadas = dietas.filter((_, i) => i !== dietaParaExcluir.indice);
+            localStorage.setItem("dietas", JSON.stringify(atualizadas));
+            setDietas(atualizadas);
+            setDietaParaExcluir(null);
+            window.dispatchEvent(new Event("dietasAtualizadas"));
+          }}
         />
       )}
     </div>
