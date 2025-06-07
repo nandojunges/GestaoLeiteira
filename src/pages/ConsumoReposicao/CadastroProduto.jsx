@@ -118,6 +118,7 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
     quantidade: "",
     apresentacao: "",
     volume: "",
+    volumeUnidade: "mL",
     validade: "",
     analogo: "",
     agrupamento: "",
@@ -526,14 +527,24 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
             )}
             {["Antibiótico", "Antiparasitário", "Hormônio", "AINE", "Vitaminas"].includes(produto.categoria) && (
               <div>
-                <label>Volume (mL ou L)</label>
-                <input
-                  type="number"
-                  value={produto.volume || ""}
-                  onChange={(e) => atualizarCampo("volume", e.target.value)}
-                  style={input()}
-                  placeholder="Ex: 50"
-                />
+                <label>Volume</label>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <input
+                    type="number"
+                    value={produto.volume || ""}
+                    onChange={(e) => atualizarCampo("volume", e.target.value)}
+                    style={{ ...input(), flex: 1 }}
+                    placeholder="Ex: 50"
+                  />
+                  <select
+                    value={produto.volumeUnidade}
+                    onChange={(e) => atualizarCampo("volumeUnidade", e.target.value)}
+                    style={{ ...input(), width: "90px" }}
+                  >
+                    <option value="mL">mL</option>
+                    <option value="litros">litros</option>
+                  </select>
+                </div>
               </div>
             )}
 
