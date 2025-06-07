@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import ModalPlanoCiclo from "./ModalPlanoCiclo";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 
@@ -288,60 +289,12 @@ export default function ListaLimpeza({ onEditar }) {
       </table>
 
       {planoAtivo !== null && (
-        <div style={overlay} onClick={() => setPlanoAtivo(null)}>
-          <div style={modal} onClick={(e) => e.stopPropagation()}>
-            <div style={header}>Plano de Limpeza</div>
-            <div style={{ padding: "1rem" }}>
-              <pre style={{ whiteSpace: "pre-wrap" }}>{detalharPlano(ciclos[planoAtivo])}</pre>
-            </div>
-            <div style={{ textAlign: "right", padding: "0 1rem 1rem" }}>
-              <button onClick={() => setPlanoAtivo(null)} style={botaoConfirmar}>Fechar</button>
-            </div>
-          </div>
-        </div>
+        <ModalPlanoCiclo
+          ciclo={ciclos[planoAtivo]}
+          onClose={() => setPlanoAtivo(null)}
+        />
       )}
     </>
   );
 }
 
-const overlay = {
-  position: "fixed",
-  inset: 0,
-  backgroundColor: "rgba(0,0,0,0.6)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 9999,
-};
-
-const modal = {
-  background: "#fff",
-  borderRadius: "1rem",
-  width: "600px",
-  maxHeight: "90vh",
-  overflowY: "auto",
-  fontFamily: "Poppins, sans-serif",
-  display: "flex",
-  flexDirection: "column",
-};
-
-const header = {
-  background: "#1e40af",
-  color: "white",
-  padding: "1rem 1.5rem",
-  fontWeight: "bold",
-  fontSize: "1.1rem",
-  borderTopLeftRadius: "1rem",
-  borderTopRightRadius: "1rem",
-  textAlign: "center",
-};
-
-const botaoConfirmar = {
-  background: "#2563eb",
-  color: "#fff",
-  border: "none",
-  padding: "0.6rem 1.4rem",
-  borderRadius: "0.5rem",
-  cursor: "pointer",
-  fontWeight: "600",
-};
