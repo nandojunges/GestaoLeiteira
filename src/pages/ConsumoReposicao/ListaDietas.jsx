@@ -7,9 +7,14 @@ export default function ListaDietas() {
   const [dietas, setDietas] = useState([]);
   const [mostrarCadastro, setMostrarCadastro] = useState(false);
   const [colunaHover, setColunaHover] = useState(null);
+  const [dietaEditar, setDietaEditar] = useState(null);
+  const [indiceEditar, setIndiceEditar] = useState(null);
 
   const carregar = () => {
     const armazenadas = JSON.parse(localStorage.getItem("dietas") || "[]");
+    armazenadas.sort(
+      (a, b) => new Date(b.data || 0) - new Date(a.data || 0)
+    );
     setDietas(armazenadas);
   };
 
@@ -19,15 +24,34 @@ export default function ListaDietas() {
     return () => window.removeEventListener("dietasAtualizadas", carregar);
   }, []);
 
-  const salvarDieta = (dieta) => {
-    const atualizadas = [...dietas, dieta];
+  const salvarDieta = (dieta, indice = null) => {
+    let atualizadas = [];
+    if (indice != null && indice >= 0) {
+      atualizadas = [...dietas];
+      atualizadas[indice] = dieta;
+    } else {
+      atualizadas = [...dietas, dieta];
+    }
+    atualizadas.sort(
+      (a, b) => new Date(b.data || 0) - new Date(a.data || 0)
+    );
     localStorage.setItem("dietas", JSON.stringify(atualizadas));
     setDietas(atualizadas);
     setMostrarCadastro(false);
+    setDietaEditar(null);
+    setIndiceEditar(null);
     window.dispatchEvent(new Event("dietasAtualizadas"));
   };
 
-  const titulos = ["Lote", "Nº de Vacas", "Custo Total", "Custo Vaca/dia"];
+  const titulos = [
+    "Lote",
+    "Nº de Vacas",
+    "Custo Total",
+    "Custo Vaca/dia",
+    "Custo Vaca/mês",
+    "Data",
+    "Ações",
+  ];
 
   return (
     <div className="w-full px-8 py-6 font-sans">
@@ -57,20 +81,124 @@ export default function ListaDietas() {
           <tbody>
             {dietas.map((d, idx) => (
               <tr key={idx}>
-                <td>{d.lote || "—"}</td>
+                <td
+                  title={`Ingredientes:\n${d.ingredientes
+                    .map((ing) => `- ${ing.produto}: ${ing.quantidade} kg`)
+                    .join("\n")}`}
+                >
+                  {d.lote || "—"}
+                </td>
                 <td>{d.numVacas || "—"}</td>
-                <td>{d.custoTotal ? `R$ ${Number(d.custoTotal).toFixed(2)}` : "—"}</td>
+                <td>
+                  {d.custoTotal ? `R$ ${Number(d.custoTotal).toFixed(2)}` : "—"}
+                </td>
                 <td>
                   {d.custoVacaDia ? `R$ ${Number(d.custoVacaDia).toFixed(2)}` : "—"}
+                </td>
+                <td>
+                  {d.custoVacaDia
+                    ? `R$ ${(Number(d.custoVacaDia) * 30).toFixed(2)}`
+                    : "—"}
+                </td>
+                <td>
+                  {d.data
+                    ? new Date(d.data).toLocaleDateString("pt-BR")
+                    : "—"}
+                </td>
+                <td className="coluna-acoes">
+                  <div className="botoes-tabela">
+                    <button
+                      className="botao-editar"
+                      onClick={() => {
+                        setDietaEditar(d);
+                        setIndiceEditar(idx);
+                        setMostrarCadastro(true);
+                      }}
+                    >
+                      ✏️ Editar
+                    </button>
+                    <button
+                      className="botao-editar"
+                      onClick={() => {
+                        if (window.confirm("Deseja excluir esta dieta?")) {
+                          const atualizadas = dietas.filter((_, i) => i !== idx);
+                          localStorage.setItem(
+                            "dietas",
+                            JSON.stringify(atualizadas)
+                          );
+                          setDietas(atualizadas);
+                          window.dispatchEvent(
+                            new Event("dietasAtualizadas")
+                          );
+                        }
+                      }}
+                      style={{ borderColor: "#dc3545", color: "#dc3545" }}
+                    >
+                      🗑️ Excluir
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr>
+              <td style={{ fontWeight: "bold" }}>Totais</td>
+              <td>
+                {dietas.reduce((acc, d) => acc + (Number(d.numVacas) || 0), 0)}
+              </td>
+              <td>
+                {`R$ ${dietas
+                  .reduce((acc, d) => acc + (Number(d.custoTotal) || 0), 0)
+                  .toFixed(2)}`}
+              </td>
+              <td>
+                {(() => {
+                  const totalVacas = dietas.reduce(
+                    (acc, d) => acc + (Number(d.numVacas) || 0),
+                    0
+                  );
+                  const totalCusto = dietas.reduce(
+                    (acc, d) => acc + (Number(d.custoTotal) || 0),
+                    0
+                  );
+                  return totalVacas
+                    ? `R$ ${(totalCusto / totalVacas).toFixed(2)}`
+                    : "R$ 0.00";
+                })()}
+              </td>
+              <td>
+                {(() => {
+                  const totalVacas = dietas.reduce(
+                    (acc, d) => acc + (Number(d.numVacas) || 0),
+                    0
+                  );
+                  const totalCusto = dietas.reduce(
+                    (acc, d) => acc + (Number(d.custoTotal) || 0),
+                    0
+                  );
+                  return totalVacas
+                    ? `R$ ${((totalCusto / totalVacas) * 30).toFixed(2)}`
+                    : "R$ 0.00";
+                })()}
+              </td>
+              <td colSpan={2}></td>
+            </tr>
+          </tfoot>
         </table>
       )}
 
       {mostrarCadastro && (
-        <CadastroDietas onFechar={() => setMostrarCadastro(false)} onSalvar={salvarDieta} />
+        <CadastroDietas
+          onFechar={() => {
+            setMostrarCadastro(false);
+            setDietaEditar(null);
+            setIndiceEditar(null);
+          }}
+          onSalvar={salvarDieta}
+          dieta={dietaEditar}
+          indice={indiceEditar}
+        />
       )}
     </div>
   );
