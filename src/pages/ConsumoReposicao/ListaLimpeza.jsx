@@ -151,11 +151,19 @@ export default function ListaLimpeza({ onEditar }) {
     etapas.forEach((etapa) => {
       if (!etapa || !etapa.produto) return;
       const produto = produtos.find((p) => p.nomeComercial === etapa.produto);
-      const precoUnitario = produto?.valorUnitario ? parseFloat(produto.valorUnitario) : 0;
+      if (!produto) return;
+
+      const volumeUnidade = convToMl(produto.volume || 0, produto.unidade);
+      const volumeTotalMl = volumeUnidade * parseFloat(produto.quantidade || 0);
+      const valorTotal = parseFloat(produto.valorTotal || 0);
+      const precoPorML = volumeTotalMl > 0 ? valorTotal / volumeTotalMl : 0;
+
       const vezesDia = vezesPorDia(parseCond(etapa.condicao), freq);
-      const consumo = parseFloat(etapa.quantidade || 0) * vezesDia;
-      custoTotal += consumo * precoUnitario;
+      const usoPorAplicacao = convToMl(etapa.quantidade, etapa.unidade);
+      const custoEtapa = usoPorAplicacao * precoPorML * vezesDia;
+      custoTotal += custoEtapa;
     });
+
     return custoTotal > 0 ? `R$ ${custoTotal.toFixed(2)}` : "—";
   };
 
