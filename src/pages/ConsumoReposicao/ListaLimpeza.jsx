@@ -141,26 +141,32 @@ export default function ListaLimpeza({ onEditar }) {
     return `${Math.floor(dias)} dias restantes`;
   };
 
-  const calcularCustoDiario = (c) => {
+  const calcularCustoDiario = (ciclo) => {
     const produtos = JSON.parse(localStorage.getItem("produtos") || "[]");
-    const freq = parseInt(c.frequencia || 1);
-    const etapas = c.etapas || [
-      { produto: c.produto, quantidade: c.quantidade, unidade: c.unidade }
-    ];
+    const etapas =
+      ciclo.etapas || [
+        { produto: ciclo.produto, quantidade: ciclo.quantidade, unidade: ciclo.unidade },
+      ];
+    const freq = parseInt(ciclo.frequencia || 1);
     let total = 0;
+
     etapas.forEach((etapa) => {
-      const prod = produtos.find((p) => p.nomeComercial === etapa.produto);
-      if (!prod) return;
-
-      let vol = parseFloat(prod.volume);
-      if (prod.volumeUnidade && prod.volumeUnidade.toLowerCase().includes("l")) {
-        vol *= 1000;
+      const produto = produtos.find(
+        (p) => (p.nomeComercial || "").toLowerCase() === (etapa.produto || "").toLowerCase()
+      );
+      if (!produto) {
+        console.warn("Produto não encontrado:", etapa.produto);
+        return;
       }
-      const precoPorML = vol > 0 ? parseFloat(prod.valorTotal || 0) / vol : 0;
-      console.log("Cálculo custo", prod.nomeComercial, "volML", vol, "preço/ML", precoPorML);
+      if (!produto.volume || !produto.valorTotal) return;
 
-      const usoPorAplicacao = convToMl(etapa.quantidade, etapa.unidade);
-      const consumoPorDia = usoPorAplicacao * freq;
+      const volumeStr = String(produto.volume).toLowerCase();
+      const volumeNumerico = parseFloat(volumeStr);
+      const volumeEmML = volumeStr.includes("l") ? volumeNumerico * 1000 : volumeNumerico;
+      if (!volumeEmML || isNaN(volumeEmML)) return;
+
+      const precoPorML = parseFloat(produto.valorTotal) / volumeEmML;
+      const consumoPorDia = parseFloat(etapa.quantidade || 0) * freq;
       total += consumoPorDia * precoPorML;
     });
 
