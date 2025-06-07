@@ -172,6 +172,7 @@ export default function ListaLimpeza({ onEditar }) {
       for (let exec = 0; exec < freq; exec++) {
         const horario = freq === 1 ? "" : exec === 0 ? "Manhã" : exec === 1 ? "Tarde" : `Ordenha ${exec + 1}`;
         let itens = [];
+        let ultimaCondBase = null;
         etapas.forEach((e, i) => {
           cont[i] += 1;
           const cond = parseCond(e.condicao);
@@ -182,7 +183,14 @@ export default function ListaLimpeza({ onEditar }) {
           if (aplicar) {
             let texto = `${e.quantidade} ${e.unidade} ${e.produto}`;
             if (cond.tipo === "cada") texto += ` (condicional: ${cond.intervalo}ª ordenha)`;
-            itens.push(texto);
+            if (e.complementar && ultimaCondBase &&
+                cond.tipo === ultimaCondBase.tipo &&
+                (cond.intervalo || 0) === (ultimaCondBase.intervalo || 0)) {
+              itens.push(texto);
+            } else {
+              itens.push(texto);
+              if (!e.complementar) ultimaCondBase = cond;
+            }
           }
         });
         if (itens.length) partes.push(`- ${horario || `Ordenha ${exec + 1}`}: ${itens.join(" + ")}`);
