@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ModalCadastroManejoSanitario from "./ModalCadastroManejoSanitario";
 import ModalRegistroAplicacao from "./ModalRegistroAplicacao";
+import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 
@@ -10,6 +11,7 @@ export default function ListaCalendarioVacinal() {
   const [indiceEditar, setIndiceEditar] = useState(null);
   const [registrar, setRegistrar] = useState(null);
   const [indiceRegistrar, setIndiceRegistrar] = useState(null);
+  const [manejoExcluir, setManejoExcluir] = useState(null);
 
   useEffect(() => {
     const carregar = () => {
@@ -38,6 +40,14 @@ export default function ListaCalendarioVacinal() {
     setIndiceRegistrar(null);
     const lista = JSON.parse(localStorage.getItem("manejosSanitarios") || "[]");
     setManejos(lista);
+  };
+
+  const removerManejo = (index) => {
+    const nova = manejos.filter((_, i) => i !== index);
+    localStorage.setItem("manejosSanitarios", JSON.stringify(nova));
+    setManejos(nova);
+    window.dispatchEvent(new Event("manejosSanitariosAtualizados"));
+    setManejoExcluir(null);
   };
 
   return (
@@ -79,14 +89,7 @@ export default function ListaCalendarioVacinal() {
                     <button
                       className="botao-editar"
                       style={{ borderColor: "#dc3545", color: "#dc3545" }}
-                      onClick={() => {
-                        if (window.confirm("Deseja excluir este manejo?")) {
-                          const nova = manejos.filter((_, i) => i !== idx);
-                          localStorage.setItem("manejosSanitarios", JSON.stringify(nova));
-                          setManejos(nova);
-                          window.dispatchEvent(new Event("manejosSanitariosAtualizados"));
-                        }
-                      }}
+                      onClick={() => setManejoExcluir(idx)}
                     >
                       Excluir
                     </button>
@@ -111,6 +114,14 @@ export default function ListaCalendarioVacinal() {
           manejo={registrar}
           indice={indiceRegistrar}
           onFechar={fecharRegistro}
+        />
+      )}
+
+      {manejoExcluir !== null && (
+        <ModalConfirmarExclusao
+          mensagem="Deseja realmente excluir este manejo?"
+          onCancelar={() => setManejoExcluir(null)}
+          onConfirmar={() => removerManejo(manejoExcluir)}
         />
       )}
     </div>

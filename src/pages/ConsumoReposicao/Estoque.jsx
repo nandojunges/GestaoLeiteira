@@ -3,7 +3,7 @@ import CadastroProduto from "./CadastroProduto";
 import AjustesEstoque from "./AjustesEstoque";
 import ModalEditarProduto from "./ModalEditarProduto";
 import Select from "react-select";
-import ModalConfirmacao from "../../components/ModalConfirmacao";
+import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
 import "../../styles/botoes.css";
 import "../../styles/tabelaModerna.css";
 
@@ -206,7 +206,7 @@ export default function Estoque() {
       )}
 
       {produtoParaExcluir && (
-        <ModalConfirmacao
+        <ModalConfirmarExclusao
           mensagem={`Deseja realmente excluir o produto \u201c${
             produtoParaExcluir.nomeComercial || "sem nome"
           }\u201d?`}

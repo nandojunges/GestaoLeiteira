@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 import ModalInfoLote from "./ModalInfoLote";
+import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
 
 export default function ListaLotes({ onAbrirCadastro }) {
   const [lotes, setLotes] = useState([]);
   const [colunaHover, setColunaHover] = useState(null);
   const [modalLote, setModalLote] = useState(null);
+  const [loteExcluir, setLoteExcluir] = useState(null);
 
   const carregar = () => {
     const dados = JSON.parse(localStorage.getItem("lotes") || "[]");
@@ -35,12 +37,12 @@ export default function ListaLotes({ onAbrirCadastro }) {
     window.dispatchEvent(new Event("lotesAtualizados"));
   };
 
-  const excluir = (index) => {
-    if (!window.confirm("Deseja excluir este lote?")) return;
+  const removerLote = (index) => {
     const atualizados = lotes.filter((_, i) => i !== index);
     setLotes(atualizados);
     localStorage.setItem("lotes", JSON.stringify(atualizados));
     window.dispatchEvent(new Event("lotesAtualizados"));
+    setLoteExcluir(null);
   };
 
   const abrirModal = (lote) => {
@@ -113,7 +115,7 @@ export default function ListaLotes({ onAbrirCadastro }) {
                     </button>
                     <button
                       className="botao-editar"
-                      onClick={() => excluir(index)}
+                      onClick={() => setLoteExcluir(index)}
                       style={{ borderColor: "#dc3545", color: "#dc3545" }}
                     >
                       Excluir
@@ -130,6 +132,14 @@ export default function ListaLotes({ onAbrirCadastro }) {
           nomeDoLote={modalLote.nome}
           funcaoDoLote={modalLote.funcao}
           onFechar={fecharModal}
+        />
+      )}
+
+      {loteExcluir !== null && (
+        <ModalConfirmarExclusao
+          mensagem="Deseja realmente excluir este lote?"
+          onCancelar={() => setLoteExcluir(null)}
+          onConfirmar={() => removerLote(loteExcluir)}
         />
       )}
     </div>

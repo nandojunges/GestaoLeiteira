@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ModalPlanoCiclo from "./ModalPlanoCiclo";
+import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 
@@ -9,6 +10,7 @@ export default function ListaLimpeza({ onEditar }) {
   const [ciclos, setCiclos] = useState([]);
   const [colunaHover, setColunaHover] = useState(null);
   const [planoAtivo, setPlanoAtivo] = useState(null);
+  const [cicloExcluir, setCicloExcluir] = useState(null);
 
   const carregar = () => {
     const lista = JSON.parse(localStorage.getItem("ciclosLimpeza") || "[]");
@@ -214,12 +216,12 @@ export default function ListaLimpeza({ onEditar }) {
     return linhas.join("\n");
   };
 
-  const excluir = (index) => {
-    if (!window.confirm("Deseja excluir este ciclo?")) return;
+  const removerCiclo = (index) => {
     const atualizados = ciclos.filter((_, i) => i !== index);
     setCiclos(atualizados);
     localStorage.setItem("ciclosLimpeza", JSON.stringify(atualizados));
     window.dispatchEvent(new Event("ciclosLimpezaAtualizados"));
+    setCicloExcluir(null);
   };
 
   const titulos = [
@@ -299,7 +301,7 @@ export default function ListaLimpeza({ onEditar }) {
                   <td style={{ whiteSpace: "nowrap" }}>
                     <div style={{ display: "flex", gap: "0.4rem" }}>
                       <button className="botao-editar" onClick={() => onEditar(c, index)}>Editar</button>
-                      <button className="botao-editar" onClick={() => excluir(index)} style={{ borderColor: "#dc3545", color: "#dc3545" }}>Excluir</button>
+                      <button className="botao-editar" onClick={() => setCicloExcluir(index)} style={{ borderColor: "#dc3545", color: "#dc3545" }}>Excluir</button>
                       <button className="botao-editar" onClick={() => setPlanoAtivo(index)} style={{ borderColor: "#6b7280", color: "#6b7280" }}>Ver plano</button>
                     </div>
                   </td>
@@ -314,6 +316,14 @@ export default function ListaLimpeza({ onEditar }) {
         <ModalPlanoCiclo
           ciclo={ciclos[planoAtivo]}
           onClose={() => setPlanoAtivo(null)}
+        />
+      )}
+
+      {cicloExcluir !== null && (
+        <ModalConfirmarExclusao
+          mensagem="Deseja realmente excluir este ciclo?"
+          onCancelar={() => setCicloExcluir(null)}
+          onConfirmar={() => removerCiclo(cicloExcluir)}
         />
       )}
     </>

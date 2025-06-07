@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 import ModalEditarProduto from "./ModalEditarProduto";
-import ModalConfirmacao from "../../components/ModalConfirmacao";
+import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
 
 export default function ListaProdutos({ categoriaFiltro }) {
   const [produtos, setProdutos] = useState([]);
@@ -191,7 +191,7 @@ export default function ListaProdutos({ categoriaFiltro }) {
       )}
 
       {produtoParaExcluir && (
-        <ModalConfirmacao
+        <ModalConfirmarExclusao
           mensagem={`Deseja realmente excluir o produto \u201c${
             produtoParaExcluir.nomeComercial || "sem nome"
           }\u201d?`}
