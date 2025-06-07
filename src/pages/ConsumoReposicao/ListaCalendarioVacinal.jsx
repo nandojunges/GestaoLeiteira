@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ModalCadastroManejoSanitario from "./ModalCadastroManejoSanitario";
+import ModalRegistroAplicacao from "./ModalRegistroAplicacao";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 
@@ -7,6 +8,8 @@ export default function ListaCalendarioVacinal() {
   const [manejos, setManejos] = useState([]);
   const [editar, setEditar] = useState(null);
   const [indiceEditar, setIndiceEditar] = useState(null);
+  const [registrar, setRegistrar] = useState(null);
+  const [indiceRegistrar, setIndiceRegistrar] = useState(null);
 
   useEffect(() => {
     const carregar = () => {
@@ -26,6 +29,13 @@ export default function ListaCalendarioVacinal() {
   const fecharModal = () => {
     setEditar(null);
     setIndiceEditar(null);
+    const lista = JSON.parse(localStorage.getItem("manejosSanitarios") || "[]");
+    setManejos(lista);
+  };
+
+  const fecharRegistro = () => {
+    setRegistrar(null);
+    setIndiceRegistrar(null);
     const lista = JSON.parse(localStorage.getItem("manejosSanitarios") || "[]");
     setManejos(lista);
   };
@@ -57,11 +67,14 @@ export default function ListaCalendarioVacinal() {
                 <td>{m.idade || "—"}</td>
                 <td>{m.via || "—"}</td>
                 <td>{m.dose ? `${m.dose} mL` : "—"}</td>
-                <td>{m.dataInicial ? new Date(m.dataInicial).toLocaleDateString("pt-BR") : "—"}</td>
+                <td>{m.proximaAplicacao ? new Date(m.proximaAplicacao).toLocaleDateString("pt-BR") : (m.dataInicial ? new Date(m.dataInicial).toLocaleDateString("pt-BR") : "—")}</td>
                 <td className="coluna-acoes">
                   <div className="botoes-tabela">
                     <button className="botao-editar" onClick={() => { setEditar(m); setIndiceEditar(idx); }}>
                       Editar
+                    </button>
+                    <button className="botao-editar" onClick={() => { setRegistrar(m); setIndiceRegistrar(idx); }}>
+                      Registrar
                     </button>
                     <button
                       className="botao-editar"
@@ -91,6 +104,13 @@ export default function ListaCalendarioVacinal() {
           indice={indiceEditar}
           onFechar={fecharModal}
           onSalvar={fecharModal}
+        />
+      )}
+      {registrar && (
+        <ModalRegistroAplicacao
+          manejo={registrar}
+          indice={indiceRegistrar}
+          onFechar={fecharRegistro}
         />
       )}
     </div>
