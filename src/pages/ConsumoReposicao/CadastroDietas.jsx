@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
 import Select from "react-select";
 
-export default function CadastroDietas({ onFechar, onSalvar }) {
+export default function CadastroDietas({ onFechar, onSalvar, dieta = null, indice = null }) {
   const [produtos, setProdutos] = useState([]);
   const [lotes, setLotes] = useState([]);
-  const [lote, setLote] = useState("");
-  const [numVacas, setNumVacas] = useState(0);
-  const [ingredientes, setIngredientes] = useState([
-    { produto: null, quantidade: "" }
-  ]);
-  const [custoTotal, setCustoTotal] = useState(0);
-  const [custoVacaDia, setCustoVacaDia] = useState(0);
+  const [lote, setLote] = useState(dieta?.lote || "");
+  const [numVacas, setNumVacas] = useState(dieta?.numVacas || 0);
+  const [ingredientes, setIngredientes] = useState(
+    dieta?.ingredientes && dieta.ingredientes.length > 0
+      ? dieta.ingredientes
+      : [{ produto: null, quantidade: "" }]
+  );
+  const [custoTotal, setCustoTotal] = useState(dieta?.custoTotal || 0);
+  const [custoVacaDia, setCustoVacaDia] = useState(dieta?.custoVacaDia || 0);
 
   useEffect(() => {
     const lista = JSON.parse(localStorage.getItem("produtos") || "[]");
@@ -85,7 +87,15 @@ export default function CadastroDietas({ onFechar, onSalvar }) {
       alert("Selecione um lote.");
       return;
     }
-    onSalvar?.({ lote, ingredientes, numVacas, custoTotal, custoVacaDia });
+    const registro = {
+      lote,
+      ingredientes,
+      numVacas,
+      custoTotal,
+      custoVacaDia,
+      data: dieta?.data || new Date().toISOString(),
+    };
+    onSalvar?.(registro, indice);
     onFechar?.();
   };
 
