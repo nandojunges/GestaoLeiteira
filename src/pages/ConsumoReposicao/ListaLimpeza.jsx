@@ -269,25 +269,75 @@ export default function ListaLimpeza({ onEditar }) {
                     </button>
                     <button
                       className="botao-editar"
-                      onClick={() => setPlanoAtivo(planoAtivo === index ? null : index)}
+                      onClick={() => setPlanoAtivo(index)}
                       style={{ borderColor: "#6b7280", color: "#6b7280" }}
                     >
-                      {planoAtivo === index ? "Fechar" : "Ver plano"}
+                      Ver plano
                     </button>
                   </div>
                 </td>
               </tr>
-              {planoAtivo === index && (
-                <tr>
-                  <td colSpan={titulos.length}>
-                    <pre style={{ whiteSpace: "pre-wrap" }}>{detalharPlano(c)}</pre>
-                  </td>
-                </tr>
-              )}
             </React.Fragment>
           ))
         )}
       </tbody>
     </table>
+    {planoAtivo !== null && (
+      <div style={overlay} onClick={() => setPlanoAtivo(null)}>
+        <div style={modal} onClick={(e) => e.stopPropagation()}>
+          <div style={header}>Plano de Limpeza</div>
+          <div style={{ padding: "1rem" }}>
+            <pre style={{ whiteSpace: "pre-wrap" }}>{detalharPlano(ciclos[planoAtivo])}</pre>
+          </div>
+          <div style={{ textAlign: "right", padding: "0 1rem 1rem" }}>
+            <button onClick={() => setPlanoAtivo(null)} style={botaoConfirmar}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }
+
+const overlay = {
+  position: "fixed",
+  inset: 0,
+  backgroundColor: "rgba(0,0,0,0.6)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 9999,
+};
+
+const modal = {
+  background: "#fff",
+  borderRadius: "1rem",
+  width: "600px",
+  maxHeight: "90vh",
+  overflowY: "auto",
+  fontFamily: "Poppins, sans-serif",
+  display: "flex",
+  flexDirection: "column",
+};
+
+const header = {
+  background: "#1e40af",
+  color: "white",
+  padding: "1rem 1.5rem",
+  fontWeight: "bold",
+  fontSize: "1.1rem",
+  borderTopLeftRadius: "1rem",
+  borderTopRightRadius: "1rem",
+  textAlign: "center",
+};
+
+const botaoConfirmar = {
+  background: "#2563eb",
+  color: "#fff",
+  border: "none",
+  padding: "0.6rem 1.4rem",
+  borderRadius: "0.5rem",
+  cursor: "pointer",
+  fontWeight: "600",
+};
