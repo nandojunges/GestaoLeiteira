@@ -190,24 +190,60 @@ o01rv-codex/criar-aba-de-estoque
             )}
           </div>
 
-          {[
-            ["Quantidade", "quantidade", "number"],
-            ["Volume", "volume", "number"],
-            ["Valor Total", "valorTotal", "number"],
-            ["Validade", "validade", "date"],
-          ].map(([label, campo, tipo], i) => (
-            <div key={campo} style={estilos.campo}>
-              <label>{label}</label>
+          <div style={estilos.campo}>
+            <label>Quantidade</label>
+            <input
+              ref={(el) => (camposRef.current[1] = el)}
+              type="number"
+              value={editado.quantidade || ""}
+              onChange={(e) => atualizar("quantidade", e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, 1)}
+              style={estilos.input}
+            />
+          </div>
+          <div style={estilos.campo}>
+            <label>Volume</label>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
               <input
-                ref={(el) => (camposRef.current[i + 1] = el)}
-                type={tipo}
-                value={editado[campo] || ""}
-                onChange={(e) => atualizar(campo, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, i + 1)}
-                style={estilos.input}
+                ref={(el) => (camposRef.current[2] = el)}
+                type="number"
+                value={editado.volume || ""}
+                onChange={(e) => atualizar("volume", e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, 2)}
+                style={{ ...estilos.input, flex: 1 }}
               />
+              <select
+                value={editado.volumeUnidade || "mL"}
+                onChange={(e) => atualizar("volumeUnidade", e.target.value)}
+                style={{ ...estilos.input, width: "90px" }}
+              >
+                <option value="mL">mL</option>
+                <option value="litros">litros</option>
+              </select>
             </div>
-          ))}
+          </div>
+          <div style={estilos.campo}>
+            <label>Valor Total</label>
+            <input
+              ref={(el) => (camposRef.current[3] = el)}
+              type="number"
+              value={editado.valorTotal || ""}
+              onChange={(e) => atualizar("valorTotal", e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, 3)}
+              style={estilos.input}
+            />
+          </div>
+          <div style={estilos.campo}>
+            <label>Validade</label>
+            <input
+              ref={(el) => (camposRef.current[4] = el)}
+              type="date"
+              value={editado.validade || ""}
+              onChange={(e) => atualizar("validade", e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, 4)}
+              style={estilos.input}
+            />
+          </div>
         </div>
 
         <div style={estilos.botoes}>

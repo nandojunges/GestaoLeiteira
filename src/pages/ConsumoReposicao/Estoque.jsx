@@ -47,7 +47,11 @@ export default function Estoque() {
   const calcularValorUnitario = (produto) => {
     if (!produto) return null;
     if (produto.valorTotal && produto.quantidade && produto.volume) {
-      const totalVolume = produto.quantidade * produto.volume;
+      let vol = parseFloat(produto.volume);
+      if (produto.volumeUnidade && produto.volumeUnidade.toLowerCase().includes("l")) {
+        vol *= 1000;
+      }
+      const totalVolume = produto.quantidade * vol;
       return totalVolume > 0 ? produto.valorTotal / totalVolume : null;
     }
     return null;
@@ -134,7 +138,7 @@ export default function Estoque() {
                   <td>{p.quantidade ? `${p.quantidade} ${p.unidade || ""}` : "—"}</td>
                   <td>{p.valorTotal ? `R$ ${Number(p.valorTotal).toFixed(2)}` : "—"}</td>
                   <td>{p.apresentacao || "—"}</td>
-                  <td>{p.volume ? `${p.volume} ${p.unidade || ""}` : "—"}</td>
+                  <td>{p.volume ? `${p.volume} ${p.volumeUnidade || ""}` : "—"}</td>
                   <td>{valorUnitario ? `R$ ${valorUnitario.toFixed(2)} / ${p.unidade}` : "—"}</td>
                   <td>{p.validade || "—"}</td>
                   <td style={{ color: alertaEstoque ? "red" : "green", fontWeight: 600 }}>

@@ -100,7 +100,7 @@ export default function ListaLimpeza({ onEditar }) {
             const idx = produtos.findIndex((p) => p.nomeComercial === e.produto);
             if (idx === -1) return;
             const prod = produtos[idx];
-            const volumeUnidade = convToMl(prod.volume || 0, prod.unidade);
+            const volumeUnidade = convToMl(prod.volume || 0, prod.volumeUnidade || prod.unidade);
             let totalMl = volumeUnidade * parseFloat(prod.quantidade || 0);
             const consumoMl = convToMl(e.quantidade, e.unidade);
             totalMl = Math.max(0, totalMl - consumoMl);
@@ -134,7 +134,7 @@ export default function ListaLimpeza({ onEditar }) {
     Object.entries(consumo).forEach(([nome, cons]) => {
       const prod = produtos.find((p) => p.nomeComercial === nome);
       if (!prod) return;
-      const estoque = convToMl(prod.volume || 0, prod.unidade) * parseFloat(prod.quantidade || 0);
+      const estoque = convToMl(prod.volume || 0, prod.volumeUnidade || prod.unidade) * parseFloat(prod.quantidade || 0);
       if (cons > 0) dias = Math.min(dias, estoque / cons);
     });
     if (!isFinite(dias) || dias === Infinity) return "—";
@@ -145,26 +145,26 @@ export default function ListaLimpeza({ onEditar }) {
     const produtos = JSON.parse(localStorage.getItem("produtos") || "[]");
     const freq = parseInt(c.frequencia || 1);
     const etapas = c.etapas || [
-      { produto: c.produto, quantidade: c.quantidade, unidade: c.unidade, condicao: { tipo: "sempre" } }
+      { produto: c.produto, quantidade: c.quantidade, unidade: c.unidade }
     ];
-    let custoTotal = 0;
+    let total = 0;
     etapas.forEach((etapa) => {
-      if (!etapa || !etapa.produto) return;
-      const produto = produtos.find((p) => p.nomeComercial === etapa.produto);
-      if (!produto) return;
+      const prod = produtos.find((p) => p.nomeComercial === etapa.produto);
+      if (!prod) return;
 
-      const volumeUnidade = convToMl(produto.volume || 0, produto.unidade);
-      const volumeTotalMl = volumeUnidade * parseFloat(produto.quantidade || 0);
-      const valorTotal = parseFloat(produto.valorTotal || 0);
-      const precoPorML = volumeTotalMl > 0 ? valorTotal / volumeTotalMl : 0;
+      let vol = parseFloat(prod.volume);
+      if (prod.volumeUnidade && prod.volumeUnidade.toLowerCase().includes("l")) {
+        vol *= 1000;
+      }
+      const precoPorML = vol > 0 ? parseFloat(prod.valorTotal || 0) / vol : 0;
+      console.log("Cálculo custo", prod.nomeComercial, "volML", vol, "preço/ML", precoPorML);
 
-      const vezesDia = vezesPorDia(parseCond(etapa.condicao), freq);
       const usoPorAplicacao = convToMl(etapa.quantidade, etapa.unidade);
-      const custoEtapa = usoPorAplicacao * precoPorML * vezesDia;
-      custoTotal += custoEtapa;
+      const consumoPorDia = usoPorAplicacao * freq;
+      total += consumoPorDia * precoPorML;
     });
 
-    return custoTotal > 0 ? `R$ ${custoTotal.toFixed(2)}` : "—";
+    return total > 0 ? `R$ ${total.toFixed(2)}` : "—";
   };
 
   const detalharPlano = (c) => {
