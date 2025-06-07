@@ -2,24 +2,85 @@ import React, { useEffect, useState } from "react";
 
 export default function ModalExamesSanitarios({ onFechar }) {
   const [dados, setDados] = useState({
-    nome: "",
-    status: "nao",
+    tipo: "",
+    outroTipo: "",
+    abrangencia: "",
+    status: "Propriedade Não Certificada",
+    validadeCertificado: "",
+    certificado: null,
     dataUltimo: "",
     comprovante: null,
-    exameEntrada: false,
+    animal: "",
   });
+  const [listaAnimais, setListaAnimais] = useState([]);
 
   useEffect(() => {
     const esc = (e) => e.key === "Escape" && onFechar?.();
     window.addEventListener("keydown", esc);
+    const animais = JSON.parse(localStorage.getItem("animais") || "[]");
+    const bezerros = JSON.parse(localStorage.getItem("bezerros") || "[]");
+    const nums = [...animais, ...bezerros]
+      .map((a) => a.numero)
+      .filter((n) => n);
+    setListaAnimais(nums);
     return () => window.removeEventListener("keydown", esc);
   }, [onFechar]);
 
   const atualizar = (campo, valor) => setDados((p) => ({ ...p, [campo]: valor }));
 
+  const handleFile = (campo, file) => {
+    if (!file) {
+      atualizar(campo, null);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => atualizar(campo, reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const precisaStatus = (t) =>
+    [
+      "Brucelose",
+      "Tuberculose",
+      "Brucelose e Tuberculose (certificação conjunta)",
+    ].includes(t);
+
+  const calcularProxima = () => {
+    if (!dados.dataUltimo) return "";
+    const d = new Date(dados.dataUltimo);
+    switch (dados.tipo) {
+      case "Brucelose":
+      case "Tuberculose":
+        d.setFullYear(d.getFullYear() + 1);
+        return d.toISOString().substring(0, 10);
+      case "Brucelose e Tuberculose (certificação conjunta)":
+        if (dados.validadeCertificado)
+          return dados.validadeCertificado;
+        d.setFullYear(d.getFullYear() + 1);
+        return d.toISOString().substring(0, 10);
+      case "Leptospirose":
+        d.setMonth(d.getMonth() + 6);
+        return d.toISOString().substring(0, 10);
+      default:
+        return "";
+    }
+  };
+
   const salvar = () => {
+    if (!dados.tipo || !dados.dataUltimo) {
+      alert("Preencha os campos obrigatórios.");
+      return;
+    }
+    const registro = {
+      ...dados,
+      nome:
+        dados.tipo === "Outros (com campo livre)" && dados.outroTipo
+          ? dados.outroTipo
+          : dados.tipo,
+      proximaObrigatoriedade: calcularProxima(),
+    };
     const lista = JSON.parse(localStorage.getItem("examesSanitarios") || "[]");
-    lista.push(dados);
+    lista.push(registro);
     localStorage.setItem("examesSanitarios", JSON.stringify(lista));
     onFechar?.();
   };
@@ -38,31 +99,137 @@ export default function ModalExamesSanitarios({ onFechar }) {
         <div style={header}>Controle de Exames</div>
         <div style={conteudo}>
           <div>
-            <label>Nome do Exame</label>
-            <input value={dados.nome} onChange={e => atualizar("nome", e.target.value)} style={input()} />
-          </div>
-          <div>
-            <label>Status da Propriedade</label>
-            <select value={dados.status} onChange={e => atualizar("status", e.target.value)} style={input()}>
-              <option value="nao">Não certificada</option>
-              <option value="sim">Certificada</option>
+            <label>Tipo de Exame *</label>
+            <select
+              value={dados.tipo}
+              onChange={(e) => atualizar("tipo", e.target.value)}
+              style={input()}
+            >
+              <option value="">Selecione...</option>
+              <option value="Brucelose">Brucelose</option>
+              <option value="Tuberculose">Tuberculose</option>
+              <option value="Brucelose e Tuberculose (certificação conjunta)">
+                Brucelose e Tuberculose (certificação conjunta)
+              </option>
+              <option value="Leptospirose">Leptospirose</option>
+              <option value="Tripanossoma">Tripanossoma</option>
+              <option value="Babesiose">Babesiose</option>
+              <option value="Outros (com campo livre)">Outros</option>
             </select>
           </div>
+
+          {dados.tipo === "Outros (com campo livre)" && (
+            <div>
+              <label>Nome do Exame</label>
+              <input
+                value={dados.outroTipo}
+                onChange={(e) => atualizar("outroTipo", e.target.value)}
+                style={input()}
+              />
+            </div>
+          )}
+
           <div>
-            <label>Data do Último Exame</label>
-            <input type="date" value={dados.dataUltimo} onChange={e => atualizar("dataUltimo", e.target.value)} style={input()} />
+            <label>Abrangência *</label>
+            <select
+              value={dados.abrangencia}
+              onChange={(e) => atualizar("abrangencia", e.target.value)}
+              style={input()}
+            >
+              <option value="">Selecione...</option>
+              <option value="Propriedade inteira">Propriedade inteira</option>
+              <option value="Animal específico">Animal específico</option>
+              <option value="Animal novo em entrada">Animal novo em entrada</option>
+            </select>
           </div>
+
+          {(dados.abrangencia === "Animal específico" ||
+            dados.abrangencia === "Animal novo em entrada") && (
+            <div>
+              <label>Animal vinculado</label>
+              <input
+                value={dados.animal}
+                onChange={(e) => atualizar("animal", e.target.value)}
+                list="listaAnimais"
+                style={input()}
+              />
+              <datalist id="listaAnimais">
+                {listaAnimais.map((n, i) => (
+                  <option key={i} value={n} />
+                ))}
+              </datalist>
+            </div>
+          )}
+
+          {precisaStatus(dados.tipo) && (
+            <div>
+              <label>Status da Propriedade</label>
+              <select
+                value={dados.status}
+                onChange={(e) => atualizar("status", e.target.value)}
+                style={input()}
+              >
+                <option value="Propriedade Não Certificada">Propriedade Não Certificada</option>
+                <option value="Propriedade Certificada">Propriedade Certificada</option>
+              </select>
+            </div>
+          )}
+
+          {precisaStatus(dados.tipo) && dados.status === "Propriedade Certificada" && (
+            <div>
+              <label>Certificado da Propriedade</label>
+              <input
+                type="file"
+                onChange={(e) => handleFile("certificado", e.target.files[0])}
+                style={input()}
+              />
+              <div style={{ marginTop: "0.5rem" }}>
+                <label>Validade do Certificado</label>
+                <input
+                  type="date"
+                  value={dados.validadeCertificado}
+                  onChange={(e) => atualizar("validadeCertificado", e.target.value)}
+                  style={input()}
+                />
+              </div>
+            </div>
+          )}
+
           <div>
-            <label>Comprovante</label>
-            <input type="file" onChange={e => atualizar("comprovante", e.target.files[0])} style={input()} />
+            <label>Data do Último Exame *</label>
+            <input
+              type="date"
+              value={dados.dataUltimo}
+              onChange={(e) => atualizar("dataUltimo", e.target.value)}
+              style={input()}
+            />
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <input type="checkbox" checked={dados.exameEntrada} onChange={e => atualizar("exameEntrada", e.target.checked)} />
-            <span>Exame de entrada para animal novo?</span>
+
+          <div>
+            <label>Comprovante do Exame</label>
+            <input
+              type="file"
+              onChange={(e) => handleFile("comprovante", e.target.files[0])}
+              style={input()}
+            />
           </div>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "1rem" }}>
-            <button onClick={onFechar} style={botaoCancelar}>Cancelar</button>
-            <button onClick={salvar} style={botaoConfirmar}>Salvar</button>
+
+          {calcularProxima() && (
+            <div>
+              <label>Próxima obrigatoriedade</label>
+              <input type="date" value={calcularProxima()} readOnly style={input()} />
+            </div>
+          )}
+
+          <div
+            style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "1rem" }}
+          >
+            <button onClick={onFechar} style={botaoCancelar}>
+              Cancelar
+            </button>
+            <button onClick={salvar} style={botaoConfirmar}>
+              Salvar
+            </button>
           </div>
         </div>
       </div>
