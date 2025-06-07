@@ -10,9 +10,22 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
   const [diasSemana, setDiasSemana] = useState(ciclo?.diasSemana || []);
   const [frequencia, setFrequencia] = useState(ciclo?.frequencia || 1);
   const [frequenciaCond, setFrequenciaCond] = useState(ciclo?.frequenciaCond || "");
-  const [produto, setProduto] = useState(ciclo?.produto || null);
-  const [quantidade, setQuantidade] = useState(ciclo?.quantidade || "");
-  const [unidade, setUnidade] = useState(ciclo?.unidade || "mL");
+  const [etapas, setEtapas] = useState(
+    ciclo?.etapas ||
+      (ciclo?.produto
+        ? [
+            {
+              produto: ciclo.produto,
+              quantidade: ciclo.quantidade || "",
+              unidade: ciclo.unidade || "mL",
+              condicaoTipo: "sempre",
+              intervalo: ""
+            }
+          ]
+        : [
+            { produto: null, quantidade: "", unidade: "mL", condicaoTipo: "sempre", intervalo: "" }
+          ])
+  );
   const [produtos, setProdutos] = useState([]);
 
   useEffect(() => {
@@ -25,10 +38,35 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
     setDiasSemana(diasSemana.includes(d) ? diasSemana.filter(x => x !== d) : [...diasSemana, d]);
   };
 
+  const atualizarEtapa = (index, campo, valor) => {
+    setEtapas((prev) => {
+      const novo = [...prev];
+      novo[index] = { ...novo[index], [campo]: valor };
+      return novo;
+    });
+  };
+
+  const adicionarEtapa = () => {
+    setEtapas((prev) => [
+      ...prev,
+      { produto: null, quantidade: "", unidade: "mL", condicaoTipo: "sempre", intervalo: "" }
+    ]);
+  };
+
+  const removerEtapa = (index) => {
+    setEtapas((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const salvar = () => {
-    if (!nome || !tipo || !produto || !diasSemana.length || !quantidade) {
+    if (!nome || !tipo || !diasSemana.length) {
       alert("Preencha todos os campos obrigatórios.");
       return;
+    }
+    for (const e of etapas) {
+      if (!e.produto || !e.quantidade) {
+        alert("Preencha produto e quantidade de todas as etapas.");
+        return;
+      }
     }
     const registro = {
       nome,
@@ -36,9 +74,15 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
       diasSemana,
       frequencia: parseInt(frequencia),
       frequenciaCond,
-      produto,
-      quantidade: parseFloat(quantidade),
-      unidade
+      etapas: etapas.map((e) => ({
+        produto: e.produto,
+        quantidade: parseFloat(e.quantidade),
+        unidade: e.unidade,
+        condicao:
+          e.condicaoTipo === "sempre"
+            ? "sempre"
+            : `a cada ${e.intervalo} ordenhas`
+      }))
     };
     onSalvar?.(registro, indice);
   };
@@ -87,25 +131,80 @@ export default function ModalCadastroCiclo({ onFechar, onSalvar, ciclo = null, i
             <input value={frequenciaCond} onChange={e => setFrequenciaCond(e.target.value)} placeholder="Ex: a cada 3 ordenhas" style={input()} />
           </div>
           <div>
-            <label>Produto *</label>
-            <Select
-              options={produtos}
-              value={produto ? { value: produto, label: produto } : null}
-              onChange={op => setProduto(op?.value || null)}
-              className="react-select-container"
-              classNamePrefix="react-select"
-              placeholder="Selecione..."
-            />
-          </div>
-          <div>
-            <label>Quantidade por aplicação</label>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <input type="number" value={quantidade} onChange={e => setQuantidade(e.target.value)} style={{ ...input(), width: "100px" }} />
-              <select value={unidade} onChange={e => setUnidade(e.target.value)} style={{ ...input(), width: "100px" }}>
-                <option value="mL">mL</option>
-                <option value="litros">litros</option>
-              </select>
-            </div>
+            <label className="mb-1 block">Etapas de Limpeza</label>
+            {etapas.map((e, idx) => (
+              <div key={idx} style={{ border: "1px solid #ddd", borderRadius: "0.5rem", padding: "0.8rem", marginBottom: "0.5rem" }}>
+                <div style={{ fontWeight: "600", marginBottom: "0.5rem" }}>Etapa {idx + 1}</div>
+                <div style={{ marginBottom: "0.5rem" }}>
+                  <label>Produto *</label>
+                  <Select
+                    options={produtos}
+                    value={e.produto ? { value: e.produto, label: e.produto } : null}
+                    onChange={op => atualizarEtapa(idx, "produto", op?.value || null)}
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                    placeholder="Selecione..."
+                  />
+                </div>
+                <div style={{ marginBottom: "0.5rem", display: "flex", gap: "0.5rem" }}>
+                  <div style={{ flex: 1 }}>
+                    <label>Quantidade *</label>
+                    <input
+                      type="number"
+                      value={e.quantidade}
+                      onChange={ev => atualizarEtapa(idx, "quantidade", ev.target.value)}
+                      style={{ ...input(), width: "100%" }}
+                    />
+                  </div>
+                  <div style={{ width: "110px" }}>
+                    <label>Unidade</label>
+                    <select
+                      value={e.unidade}
+                      onChange={ev => atualizarEtapa(idx, "unidade", ev.target.value)}
+                      style={input()}
+                    >
+                      <option value="mL">mL</option>
+                      <option value="litros">litros</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ marginBottom: "0.5rem" }}>
+                  <label>Condição de aplicação</label>
+                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                    <select
+                      value={e.condicaoTipo}
+                      onChange={ev => atualizarEtapa(idx, "condicaoTipo", ev.target.value)}
+                      style={{ ...input(), width: "150px" }}
+                    >
+                      <option value="sempre">Sempre</option>
+                      <option value="cada">A cada</option>
+                    </select>
+                    {e.condicaoTipo === "cada" && (
+                      <>
+                        <input
+                          type="number"
+                          value={e.intervalo}
+                          onChange={ev => atualizarEtapa(idx, "intervalo", ev.target.value)}
+                          style={{ ...input(), width: "80px" }}
+                        />
+                        <span>ordenhas</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {etapas.length > 1 && (
+                  <button
+                    onClick={() => removerEtapa(idx)}
+                    style={{ ...botaoCancelar, marginTop: "0.5rem" }}
+                  >
+                    Remover Etapa
+                  </button>
+                )}
+              </div>
+            ))}
+            <button onClick={adicionarEtapa} style={{ ...botaoConfirmar, marginTop: "0.5rem" }}>
+              + Etapa de Limpeza
+            </button>
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "1rem" }}>
             <button onClick={onFechar} style={botaoCancelar}>Cancelar</button>

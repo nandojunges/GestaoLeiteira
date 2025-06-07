@@ -38,26 +38,53 @@ export default function ListaLimpeza({ onEditar }) {
     if (diasPassados <= 0) return;
 
     const produtos = JSON.parse(localStorage.getItem("produtos") || "[]");
+    const contadores = JSON.parse(localStorage.getItem("contadoresLimpeza") || "{}");
 
     for (let d = 1; d <= diasPassados; d++) {
       const data = new Date(dataUlt || hoje);
       data.setDate(data.getDate() + d);
       const diaSemana = data.getDay();
-      lista.forEach((c) => {
+      lista.forEach((c, ci) => {
         if (!c.diasSemana?.includes(diaSemana)) return;
-        const idx = produtos.findIndex((p) => p.nomeComercial === c.produto);
-        if (idx === -1) return;
-        const prod = produtos[idx];
-        const volumeUnidade = convToMl(prod.volume || 0, prod.unidade);
-        let totalMl = volumeUnidade * parseFloat(prod.quantidade || 0);
-        const consumoMl = convToMl(c.quantidade, c.unidade) * parseInt(c.frequencia || 1);
-        totalMl = Math.max(0, totalMl - consumoMl);
-        prod.quantidade = volumeUnidade > 0 ? totalMl / volumeUnidade : prod.quantidade;
-        produtos[idx] = prod;
+        const freq = parseInt(c.frequencia || 1);
+        for (let exec = 0; exec < freq; exec++) {
+          const etapas = c.etapas || [
+            {
+              produto: c.produto,
+              quantidade: c.quantidade,
+              unidade: c.unidade,
+              condicao: "sempre"
+            }
+          ];
+          etapas.forEach((e, ei) => {
+            if (!e || !e.produto) return;
+            const key = `${ci}-${ei}`;
+            contadores[key] = (contadores[key] || 0) + 1;
+            let aplicar = true;
+            if (e.condicao && e.condicao !== "sempre") {
+              const m = e.condicao.match(/a cada\s*(\d+)/i);
+              if (m) {
+                const intervalo = parseInt(m[1]);
+                aplicar = contadores[key] % intervalo === 0;
+              }
+            }
+            if (!aplicar) return;
+            const idx = produtos.findIndex((p) => p.nomeComercial === e.produto);
+            if (idx === -1) return;
+            const prod = produtos[idx];
+            const volumeUnidade = convToMl(prod.volume || 0, prod.unidade);
+            let totalMl = volumeUnidade * parseFloat(prod.quantidade || 0);
+            const consumoMl = convToMl(e.quantidade, e.unidade);
+            totalMl = Math.max(0, totalMl - consumoMl);
+            prod.quantidade = volumeUnidade > 0 ? totalMl / volumeUnidade : prod.quantidade;
+            produtos[idx] = prod;
+          });
+        }
       });
     }
 
     localStorage.setItem("produtos", JSON.stringify(produtos));
+    localStorage.setItem("contadoresLimpeza", JSON.stringify(contadores));
     localStorage.setItem("ultimaExecucaoLimpeza", hoje.toISOString());
     window.dispatchEvent(new Event("produtosAtualizados"));
   };
@@ -75,8 +102,7 @@ export default function ListaLimpeza({ onEditar }) {
     "Tipo",
     "Frequência",
     "Dias da semana",
-    "Produto",
-    "Quantidade/dia",
+    "Etapas",
     "Ação",
   ];
 
@@ -110,11 +136,14 @@ export default function ListaLimpeza({ onEditar }) {
               <td>{c.tipo || "—"}</td>
               <td>{c.frequencia ? `${c.frequencia}x/dia` : "—"}</td>
               <td>{c.diasSemana?.map((d) => DIAS[d]).join(", ")}</td>
-              <td>{c.produto || "—"}</td>
               <td>
-                {c.quantidade && c.frequencia
-                  ? `${c.quantidade * c.frequencia} ${c.unidade}`
-                  : "—"}
+                {(c.etapas || [
+                  { produto: c.produto, quantidade: c.quantidade, unidade: c.unidade, condicao: c.condicao || "sempre" }
+                ]).map((e, i) => (
+                  <div key={i}>
+                    {e.produto} - {e.quantidade} {e.unidade} ({e.condicao || "sempre"})
+                  </div>
+                ))}
               </td>
               <td>
                 <div style={{ display: "flex", gap: "0.4rem" }}>
