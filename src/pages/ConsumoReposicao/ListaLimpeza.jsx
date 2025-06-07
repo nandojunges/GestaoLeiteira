@@ -72,7 +72,7 @@ export default function ListaLimpeza({ onEditar }) {
         if (!c.diasSemana?.includes(diaSemana)) return;
         const freq = parseInt(c.frequencia || 1);
         for (let exec = 0; exec < freq; exec++) {
-          const horario = exec === 0 ? "manha" : exec === 1 ? "tarde" : `ord${exec+1}`;
+          const horario = exec === 0 ? "manha" : exec === 1 ? "tarde" : `ord${exec + 1}`;
           const etapas = c.etapas || [
             {
               produto: c.produto,
@@ -214,89 +214,81 @@ export default function ListaLimpeza({ onEditar }) {
   ];
 
   return (
-    <table className="tabela-padrao">
-      <thead>
-        <tr>
-          {titulos.map((t, idx) => (
-            <th
-              key={idx}
-              onMouseEnter={() => setColunaHover(idx)}
-              onMouseLeave={() => setColunaHover(null)}
-              className={colunaHover === idx ? "coluna-hover" : ""}
-            >
-              {t}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {ciclos.length === 0 ? (
+    <>
+      <table className="tabela-padrao">
+        <thead>
           <tr>
-            <td colSpan={titulos.length} style={{ textAlign: "center" }}>
-              Nenhum ciclo cadastrado.
-            </td>
+            {titulos.map((t, idx) => (
+              <th
+                key={idx}
+                onMouseEnter={() => setColunaHover(idx)}
+                onMouseLeave={() => setColunaHover(null)}
+                className={colunaHover === idx ? "coluna-hover" : ""}
+              >
+                {t}
+              </th>
+            ))}
           </tr>
-        ) : (
-          ciclos.map((c, index) => (
-            <React.Fragment key={index}>
-              <tr>
-                <td>{c.nome || "—"}</td>
-                <td>{c.tipo || "—"}</td>
-                <td>{c.frequencia ? `${c.frequencia}x/dia` : "—"}</td>
-                <td>{c.diasSemana?.map((d) => DIAS[d]).join(", ")}</td>
-                <td>{calcularDuracao(c)}</td>
-                <td>{calcularCustoDiario(c)}</td>
-                <td>
-                  {(c.etapas || [
-                    { produto: c.produto, quantidade: c.quantidade, unidade: c.unidade, condicao: c.condicao || { tipo: "sempre" } }
-                  ]).map((e, i) => (
-                    <div key={i}>
-                      {e.produto} - {e.quantidade} {e.unidade} ({typeof e.condicao === "object" ? e.condicao.tipo : e.condicao || "sempre"})
+        </thead>
+        <tbody>
+          {ciclos.length === 0 ? (
+            <tr>
+              <td colSpan={titulos.length} style={{ textAlign: "center" }}>
+                Nenhum ciclo cadastrado.
+              </td>
+            </tr>
+          ) : (
+            ciclos.map((c, index) => (
+              <React.Fragment key={index}>
+                <tr>
+                  <td>{c.nome || "—"}</td>
+                  <td>{c.tipo || "—"}</td>
+                  <td>{c.frequencia ? `${c.frequencia}x/dia` : "—"}</td>
+                  <td>{c.diasSemana?.map((d) => DIAS[d]).join(", ")}</td>
+                  <td>{calcularDuracao(c)}</td>
+                  <td>{calcularCustoDiario(c)}</td>
+                  <td>
+                    {(c.etapas || [
+                      {
+                        produto: c.produto,
+                        quantidade: c.quantidade,
+                        unidade: c.unidade,
+                        condicao: c.condicao || { tipo: "sempre" }
+                      }
+                    ]).map((e, i) => (
+                      <div key={i}>
+                        {e.produto} - {e.quantidade} {e.unidade} ({typeof e.condicao === "object" ? e.condicao.tipo : e.condicao || "sempre"})
+                      </div>
+                    ))}
+                  </td>
+                  <td>
+                    <div style={{ display: "flex", gap: "0.4rem" }}>
+                      <button className="botao-editar" onClick={() => onEditar(c, index)}>Editar</button>
+                      <button className="botao-editar" onClick={() => excluir(index)} style={{ borderColor: "#dc3545", color: "#dc3545" }}>Excluir</button>
+                      <button className="botao-editar" onClick={() => setPlanoAtivo(index)} style={{ borderColor: "#6b7280", color: "#6b7280" }}>Ver plano</button>
                     </div>
-                  ))}
-                </td>
-                <td>
-                  <div style={{ display: "flex", gap: "0.4rem" }}>
-                    <button className="botao-editar" onClick={() => onEditar(c, index)}>
-                      Editar
-                    </button>
-                    <button
-                      className="botao-editar"
-                      onClick={() => excluir(index)}
-                      style={{ borderColor: "#dc3545", color: "#dc3545" }}
-                    >
-                      Excluir
-                    </button>
-                    <button
-                      className="botao-editar"
-                      onClick={() => setPlanoAtivo(index)}
-                      style={{ borderColor: "#6b7280", color: "#6b7280" }}
-                    >
-                      Ver plano
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </React.Fragment>
-          ))
-        )}
-      </tbody>
-    </table>
-    {planoAtivo !== null && (
-      <div style={overlay} onClick={() => setPlanoAtivo(null)}>
-        <div style={modal} onClick={(e) => e.stopPropagation()}>
-          <div style={header}>Plano de Limpeza</div>
-          <div style={{ padding: "1rem" }}>
-            <pre style={{ whiteSpace: "pre-wrap" }}>{detalharPlano(ciclos[planoAtivo])}</pre>
-          </div>
-          <div style={{ textAlign: "right", padding: "0 1rem 1rem" }}>
-            <button onClick={() => setPlanoAtivo(null)} style={botaoConfirmar}>
-              Fechar
-            </button>
+                  </td>
+                </tr>
+              </React.Fragment>
+            ))
+          )}
+        </tbody>
+      </table>
+
+      {planoAtivo !== null && (
+        <div style={overlay} onClick={() => setPlanoAtivo(null)}>
+          <div style={modal} onClick={(e) => e.stopPropagation()}>
+            <div style={header}>Plano de Limpeza</div>
+            <div style={{ padding: "1rem" }}>
+              <pre style={{ whiteSpace: "pre-wrap" }}>{detalharPlano(ciclos[planoAtivo])}</pre>
+            </div>
+            <div style={{ textAlign: "right", padding: "0 1rem 1rem" }}>
+              <button onClick={() => setPlanoAtivo(null)} style={botaoConfirmar}>Fechar</button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
+    </>
   );
 }
 
