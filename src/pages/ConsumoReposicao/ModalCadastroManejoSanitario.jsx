@@ -34,6 +34,16 @@ export default function ModalCadastroManejoSanitario({ onFechar, onSalvar, manej
     }
     const lista = JSON.parse(localStorage.getItem("manejosSanitarios") || "[]");
     const registro = { ...dados };
+    if (dados.dataInicial) {
+      const dias = parseInt(dados.frequencia);
+      if (!isNaN(dias)) {
+        const d = new Date(dados.dataInicial);
+        d.setDate(d.getDate() + dias);
+        registro.proximaAplicacao = d.toISOString().substring(0, 10);
+      } else {
+        registro.proximaAplicacao = dados.dataInicial;
+      }
+    }
     if (indice != null) {
       lista[indice] = registro;
     } else {
@@ -44,7 +54,7 @@ export default function ModalCadastroManejoSanitario({ onFechar, onSalvar, manej
     onSalvar?.(registro, indice);
   };
 
-  const CATEGORIAS = ["Bezerra", "Novilha", "Vaca em lactação", "Vaca seca"];
+  const CATEGORIAS = ["Bezerra", "Novilha", "Vaca em lactação", "Vaca seca", "Todo plantel"];
   const TIPOS = ["Vacina", "Vermífugo", "Vitamina", "Antiparasitário", "Preventivo"];
   const VIAS = ["Subcutânea", "Oral", "Intramuscular"];
 
