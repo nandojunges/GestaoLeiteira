@@ -110,7 +110,7 @@ export default function VisaoGeralReproducao() {
         </thead>
         <tbody>
           {vacas.map((vaca, index) => {
-            const del = calcularDEL(vaca.ultimoParto || vaca.dataParto);
+            const del = vaca.ultimoParto ? calcularDEL(vaca.ultimoParto) : null;
             const statusAtual = obterStatus(vaca, del);
             const proximaAcao = obterProximaAcao(vaca);
             const dataProximaAcao = obterDataProximaAcao(vaca);
