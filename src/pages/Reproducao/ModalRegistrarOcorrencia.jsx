@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Select from 'react-select';
+import { formatarDataDigitada, formatarDataBR } from '../Animais/utilsAnimais';
 
 export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
   const TIPOS = [
@@ -8,22 +9,43 @@ export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
     'Infecção Subclínica',
     'Cio natural',
     'Descalcificação',
-    'Cetose'
+    'Cetose',
+    'Retenção de placenta',
+    'Outros'
   ];
 
   const [tipo, setTipo] = useState('');
+  const [descricaoTipo, setDescricaoTipo] = useState('');
+  const [dataOcorrencia, setDataOcorrencia] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [iniciarTratamento, setIniciarTratamento] = useState(false);
+  const [dataInicioTratamento, setDataInicioTratamento] = useState('');
   const [produto, setProduto] = useState(null);
   const [dose, setDose] = useState('');
   const [duracao, setDuracao] = useState('');
   const [carencia, setCarencia] = useState('');
   const [produtos, setProdutos] = useState([]);
+  const camposRef = useRef([]);
+
+  const handleEnter = (index) => (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const prox = camposRef.current[index + 1];
+      prox && prox.focus();
+    }
+  };
 
   useEffect(() => {
     const lista = JSON.parse(localStorage.getItem('produtos') || '[]');
-    const farm = lista.filter(p => p.agrupamento === 'Farmácia');
-    setProdutos(farm.map(p => ({ value: p.nomeComercial, label: p.nomeComercial })));
+    const farm = lista.filter((p) => p.agrupamento === 'Farmácia');
+    setProdutos(
+      farm.map((p) => ({
+        value: p.nomeComercial,
+        label: p.nomeComercial,
+        carenciaLeite: p.carenciaLeite,
+        carenciaCarne: p.carenciaCarne
+      }))
+    );
     const esc = e => e.key === 'Escape' && onClose?.();
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
@@ -34,11 +56,15 @@ export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
       alert('Selecione o tipo de ocorrência');
       return;
     }
-    const hoje = new Date().toISOString().substring(0, 10);
+    if (!dataOcorrencia || dataOcorrencia.length !== 10) {
+      alert('Informe a data da ocorrência');
+      return;
+    }
     const ocorrencia = {
       numeroAnimal: vaca.numero,
-      data: hoje,
+      data: dataOcorrencia,
       tipo,
+      descricaoTipo: tipo === 'Outros' ? descricaoTipo : undefined,
       observacoes
     };
     const listaOc = JSON.parse(localStorage.getItem('ocorrencias') || '[]');
@@ -46,19 +72,49 @@ export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
     localStorage.setItem('ocorrencias', JSON.stringify(listaOc));
     window.dispatchEvent(new Event('ocorrenciasAtualizadas'));
 
-    if (iniciarTratamento && produto) {
+    if (iniciarTratamento && produto && dataInicioTratamento) {
       const tratamento = {
         numeroAnimal: vaca.numero,
-        data: hoje,
+        dataInicio: dataInicioTratamento,
         produto,
         dose,
         duracao,
-        carencia
+        carencia,
+        ocorrencia: tipo
       };
       const listaTr = JSON.parse(localStorage.getItem('tratamentos') || '[]');
       listaTr.push(tratamento);
       localStorage.setItem('tratamentos', JSON.stringify(listaTr));
       window.dispatchEvent(new Event('tratamentosAtualizados'));
+
+      const eventos = JSON.parse(localStorage.getItem('eventosExtras') || '[]');
+      const toISO = (d) => {
+        const [dia, mes, ano] = d.split('/');
+        return `${ano}-${mes.padStart(2,'0')}-${dia.padStart(2,'0')}`;
+      };
+      const inicio = new Date(toISO(dataInicioTratamento));
+      for (let i = 0; i < parseInt(duracao || 0); i++) {
+        const data = new Date(inicio);
+        data.setDate(data.getDate() + i);
+        eventos.push({
+          title: `Tratamento ${produto} - Vaca ${vaca.numero}`,
+          date: data.toISOString().split('T')[0],
+          tipo: 'checkup',
+          prioridadeVisual: true
+        });
+      }
+      localStorage.setItem('eventosExtras', JSON.stringify(eventos));
+
+      const alertas = JSON.parse(localStorage.getItem('alertasTratamento') || '[]');
+      const fim = new Date(inicio);
+      fim.setDate(fim.getDate() + parseInt(duracao || 0) - 1);
+      alertas.push({
+        numeroAnimal: vaca.numero,
+        produto,
+        ate: formatarDataBR(fim)
+      });
+      localStorage.setItem('alertasTratamento', JSON.stringify(alertas));
+      window.dispatchEvent(new Event('alertasTratamentoAtualizados'));
     }
     onSalvar?.(ocorrencia);
     onClose?.();
@@ -79,42 +135,92 @@ export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
         <div style={conteudo}>
           <div>
             <label>Tipo de Ocorrência *</label>
-            <select value={tipo} onChange={e => setTipo(e.target.value)} style={input()}>
-              <option value="">Selecione...</option>
-              {TIPOS.map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
+            <Select
+              options={TIPOS.map(t => ({ value: t, label: t }))}
+              value={tipo ? { value: tipo, label: tipo } : null}
+              onChange={opt => {
+                setTipo(opt?.value || '');
+                setDescricaoTipo('');
+              }}
+              className="react-select-container"
+              classNamePrefix="react-select"
+              placeholder="Selecione..."
+            />
+          </div>
+          {tipo === 'Outros' && (
+            <div>
+              <label>Descreva</label>
+              <input
+                ref={el => (camposRef.current[1] = el)}
+                value={descricaoTipo}
+                onChange={e => setDescricaoTipo(e.target.value)}
+                onKeyDown={handleEnter(1)}
+                style={input()}
+              />
+            </div>
+          )}
+          <div>
+            <label>Data da ocorrência *</label>
+            <input
+              ref={el => (camposRef.current[ tipo === 'Outros' ? 2 : 1] = el)}
+              value={dataOcorrencia}
+              onChange={e => setDataOcorrencia(formatarDataDigitada(e.target.value))}
+              onKeyDown={tipo === 'Outros' ? handleEnter(2) : handleEnter(1)}
+              style={input()}
+              placeholder="dd/mm/aaaa"
+            />
           </div>
           <div>
             <label>Observações</label>
             <textarea
+              ref={el => (camposRef.current[tipo === 'Outros' ? 3 : 2] = el)}
               value={observacoes}
               onChange={e => setObservacoes(e.target.value)}
+              onKeyDown={tipo === 'Outros' ? handleEnter(3) : handleEnter(2)}
               style={{ ...input(), height: '80px' }}
             />
           </div>
-          <div>
-            <label>
-              <input
-                type="checkbox"
-                checked={iniciarTratamento}
-                onChange={e => setIniciarTratamento(e.target.checked)}
-              />{' '}
-              Iniciar tratamento agora
-            </label>
-          </div>
-          {iniciarTratamento && (
+          {tipo !== 'Cio natural' && (
+            <div>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={iniciarTratamento}
+                  onChange={e => setIniciarTratamento(e.target.checked)}
+                />{' '}
+                Iniciar tratamento agora
+              </label>
+            </div>
+          )}
+          {iniciarTratamento && tipo !== 'Cio natural' && (
             <>
               <div>
                 <label>Produto</label>
                 <Select
                   options={produtos}
                   value={produto ? { value: produto, label: produto } : null}
-                  onChange={opt => setProduto(opt?.value || null)}
+                  onChange={opt => {
+                    setProduto(opt?.value || null);
+                    if (opt) {
+                      const l = opt.carenciaLeite || 0;
+                      const c = opt.carenciaCarne || 0;
+                      setCarencia(`${l}/${c}`);
+                    }
+                  }}
                   className="react-select-container"
                   classNamePrefix="react-select"
                   placeholder="Selecione..."
+                />
+              </div>
+              <div>
+                <label>Data de início *</label>
+                <input
+                  ref={el => (camposRef.current[tipo === 'Outros' ? 4 : 3] = el)}
+                  value={dataInicioTratamento}
+                  onChange={e => setDataInicioTratamento(formatarDataDigitada(e.target.value))}
+                  onKeyDown={handleEnter(tipo === 'Outros' ? 4 : 3)}
+                  style={input()}
+                  placeholder="dd/mm/aaaa"
                 />
               </div>
               <div>
