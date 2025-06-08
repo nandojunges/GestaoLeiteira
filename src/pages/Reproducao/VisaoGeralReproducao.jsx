@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { carregarAnimaisDoLocalStorage, calcularDEL } from '../Animais/utilsAnimais';
 import ModalHistoricoCompleto from "../Animais/ModalHistoricoCompleto";
 import ModalConfiguracaoPEV from "./ModalConfiguracaoPEV";
+import { getStatusVaca, getAcoesDisponiveis, filtrarAnimaisAtivos } from './utilsReproducao';
 import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
 
@@ -19,13 +20,14 @@ export default function VisaoGeralReproducao() {
 
   useEffect(() => {
     const animais = carregarAnimaisDoLocalStorage();
-    setVacas(animais);
+    const ativos = filtrarAnimaisAtivos(animais);
+    setVacas(ativos);
 
     const config = JSON.parse(localStorage.getItem("configPEV") || "{}");
     setConfigPEV({
       diasPEV: config.diasPEV || 60,
       permitirPreSincronizacao: config.permitirPreSincronizacao || false,
-      permitirSecagem: config.permitirSecagem || true
+      permitirSecagem: config.permitirSecagem || true,
     });
   }, []);
 
@@ -35,42 +37,8 @@ export default function VisaoGeralReproducao() {
   };
 
   const aplicarConfiguracoesPEV = (config) => {
-    console.log("🔥 CONFIG PEV APLICADA!", config);
-
     setConfigPEV(config);
-
-    const novasVacas = vacas.map((vaca) => {
-      console.log("🐮 Avaliando vaca:", vaca.numero);
-      if (vaca.statusReprodutivo === "pos-parto") {
-        const del = calcularDEL(vaca.ultimoParto || vaca.dataParto);
-        console.log("📌 DEL:", del, "diasPEV:", config.diasPEV);
-        if (del >= config.diasPEV) {
-          console.log("✅ LIBERADA!");
-          return {
-            ...vaca,
-            statusReprodutivo: "liberada",
-            proximaAcao: {
-              tipo: config.permitirPreSincronizacao ? "Iniciar Pré-sincronização" : "Iniciar Protocolo",
-              dataPrevista: "—"
-            },
-          };
-        } else {
-          console.log("⏳ Ainda no PEV");
-          return {
-            ...vaca,
-            statusReprodutivo: "pos-parto",
-            proximaAcao: { tipo: "Aguardar", dataPrevista: "—" }
-          };
-        }
-      }
-      return vaca;
-    });
-
-    console.log("🔄 NOVAS VACAS:", novasVacas);
-
-    // 🚀 Garante nova cópia para forçar re-render
-    setVacas([...novasVacas]);
-    localStorage.setItem("animais", JSON.stringify(novasVacas));
+    localStorage.setItem("configPEV", JSON.stringify(config));
     setMostrarModalPEV(false);
   };
 
@@ -78,15 +46,12 @@ export default function VisaoGeralReproducao() {
     "Número", "Brinco", "DEL", "Status Atual", "Última Ação", "Próxima Ação", "Data Prevista", "Ações", "Ficha"
   ];
 
-  const obterStatus = (vaca) => {
-    const status = (vaca.statusReprodutivo || '').toLowerCase();
-    if (status === 'prenhe') return '✅ Prenhe confirmada';
-    if (status === 'liberada') return '🟢 Liberada';
-    if (status === 'pos-parto') return '🔵 Pós-parto (PEV)';
-    if (status === 'protocolo') return '🟠 Em protocolo';
-    if (status === 'diagnostico') return '🟡 Aguardando diagnóstico';
-    if (status === 'vazia') return '❌ Vazia';
-    return '—';
+  const obterStatus = (vaca, del) => {
+    const statusBase = (vaca.statusReprodutivo || '').toLowerCase();
+    if (statusBase === 'prenhe') return '✅ Prenhe confirmada';
+    if (statusBase === 'seca') return '🔴 Seca';
+    const statusPEV = getStatusVaca(del);
+    return statusPEV === 'Liberada' ? '🟢 Liberada' : '🔵 Pós-parto (PEV)';
   };
 
   const obterProximaAcao = (vaca) => {
@@ -97,18 +62,8 @@ export default function VisaoGeralReproducao() {
     return vaca.proximaAcao?.dataPrevista || '—';
   };
 
-  const renderizarMenuAcoes = (vaca, del, statusAtual) => {
-    const opcoes = [];
-    if (statusAtual.includes('pós-parto') && del <= configPEV.diasPEV && configPEV.permitirPreSincronizacao) {
-      opcoes.push("Iniciar Pré-sincronização");
-    }
-    if (statusAtual.includes('liberada')) {
-      opcoes.push("Registrar CIO", "Iniciar Protocolo");
-    }
-    if (configPEV.permitirSecagem && del > 280) {
-      opcoes.push("Registrar Secagem");
-    }
-    opcoes.push("Registrar Ocorrência Clínica");
+  const renderizarMenuAcoes = (vaca, del) => {
+    const opcoes = getAcoesDisponiveis(del);
 
     return (
       <select
@@ -156,7 +111,7 @@ export default function VisaoGeralReproducao() {
         <tbody>
           {vacas.map((vaca, index) => {
             const del = calcularDEL(vaca.ultimoParto || vaca.dataParto);
-            const statusAtual = obterStatus(vaca);
+            const statusAtual = obterStatus(vaca, del);
             const proximaAcao = obterProximaAcao(vaca);
             const dataProximaAcao = obterDataProximaAcao(vaca);
 
@@ -168,7 +123,7 @@ export default function VisaoGeralReproducao() {
               vaca.ultimaAcao?.tipo || '—',
               proximaAcao,
               dataProximaAcao,
-              renderizarMenuAcoes(vaca, del, statusAtual),
+              renderizarMenuAcoes(vaca, del),
               <button
                 onClick={() => abrirFicha(vaca)}
                 className="botao-acao pequeno"
