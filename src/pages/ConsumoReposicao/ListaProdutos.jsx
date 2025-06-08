@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
-import verificarAlertaEstoqueInteligente from "./verificarAlertaEstoque";
+import verificarAlertaEstoqueInteligente from "../../utils/verificarAlertaEstoque";
 import ModalEditarProduto from "./ModalEditarProduto";
 import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
 

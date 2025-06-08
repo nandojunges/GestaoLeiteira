@@ -6,7 +6,7 @@ import Select from "react-select";
 import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
 import "../../styles/botoes.css";
 import "../../styles/tabelaModerna.css";
-import verificarAlertaEstoqueInteligente from "./verificarAlertaEstoque";
+import verificarAlertaEstoqueInteligente from "../../utils/verificarAlertaEstoque";
 
 export default function Estoque() {
   const [produtos, setProdutos] = useState([]);
@@ -102,7 +102,7 @@ export default function Estoque() {
         </div>
       </div>
 
-      <table className="tabela-padrao" style={{ tableLayout: "auto", width: "100%" }}>
+      <table className="tabela-padrao" style={{ tableLayout: "fixed", width: "100%" }}>
         <thead>
           <tr>
             {[
@@ -137,7 +137,15 @@ export default function Estoque() {
                   <td>{p.volume ? `${p.volume} ${p.volumeUnidade || ""}` : "—"}</td>
                   <td>{valorUnitario ? `R$ ${valorUnitario.toFixed(2)} / ${p.unidade}` : "—"}</td>
                   <td>{p.validade || "—"}</td>
-                  <td style={{ color: alerta.status === "ok" ? "green" : alerta.status === "insuficiente" ? "red" : "orange", fontWeight: 600 }}>
+                  <td
+                    style={{
+                      color: alerta.status === "ok" ? "green" : alerta.status === "insuficiente" ? "red" : "orange",
+                      fontWeight: 600,
+                      whiteSpace: "normal",
+                      maxWidth: "180px",
+                      overflowWrap: "break-word"
+                    }}
+                  >
                     {alerta.status === "insuficiente" && "🔴 Insuficiente"}
                     {alerta.status === "baixo" && `🟠 Estoque baixo${alerta.mensagem ? ` (${alerta.mensagem})` : ''}`}
                     {alerta.status === "ok" && "🟢 OK"}
@@ -145,7 +153,7 @@ export default function Estoque() {
                   <td style={{ color: alertaValidade ? "orange" : "green", fontWeight: 600 }}>
                     {alertaValidade ? "⚠️ Vencendo" : "OK"}
                   </td>
-                  <td>
+                  <td style={{ whiteSpace: "nowrap" }}>
                     <div style={{ display: "flex", gap: "0.4rem" }}>
                       <button
                         onClick={() => abrirModalEdicao(p, index)}
