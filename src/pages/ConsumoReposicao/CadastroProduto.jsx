@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Select from "react-select";
-import { inferirTipoUso } from "./verificarAlertaEstoque";
+import { inferirTipoUso } from "../../utils/verificarAlertaEstoque";
 
 // Constantes fixas
 const CATEGORIAS = [
