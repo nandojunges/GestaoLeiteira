@@ -4,12 +4,14 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import gerarEventosCalendario from '../../utils/gerarEventosCalendario';
+import VisualizarEventosDia from './VisualizarEventosDia';
 import './calendario.css';
 
 export default function CalendarioAtividades() {
   const [extras, setExtras] = useState([]);
   const [autoEventos, setAutoEventos] = useState([]);
   const [filtrados, setFiltrados] = useState([]);
+  const [mostrarRotineiros, setMostrarRotineiros] = useState(false);
   const [categorias, setCategorias] = useState({
     parto: true,
     secagem: true,
@@ -21,10 +23,9 @@ export default function CalendarioAtividades() {
     checkup: true,
   });
   const [dataSelecionada, setDataSelecionada] = useState(null);
-  const [titulo, setTitulo] = useState('');
 
   useEffect(() => {
-    const salvos = JSON.parse(localStorage.getItem('eventosExtras') || '[]');
+    const salvos = JSON.parse(localStorage.getItem('eventosExtras') || '[]').map((e) => ({ prioridadeVisual: true, ...e }));
     setExtras(salvos);
 
     const atualizar = () => setAutoEventos(gerarEventosCalendario());
@@ -44,25 +45,21 @@ export default function CalendarioAtividades() {
   useEffect(() => {
     localStorage.setItem('eventosExtras', JSON.stringify(extras));
     const todos = [...autoEventos, ...extras];
-    setFiltrados(todos.filter((ev) => categorias[ev.tipo]));
-  }, [extras, autoEventos, categorias]);
+    setFiltrados(
+      todos.filter(
+        (ev) => categorias[ev.tipo] && (ev.prioridadeVisual || mostrarRotineiros)
+      )
+    );
+  }, [extras, autoEventos, categorias, mostrarRotineiros]);
 
   const toggleCat = (c) => {
     setCategorias((p) => ({ ...p, [c]: !p[c] }));
   };
 
-  const adicionarEvento = () => {
-    if (!titulo.trim() || !dataSelecionada) return;
-    const novo = {
-      title: titulo,
-      date: dataSelecionada,
-      tipo: 'checkup',
-      color: '#95A5A6',
-    };
-    setExtras((prev) => [...prev, novo]);
-    setTitulo('');
-    setDataSelecionada(null);
+  const toggleRotineiros = () => {
+    setMostrarRotineiros((p) => !p);
   };
+
 
   return (
     <div className="w-full min-h-screen bg-white p-6 overflow-auto">
@@ -75,6 +72,13 @@ export default function CalendarioAtividades() {
             <span className="capitalize">{cat}</span>
           </label>
         ))}
+      </div>
+
+      <div className="flex justify-center mb-4">
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={mostrarRotineiros} onChange={toggleRotineiros} />
+          Mostrar eventos rotineiros (limpeza, rotina)
+        </label>
       </div>
 
       <div className="max-w-6xl mx-auto bg-white p-4 rounded-xl shadow-md">
@@ -90,29 +94,13 @@ export default function CalendarioAtividades() {
       </div>
 
       {dataSelecionada && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Novo Check-up</h2>
-            <p className="text-sm text-gray-500 mb-2">
-              📆 {new Date(dataSelecionada).toLocaleDateString('pt-BR')}
-            </p>
-            <input
-              type="text"
-              placeholder="Título do check-up"
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
-              className="w-full p-3 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setDataSelecionada(null)} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition">
-                Cancelar
-              </button>
-              <button onClick={adicionarEvento} className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
-                Salvar
-              </button>
-            </div>
-          </div>
-        </div>
+        <VisualizarEventosDia
+          data={dataSelecionada}
+          eventos={[...autoEventos, ...extras]}
+          mostrarRotineiros={mostrarRotineiros}
+          onToggleRotineiros={toggleRotineiros}
+          onFechar={() => setDataSelecionada(null)}
+        />
       )}
     </div>
   );

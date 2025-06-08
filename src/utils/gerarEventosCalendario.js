@@ -18,7 +18,8 @@ export default function gerarEventosCalendario() {
           title: `Parto - Vaca ${numero}`,
           date: toISO(registro.data),
           tipo: 'parto',
-          color: '#6C63FF'
+          color: '#6C63FF',
+          prioridadeVisual: true
         });
       }
     }
@@ -30,7 +31,8 @@ export default function gerarEventosCalendario() {
           title: `Secagem - Vaca ${numero}`,
           date: toISO(registro.dataSecagem),
           tipo: 'secagem',
-          color: '#8E44AD'
+          color: '#8E44AD',
+          prioridadeVisual: true
         });
       }
     }
@@ -46,7 +48,8 @@ export default function gerarEventosCalendario() {
         title: `Pré-parto - ${a.numero}`,
         date: data.toISOString().split('T')[0],
         tipo: 'preparto',
-        color: '#2980B9'
+        color: '#2980B9',
+        prioridadeVisual: true
       });
     }
   });
@@ -59,7 +62,8 @@ export default function gerarEventosCalendario() {
         title: `Vacina - ${v.produto}`,
         date: data,
         tipo: 'vacina',
-        color: '#27AE60'
+        color: '#27AE60',
+        prioridadeVisual: true
       });
     }
   });
@@ -72,7 +76,8 @@ export default function gerarEventosCalendario() {
         title: `Exame - ${e.tipo || e.nome}`,
         date: data,
         tipo: 'exame',
-        color: '#F39C12'
+        color: '#F39C12',
+        prioridadeVisual: true
       });
     }
   });
@@ -88,7 +93,8 @@ export default function gerarEventosCalendario() {
           title: `Limpeza - ${c.nome}`,
           date: d.toISOString().split('T')[0],
           tipo: 'limpeza',
-          color: '#3498DB'
+          color: '#3498DB',
+          prioridadeVisual: false
         });
       }
     });
@@ -103,7 +109,8 @@ export default function gerarEventosCalendario() {
           title: `Validade - ${p.nomeComercial}`,
           date: data,
           tipo: 'estoque',
-          color: '#E74C3C'
+          color: '#E74C3C',
+          prioridadeVisual: true
         });
       }
     }
@@ -115,7 +122,8 @@ export default function gerarEventosCalendario() {
         title: `⚠️ Produto ${p.nomeComercial} esgotando`,
         date: data.toISOString().split('T')[0],
         tipo: 'estoque',
-        color: '#E74C3C'
+        color: '#E74C3C',
+        prioridadeVisual: true
       });
     }
   });
