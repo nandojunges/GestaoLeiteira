@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
+import verificarAlertaEstoqueInteligente from "./verificarAlertaEstoque";
 import ModalEditarProduto from "./ModalEditarProduto";
 import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
 
@@ -49,11 +50,6 @@ export default function ListaProdutos({ categoriaFiltro }) {
     return null;
   };
 
-  const verificarAlertaEstoque = (produto) => {
-    const ajustes = JSON.parse(localStorage.getItem("ajustesEstoque") || "{}");
-    const minimo = ajustes[produto.categoria] || 0;
-    return produto.quantidade < minimo;
-  };
 
   const verificarAlertaValidade = (validade) => {
     if (!validade) return false;
@@ -115,7 +111,7 @@ export default function ListaProdutos({ categoriaFiltro }) {
                 return null;
 
               const valorUnitario = calcularValorUnitario(p);
-              const alertaEstoque = verificarAlertaEstoque(p);
+              const alerta = verificarAlertaEstoqueInteligente(p);
               const alertaValidade = verificarAlertaValidade(p.validade);
 
               return (
@@ -128,8 +124,10 @@ export default function ListaProdutos({ categoriaFiltro }) {
                   <td>{p.volume ? `${p.volume} ${p.volumeUnidade || ""}` : "—"}</td>
                   <td>{valorUnitario ? `R$ ${valorUnitario.toFixed(2)} / ${p.unidade}` : "—"}</td>
                   <td>{p.validade || "—"}</td>
-                  <td style={{ color: alertaEstoque ? "red" : "green", fontWeight: 600 }}>
-                    {alertaEstoque ? "⚠️ Baixo" : "OK"}
+                  <td style={{ color: alerta.status === "ok" ? "green" : alerta.status === "insuficiente" ? "red" : "orange", fontWeight: 600 }}>
+                    {alerta.status === "insuficiente" && "🔴 Insuficiente"}
+                    {alerta.status === "baixo" && `🟠 Estoque baixo${alerta.mensagem ? ` (${alerta.mensagem})` : ''}`}
+                    {alerta.status === "ok" && "🟢 OK"}
                   </td>
                   <td style={{ color: alertaValidade ? "orange" : "green", fontWeight: 600 }}>
                     {alertaValidade ? "⚠️ Vencendo" : "OK"}
