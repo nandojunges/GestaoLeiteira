@@ -1,70 +1,72 @@
 // 📁 src/pages/AppTarefas/index.jsx
 import React, { useEffect, useState } from 'react';
+import DashboardAlertas from './DashboardAlertas';
+import DashboardCards from './DashboardCards';
+import DashboardGraficos from './DashboardGraficos';
+import { eventosDeHoje } from './utilsDashboard';
 
 export default function AppTarefas() {
-  const [alertas, setAlertas] = useState([]);
-
-  const parseDate = (d) => {
-    if (!d) return null;
-    const [dia, mes, ano] = d.split('/');
-    return new Date(ano, mes - 1, dia);
-  };
+  const [eventos, setEventos] = useState([]);
 
   useEffect(() => {
-    const atualizar = () => {
-      const lista = JSON.parse(localStorage.getItem('alertasCarencia') || '[]');
-      const hoje = new Date();
-      const ativos = lista.filter((a) => {
-        const l = parseDate(a.leiteAte);
-        const c = parseDate(a.carneAte);
-        return (l && l >= hoje) || (c && c >= hoje);
-      });
-      localStorage.setItem('alertasCarencia', JSON.stringify(ativos));
-      setAlertas(ativos);
-    };
-
+    const atualizar = () => setEventos(eventosDeHoje());
     atualizar();
-    window.addEventListener('alertasCarenciaAtualizados', atualizar);
-    return () => window.removeEventListener('alertasCarenciaAtualizados', atualizar);
+    const evts = [
+      'eventosExtrasAtualizados',
+      'animaisAtualizados',
+      'produtosAtualizados',
+      'manejosSanitariosAtualizados',
+      'examesSanitariosAtualizados',
+      'ciclosLimpezaAtualizados',
+    ];
+    evts.forEach((e) => window.addEventListener(e, atualizar));
+    return () => evts.forEach((e) => window.removeEventListener(e, atualizar));
   }, []);
+
+  const irParaCalendario = () => {
+    localStorage.setItem('ultimaAba', 'calendario');
+    window.location.reload();
+  };
 
   return (
     <div className="p-4 space-y-4">
-      <div className="bg-white rounded-xl shadow-md p-4 mb-4">
-        <h2 className="text-lg font-bold mb-2">⚠️ Alertas de Carência</h2>
-        <div className="space-y-2">
-          {alertas.length === 0 && (
-            <div className="text-gray-500">Nenhum alerta de carência no momento</div>
-          )}
-          {alertas.map((a, i) => {
-            const hoje = new Date();
-            return (
-              <React.Fragment key={i}>
-                {a.leiteAte && parseDate(a.leiteAte) >= hoje && (
-                  <div className="bg-yellow-100 text-yellow-800 p-2 rounded">
-                    🟡 Vaca {a.numeroAnimal} em carência de leite até {a.leiteAte}
-                  </div>
-                )}
-                {a.carneAte && parseDate(a.carneAte) >= hoje && (
-                  <div className="bg-red-100 text-red-800 p-2 rounded">
-                    🔴 Vaca {a.numeroAnimal} em carência de carne até {a.carneAte}
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </div>
+      <DashboardAlertas />
+      <DashboardCards />
+      <DashboardGraficos />
+
+      <div className="flex flex-wrap gap-4">
+        {[
+          '➕ Cadastrar Animal',
+          '📋 Nova Medição de Leite',
+          '💉 Registrar Aplicação',
+          '📦 Novo Produto',
+        ].map((txt, i) => (
+          <button
+            key={i}
+            className="flex-1 bg-blue-600 text-white rounded-xl py-3 px-4 shadow hover:bg-blue-700 transition"
+          >
+            {txt}
+          </button>
+        ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow-md p-4">
-        <h2 className="text-lg font-bold mb-2">📌 Resumo Diário</h2>
-        <ul className="list-disc list-inside text-gray-700">
-          <li>3 vacas em tratamento</li>
-          <li>2 diagnósticos pendentes</li>
-          <li>4 tarefas agendadas para hoje</li>
+      <div className="bg-white rounded-xl shadow p-4">
+        <h3 className="font-bold mb-2">📅 Eventos de Hoje</h3>
+        <ul className="space-y-1 mb-2">
+          {eventos.map((ev, i) => (
+            <li
+              key={i}
+              className={ev.prioridadeVisual ? 'text-red-600' : 'text-gray-600'}
+            >
+              {ev.prioridadeVisual ? '⚠️' : '🔧'} {ev.title}
+            </li>
+          ))}
+          {eventos.length === 0 && <li className="text-gray-500">Nenhum evento</li>}
         </ul>
+        <button onClick={irParaCalendario} className="text-blue-600 underline text-sm">
+          Ver todos os eventos
+        </button>
       </div>
     </div>
   );
 }
-  
