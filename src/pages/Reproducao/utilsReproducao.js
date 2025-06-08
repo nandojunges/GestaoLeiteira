@@ -28,13 +28,7 @@ export const getStatusVaca = (del) => {
 export const getAcoesDisponiveis = (del) => {
   const ajustePEV = obterAjustePEV();
   if (del < ajustePEV) {
-    return [
-      'Registrar metrite',
-      'Registrar endometrite',
-      'Registrar infecção subclínica',
-      'Registrar cio natural (observação)',
-      'Iniciar pré-sincronização',
-    ];
+    return ['Registrar Ocorrência'];
   }
   return [
     'Iniciar Protocolo IATF',
