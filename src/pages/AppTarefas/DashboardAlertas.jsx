@@ -21,14 +21,27 @@ export default function DashboardAlertas() {
 
   if (alertas.length === 0) return null;
 
+  const definirEstilo = (msg) => {
+    const critico = /carência|pev|negativo/i.test(msg);
+    return critico
+      ? { cor: 'bg-red-500 text-white', icone: '\u{1F534}' }
+      : { cor: 'bg-yellow-400 text-black', icone: '\u{1F7E0}' };
+  };
+
   return (
-    <div className="bg-red-50 border border-red-200 rounded-xl p-4 shadow space-y-1">
-      {alertas.map((a, i) => (
-        <div key={i} className="flex items-center gap-2 text-sm text-red-800">
-          <span>❗</span>
-          <span>{a.mensagem}</span>
-        </div>
-      ))}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {alertas.map((a, i) => {
+        const estilo = definirEstilo(a.mensagem);
+        return (
+          <div
+            key={i}
+            className={`flex items-center gap-2 p-3 rounded-xl shadow ${estilo.cor}`}
+          >
+            <span className="text-xl">{estilo.icone}</span>
+            <span className="text-sm md:text-base">{a.mensagem}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
