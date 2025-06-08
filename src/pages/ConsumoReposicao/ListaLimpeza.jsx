@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ModalPlanoCiclo from "./ModalPlanoCiclo";
-import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
+import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 
@@ -164,12 +164,16 @@ export default function ListaLimpeza({ onEditar }) {
 
       const volumeStr = String(produto.volume).toLowerCase();
       const volumeNumerico = parseFloat(volumeStr);
-      const volumeEmML = volumeStr.includes("l") ? volumeNumerico * 1000 : volumeNumerico;
+      let volumeEmML = volumeStr.includes("l") ? volumeNumerico * 1000 : volumeNumerico;
       if (!volumeEmML || isNaN(volumeEmML)) return;
 
-      const precoPorML = parseFloat(produto.valorTotal) / volumeEmML;
-      const consumoPorDia = parseFloat(etapa.quantidade || 0) * freq;
-      total += consumoPorDia * precoPorML;
+      const unidades = parseFloat(produto.quantidade) || 1;
+      volumeEmML *= unidades;
+      const valorTotal = parseFloat(produto.valorTotal) || 0;
+      const precoPorML = volumeEmML > 0 ? valorTotal / volumeEmML : 0;
+      const quantidadeUsada = parseFloat(etapa.quantidade || 0) * freq;
+      const custoEtapa = precoPorML * quantidadeUsada;
+      total += custoEtapa;
     });
 
     return total > 0 ? `R$ ${total.toFixed(2)}` : "—";
@@ -300,9 +304,9 @@ export default function ListaLimpeza({ onEditar }) {
                   </td>
                   <td style={{ whiteSpace: "nowrap" }}>
                     <div style={{ display: "flex", gap: "0.4rem" }}>
-                      <button className="botao-editar" onClick={() => onEditar(c, index)}>Editar</button>
-                      <button className="botao-editar" onClick={() => setCicloExcluir(index)} style={{ borderColor: "#dc3545", color: "#dc3545" }}>Excluir</button>
-                      <button className="botao-editar" onClick={() => setPlanoAtivo(index)} style={{ borderColor: "#6b7280", color: "#6b7280" }}>Ver plano</button>
+                      <button className="btn-editar" onClick={() => onEditar(c, index)}>Editar</button>
+                      <button className="btn-excluir" onClick={() => setCicloExcluir(index)}>Excluir</button>
+                      <button className="btn-editar" onClick={() => setPlanoAtivo(index)} style={{ backgroundColor: "#6b7280" }}>Ver plano</button>
                     </div>
                   </td>
                 </tr>
@@ -320,7 +324,7 @@ export default function ListaLimpeza({ onEditar }) {
       )}
 
       {cicloExcluir !== null && (
-        <ModalConfirmarExclusao
+        <ModalExclusaoPadrao
           mensagem="Deseja realmente excluir este ciclo?"
           onCancelar={() => setCicloExcluir(null)}
           onConfirmar={() => removerCiclo(cicloExcluir)}

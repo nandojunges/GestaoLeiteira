@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import CadastroDietas from "./CadastroDietas";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
-import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
+import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
 
 export default function ListaDietas() {
   const [dietas, setDietas] = useState([]);
@@ -110,7 +110,7 @@ export default function ListaDietas() {
                 <td className="coluna-acoes">
                   <div className="botoes-tabela">
                     <button
-                      className="botao-editar"
+                      className="btn-editar"
                       onClick={() => {
                         setDietaEditar(d);
                         setIndiceEditar(idx);
@@ -120,9 +120,8 @@ export default function ListaDietas() {
                       ✏️ Editar
                     </button>
                     <button
-                      className="botao-editar"
+                      className="btn-excluir"
                       onClick={() => setDietaParaExcluir({ dieta: d, indice: idx })}
-                      style={{ borderColor: "#dc3545", color: "#dc3545" }}
                     >
                       🗑️ Excluir
                     </button>
@@ -192,7 +191,7 @@ export default function ListaDietas() {
       )}
 
       {dietaParaExcluir && (
-        <ModalConfirmarExclusao
+        <ModalExclusaoPadrao
           mensagem="Deseja realmente excluir esta dieta?"
           onCancelar={() => setDietaParaExcluir(null)}
           onConfirmar={() => {
