@@ -9,7 +9,6 @@ export default function gerarEventosCalendario() {
     return `${a.padStart(4, '0')}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
   };
 
-  // Partos salvos com prefixo "parto_" no localStorage
   Object.keys(localStorage).forEach((k) => {
     if (k.startsWith('parto_')) {
       const numero = k.replace('parto_', '');
@@ -37,7 +36,6 @@ export default function gerarEventosCalendario() {
     }
   });
 
-  // Pré-parto (21 dias antes da DPP)
   const animais = JSON.parse(localStorage.getItem('animais') || '[]');
   animais.forEach((a) => {
     if (a.dataPrevistaParto) {
@@ -53,35 +51,32 @@ export default function gerarEventosCalendario() {
     }
   });
 
-  // Vacinas (próxima aplicação)
   const vacinas = JSON.parse(localStorage.getItem('manejosSanitarios') || '[]');
   vacinas.forEach((v) => {
     const data = toISO(v.proximaAplicacao || v.dataInicial);
     if (data) {
       eventos.push({
         title: `Vacina - ${v.produto}`,
-        date,
+        date: data,
         tipo: 'vacina',
         color: '#27AE60'
       });
     }
   });
 
-  // Exames sanitários (validade ou próxima obrigatoriedade)
   const exames = JSON.parse(localStorage.getItem('examesSanitarios') || '[]');
   exames.forEach((e) => {
     const data = toISO(e.validadeCertificado || e.proximaObrigatoriedade);
     if (data) {
       eventos.push({
         title: `Exame - ${e.tipo || e.nome}`,
-        date,
+        date: data,
         tipo: 'exame',
         color: '#F39C12'
       });
     }
   });
 
-  // Limpeza - gerar para o mês atual
   const ciclos = JSON.parse(localStorage.getItem('ciclosLimpeza') || '[]');
   const hoje = new Date();
   const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -99,7 +94,6 @@ export default function gerarEventosCalendario() {
     });
   }
 
-  // Estoque crítico e validade
   const produtos = JSON.parse(localStorage.getItem('produtos') || '[]');
   produtos.forEach((p) => {
     if (p.validade) {
