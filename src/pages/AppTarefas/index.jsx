@@ -29,10 +29,22 @@ export default function AppTarefas() {
   };
 
   return (
-    <div className="p-4 space-y-4">
-      <DashboardAlertas />
-      <DashboardCards />
-      <DashboardGraficos />
+    <div className="p-4 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <section className="space-y-2">
+          <h2 className="font-bold border-b pb-1">🔔 Alertas Atuais</h2>
+          <DashboardAlertas />
+        </section>
+        <section className="space-y-2">
+          <h2 className="font-bold border-b pb-1">📊 Resumo do Rebanho</h2>
+          <DashboardCards />
+        </section>
+      </div>
+
+      <section className="space-y-2">
+        <h2 className="font-bold border-b pb-1">🧬 Diagnósticos Reprodutivos</h2>
+        <DashboardGraficos />
+      </section>
 
       <div className="flex flex-wrap gap-4">
         {[
@@ -51,7 +63,7 @@ export default function AppTarefas() {
       </div>
 
       <div className="bg-white rounded-xl shadow p-4">
-        <h3 className="font-bold mb-2">📅 Eventos de Hoje</h3>
+        <h3 className="font-bold mb-2 border-b pb-1">📅 Eventos de Hoje</h3>
         <ul className="space-y-1 mb-2">
           {eventos.map((ev, i) => (
             <li
