@@ -3,6 +3,7 @@ import { carregarAnimaisDoLocalStorage, calcularDEL } from '../Animais/utilsAnim
 import ModalHistoricoCompleto from "../Animais/ModalHistoricoCompleto";
 import ModalConfiguracaoPEV from "./ModalConfiguracaoPEV";
 import { getStatusVaca, getAcoesDisponiveis, filtrarAnimaisAtivos } from './utilsReproducao';
+import ModalRegistrarOcorrencia from './ModalRegistrarOcorrencia';
 import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
 
@@ -10,6 +11,7 @@ export default function VisaoGeralReproducao() {
   const [vacas, setVacas] = useState([]);
   const [animalFicha, setAnimalFicha] = useState(null);
   const [mostrarFicha, setMostrarFicha] = useState(false);
+  const [vacaOcorrencia, setVacaOcorrencia] = useState(null);
   const [colunaHover, setColunaHover] = useState(null);
   const [mostrarModalPEV, setMostrarModalPEV] = useState(false);
   const [configPEV, setConfigPEV] = useState({
@@ -69,7 +71,11 @@ export default function VisaoGeralReproducao() {
       <select
         onChange={(e) => {
           const acao = e.target.value;
-          if (acao !== "—") alert(`Selecionado: ${acao} para a vaca ${vaca.numero}`);
+          if (acao === 'Registrar Ocorrência') {
+            setVacaOcorrencia(vaca);
+          } else if (acao !== '—') {
+            alert(`Selecionado: ${acao} para a vaca ${vaca.numero}`);
+          }
           e.target.selectedIndex = 0;
         }}
         style={{ width: "100%", padding: "0.4rem", borderRadius: "0.5rem", border: "1px solid #ccc" }}
@@ -159,6 +165,14 @@ export default function VisaoGeralReproducao() {
         <ModalConfiguracaoPEV
           onClose={() => setMostrarModalPEV(false)}
           onAplicar={aplicarConfiguracoesPEV}
+        />
+      )}
+
+      {vacaOcorrencia && (
+        <ModalRegistrarOcorrencia
+          vaca={vacaOcorrencia}
+          onClose={() => setVacaOcorrencia(null)}
+          onSalvar={() => setVacaOcorrencia(null)}
         />
       )}
     </div>
