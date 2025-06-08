@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ModalPlanoCiclo from "./ModalPlanoCiclo";
-import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
+import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 
@@ -333,4 +333,3 @@ export default function ListaLimpeza({ onEditar }) {
     </>
   );
 }
-
