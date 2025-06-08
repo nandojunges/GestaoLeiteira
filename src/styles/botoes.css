@@ -105,3 +105,18 @@
 .btn-excluir:hover {
   background-color: #c82333;
 }
+
+.btn-registrar {
+  background-color: #4dabf7;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-registrar:hover {
+  background-color: #339af0;
+}

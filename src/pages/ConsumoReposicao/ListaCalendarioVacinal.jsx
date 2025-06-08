@@ -80,15 +80,26 @@ export default function ListaCalendarioVacinal() {
                 <td>{m.proximaAplicacao ? new Date(m.proximaAplicacao).toLocaleDateString("pt-BR") : (m.dataInicial ? new Date(m.dataInicial).toLocaleDateString("pt-BR") : "—")}</td>
                 <td className="coluna-acoes">
                   <div className="botoes-tabela">
-                    <button className="botao-editar" onClick={() => { setEditar(m); setIndiceEditar(idx); }}>
+                    <button
+                      className="btn-editar"
+                      onClick={() => {
+                        setEditar(m);
+                        setIndiceEditar(idx);
+                      }}
+                    >
                       Editar
                     </button>
-                    <button className="botao-editar" onClick={() => { setRegistrar(m); setIndiceRegistrar(idx); }}>
+                    <button
+                      className="btn-registrar"
+                      onClick={() => {
+                        setRegistrar(m);
+                        setIndiceRegistrar(idx);
+                      }}
+                    >
                       Registrar
                     </button>
                     <button
-                      className="botao-editar"
-                      style={{ borderColor: "#dc3545", color: "#dc3545" }}
+                      className="btn-excluir"
                       onClick={() => setManejoExcluir(idx)}
                     >
                       Excluir
