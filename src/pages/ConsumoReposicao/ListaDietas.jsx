@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import CadastroDietas from "./CadastroDietas";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
-import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
+import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
 
 export default function ListaDietas() {
   const [dietas, setDietas] = useState([]);
