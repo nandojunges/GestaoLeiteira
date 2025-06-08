@@ -46,11 +46,28 @@ export const getAcoesDisponiveis = (del) => {
   ];
 };
 
-// ✅ Filtra animais com status reprodutivo ativo
+// 🔍 Verifica se existem registros reprodutivos armazenados para o animal
+export const possuiDadosReprodutivos = (animal) => {
+  const num = animal?.numero;
+  if (!num) return false;
+
+  const temParto = !!localStorage.getItem(`parto_${num}`) ||
+    (Array.isArray(animal.partos) && animal.partos.length > 0) ||
+    !!animal.ultimoParto;
+
+  const temProtocolo = !!localStorage.getItem(`protocolo_${num}`) || !!animal.protocoloAtivo;
+
+  const temPrenhez = !!localStorage.getItem(`prenhez_${num}`) ||
+    (animal.statusReprodutivo || '').toLowerCase() === 'prenhe';
+
+  return temParto || temProtocolo || temPrenhez;
+};
+
+// ✅ Filtra animais com status reprodutivo ativo e que possuam algum registro
 export const filtrarAnimaisAtivos = (animais) => {
-  return (animais || []).filter(a => {
+  return (animais || []).filter((a) => {
     const status = (a.statusReprodutivo || '').toLowerCase();
     if (['seca', 'vendida', 'inativo'].includes(status)) return false;
-    return true;
+    return possuiDadosReprodutivos(a);
   });
 };
