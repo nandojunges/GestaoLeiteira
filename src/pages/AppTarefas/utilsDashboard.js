@@ -126,3 +126,25 @@ export function eventosDeHoje() {
   const todos = [...auto, ...extras];
   return todos.filter((ev) => ev.date === hoje);
 }
+
+export function resumoEventosHoje() {
+  const eventos = eventosDeHoje();
+  const resumo = { partos: 0, vacinacoes: 0, secagens: 0 };
+  eventos.forEach((ev) => {
+    if (ev.tipo === 'parto') resumo.partos += 1;
+    else if (ev.tipo === 'vacina') resumo.vacinacoes += 1;
+    else if (ev.tipo === 'secagem') resumo.secagens += 1;
+  });
+  return resumo;
+}
+
+export function produtosVencendo() {
+  const hoje = new Date();
+  const limite = new Date();
+  limite.setDate(limite.getDate() + 7);
+  const produtos = JSON.parse(localStorage.getItem('produtos') || '[]');
+  return produtos.filter((p) => {
+    const dv = parseDate(p.validade);
+    return dv && dv >= hoje && dv <= limite;
+  });
+}

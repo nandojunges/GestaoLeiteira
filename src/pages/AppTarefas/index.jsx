@@ -3,13 +3,23 @@ import React, { useEffect, useState } from 'react';
 import DashboardAlertas from './DashboardAlertas';
 import DashboardCards from './DashboardCards';
 import DashboardGraficos from './DashboardGraficos';
-import { eventosDeHoje } from './utilsDashboard';
+import {
+  eventosDeHoje,
+  resumoEventosHoje,
+  produtosVencendo,
+} from './utilsDashboard';
 
 export default function AppTarefas() {
   const [eventos, setEventos] = useState([]);
+  const [resumo, setResumo] = useState({ partos: 0, vacinacoes: 0, secagens: 0 });
+  const [vencimentos, setVencimentos] = useState([]);
 
   useEffect(() => {
-    const atualizar = () => setEventos(eventosDeHoje());
+    const atualizar = () => {
+      setEventos(eventosDeHoje());
+      setResumo(resumoEventosHoje());
+      setVencimentos(produtosVencendo());
+    };
     atualizar();
     const evts = [
       'eventosExtrasAtualizados',
@@ -30,23 +40,18 @@ export default function AppTarefas() {
 
   return (
     <div className="p-4 space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="space-y-2">
-          <h2 className="font-bold border-b pb-1">🔔 Alertas Atuais</h2>
-          <DashboardAlertas />
-        </section>
-        <section className="space-y-2">
-          <h2 className="font-bold border-b pb-1">📊 Resumo do Rebanho</h2>
-          <DashboardCards />
-        </section>
-      </div>
+      <section>
+        <DashboardCards />
+      </section>
+
+      <DashboardAlertas />
 
       <section className="space-y-2">
         <h2 className="font-bold border-b pb-1">🧬 Diagnósticos Reprodutivos</h2>
         <DashboardGraficos />
       </section>
 
-      <div className="flex flex-wrap gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           '➕ Cadastrar Animal',
           '📋 Nova Medição de Leite',
@@ -62,9 +67,12 @@ export default function AppTarefas() {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow p-4">
-        <h3 className="font-bold mb-2 border-b pb-1">📅 Eventos de Hoje</h3>
-        <ul className="space-y-1 mb-2">
+      <div className="bg-white rounded-xl shadow p-4 space-y-2">
+        <h3 className="font-bold border-b pb-1">📅 Eventos de Hoje</h3>
+        <p className="text-sm text-gray-700">
+          {`Partos: ${resumo.partos} · Vacinações: ${resumo.vacinacoes} · Secagens: ${resumo.secagens}`}
+        </p>
+        <ul className="space-y-1">
           {eventos.map((ev, i) => (
             <li
               key={i}
@@ -75,6 +83,16 @@ export default function AppTarefas() {
           ))}
           {eventos.length === 0 && <li className="text-gray-500">Nenhum evento</li>}
         </ul>
+        {vencimentos.length > 0 && (
+          <div>
+            <p className="font-semibold mt-2">🗓️ Produtos vencendo</p>
+            <ul className="list-disc ml-4 space-y-1 text-sm">
+              {vencimentos.map((v, i) => (
+                <li key={i}>{v.nomeComercial} - {v.validade}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         <button onClick={irParaCalendario} className="text-blue-600 underline text-sm">
           Ver todos os eventos
         </button>
