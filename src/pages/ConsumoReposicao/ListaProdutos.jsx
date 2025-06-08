@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 import ModalEditarProduto from "./ModalEditarProduto";
-import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
+import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
 
 export default function ListaProdutos({ categoriaFiltro }) {
   const [produtos, setProdutos] = useState([]);
