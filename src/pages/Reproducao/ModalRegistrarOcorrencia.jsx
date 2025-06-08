@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Select from 'react-select';
 import { formatarDataDigitada, formatarDataBR } from '../Animais/utilsAnimais';
+import { addEventoCalendario } from '../../utils/eventosCalendario';
 
 export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
   const TIPOS = [
@@ -23,7 +24,7 @@ export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
   const [produto, setProduto] = useState(null);
   const [dose, setDose] = useState('');
   const [duracao, setDuracao] = useState('');
-  const [carencia, setCarencia] = useState('');
+  const [carencia, setCarencia] = useState(''); // exibida apenas para consulta
   const [produtos, setProdutos] = useState([]);
   const camposRef = useRef([]);
 
@@ -87,12 +88,13 @@ export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
       localStorage.setItem('tratamentos', JSON.stringify(listaTr));
       window.dispatchEvent(new Event('tratamentosAtualizados'));
 
-      const eventos = JSON.parse(localStorage.getItem('eventosExtras') || '[]');
       const toISO = (d) => {
         const [dia, mes, ano] = d.split('/');
         return `${ano}-${mes.padStart(2,'0')}-${dia.padStart(2,'0')}`;
       };
+
       const inicio = new Date(toISO(dataInicioTratamento));
+      const eventos = JSON.parse(localStorage.getItem('eventosExtras') || '[]');
       for (let i = 0; i < parseInt(duracao || 0); i++) {
         const data = new Date(inicio);
         data.setDate(data.getDate() + i);
@@ -105,16 +107,41 @@ export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
       }
       localStorage.setItem('eventosExtras', JSON.stringify(eventos));
 
-      const alertas = JSON.parse(localStorage.getItem('alertasTratamento') || '[]');
-      const fim = new Date(inicio);
-      fim.setDate(fim.getDate() + parseInt(duracao || 0) - 1);
+      const listaProdutos = JSON.parse(localStorage.getItem('produtos') || '[]');
+      const info = listaProdutos.find(p => p.nomeComercial === produto) || {};
+      const carLeite = parseInt(info.carenciaLeite || 0);
+      const carCarne = parseInt(info.carenciaCarne || 0);
+
+      const fimLeite = new Date(inicio);
+      fimLeite.setDate(fimLeite.getDate() + carLeite);
+      const fimCarne = new Date(inicio);
+      fimCarne.setDate(fimCarne.getDate() + carCarne);
+
+      addEventoCalendario({
+        title: `📛 Início da carência – ${produto} (Animal ${vaca.numero})`,
+        date: inicio.toISOString().split('T')[0],
+        tipo: 'carencia'
+      });
+      addEventoCalendario({
+        title: `✅ Fim da carência de LEITE – ${produto} (Animal ${vaca.numero})`,
+        date: fimLeite.toISOString().split('T')[0],
+        tipo: 'carencia'
+      });
+      addEventoCalendario({
+        title: `✅ Fim da carência de CARNE – ${produto} (Animal ${vaca.numero})`,
+        date: fimCarne.toISOString().split('T')[0],
+        tipo: 'carencia'
+      });
+
+      const alertas = JSON.parse(localStorage.getItem('alertasCarencia') || '[]');
       alertas.push({
         numeroAnimal: vaca.numero,
         produto,
-        ate: formatarDataBR(fim)
+        leiteAte: formatarDataBR(fimLeite),
+        carneAte: formatarDataBR(fimCarne)
       });
-      localStorage.setItem('alertasTratamento', JSON.stringify(alertas));
-      window.dispatchEvent(new Event('alertasTratamentoAtualizados'));
+      localStorage.setItem('alertasCarencia', JSON.stringify(alertas));
+      window.dispatchEvent(new Event('alertasCarenciaAtualizados'));
     }
     onSalvar?.(ocorrencia);
     onClose?.();
@@ -238,7 +265,9 @@ export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
               </div>
               <div>
                 <label>Carência (Leite/Carne)</label>
-                <input value={carencia} onChange={e => setCarencia(e.target.value)} style={input()} />
+                <div style={{ padding: '0.6rem', border: '1px solid #ccc', borderRadius: '0.5rem' }}>
+                  {carencia || '—'}
+                </div>
               </div>
             </>
           )}
