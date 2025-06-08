@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 import ModalInfoLote from "./ModalInfoLote";
-import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
+import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
 
 export default function ListaLotes({ onAbrirCadastro }) {
   const [lotes, setLotes] = useState([]);
