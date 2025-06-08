@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 import ModalInfoLote from "./ModalInfoLote";
-import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
+import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
 
 export default function ListaLotes({ onAbrirCadastro }) {
   const [lotes, setLotes] = useState([]);
@@ -108,15 +108,14 @@ export default function ListaLotes({ onAbrirCadastro }) {
                 <td>
                   <div style={{ display: "flex", gap: "0.4rem" }}>
                     <button
-                      className="botao-editar"
+                      className="btn-editar"
                       onClick={() => alternarAtivo(index)}
                     >
                       {l.ativo ? "Inativar" : "Ativar"}
                     </button>
                     <button
-                      className="botao-editar"
+                      className="btn-excluir"
                       onClick={() => setLoteExcluir(index)}
-                      style={{ borderColor: "#dc3545", color: "#dc3545" }}
                     >
                       Excluir
                     </button>
@@ -136,7 +135,7 @@ export default function ListaLotes({ onAbrirCadastro }) {
       )}
 
       {loteExcluir !== null && (
-        <ModalConfirmarExclusao
+        <ModalExclusaoPadrao
           mensagem="Deseja realmente excluir este lote?"
           onCancelar={() => setLoteExcluir(null)}
           onConfirmar={() => removerLote(loteExcluir)}

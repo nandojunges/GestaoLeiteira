@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 import ModalEditarProduto from "./ModalEditarProduto";
-import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
+import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
 
 export default function ListaProdutos({ categoriaFiltro }) {
   const [produtos, setProdutos] = useState([]);
@@ -139,30 +139,14 @@ export default function ListaProdutos({ categoriaFiltro }) {
                       <button
                         type="button"
                         onClick={() => abrirModalEdicao(p, index)}
-                        style={{
-                          backgroundColor: "#007bff",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: "8px",
-                          padding: "0.4rem 0.8rem",
-                          fontWeight: "bold",
-                          cursor: "pointer"
-                        }}
+                        className="btn-editar"
                       >
                         Editar
                       </button>
                       <button
                         type="button"
                         onClick={() => confirmarExclusao(p)}
-                        style={{
-                          backgroundColor: "#dc3545",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: "8px",
-                          padding: "0.4rem 0.8rem",
-                          fontWeight: "bold",
-                          cursor: "pointer"
-                        }}
+                        className="btn-excluir"
                       >
                         Excluir
                       </button>
@@ -191,7 +175,7 @@ export default function ListaProdutos({ categoriaFiltro }) {
       )}
 
       {produtoParaExcluir && (
-        <ModalConfirmarExclusao
+        <ModalExclusaoPadrao
           mensagem={`Deseja realmente excluir o produto \u201c${
             produtoParaExcluir.nomeComercial || "sem nome"
           }\u201d?`}

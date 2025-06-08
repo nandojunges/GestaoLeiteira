@@ -3,7 +3,7 @@ import CadastroProduto from "./CadastroProduto";
 import AjustesEstoque from "./AjustesEstoque";
 import ModalEditarProduto from "./ModalEditarProduto";
 import Select from "react-select";
-import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
+import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
 import "../../styles/botoes.css";
 import "../../styles/tabelaModerna.css";
 
@@ -152,19 +152,13 @@ export default function Estoque() {
                     <div style={{ display: "flex", gap: "0.4rem" }}>
                       <button
                         onClick={() => abrirModalEdicao(p, index)}
-                        style={{
-                          backgroundColor: "#007bff", color: "#fff", border: "none",
-                          borderRadius: "8px", padding: "0.4rem 0.8rem", fontWeight: "bold"
-                        }}
+                        className="btn-editar"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => confirmarExclusao(p)}
-                        style={{
-                          backgroundColor: "#dc3545", color: "#fff", border: "none",
-                          borderRadius: "8px", padding: "0.4rem 0.8rem", fontWeight: "bold"
-                        }}
+                        className="btn-excluir"
                       >
                         Excluir
                       </button>
@@ -206,7 +200,7 @@ export default function Estoque() {
       )}
 
       {produtoParaExcluir && (
-        <ModalConfirmarExclusao
+        <ModalExclusaoPadrao
           mensagem={`Deseja realmente excluir o produto \u201c${
             produtoParaExcluir.nomeComercial || "sem nome"
           }\u201d?`}
