@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Select from "react-select";
+import { inferirTipoUso } from "./verificarAlertaEstoque";
 
 // Constantes fixas
 const CATEGORIAS = [
@@ -114,6 +115,7 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
   const [produto, setProduto] = useState({
     nomeComercial: "",
     categoria: "",
+    tipoDeUso: "",
     unidade: "",
     quantidade: "",
     apresentacao: "",
@@ -179,6 +181,7 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
     if (campo === "categoria") {
       const agrupamento = obterAgrupamento(valor);
       novoProduto.agrupamento = agrupamento;
+      novoProduto.tipoDeUso = inferirTipoUso(valor);
       setMostrarHormonal(valor === "Hormônio");
       setMostrarAIEInfo(valor === "AIE");
       setMostrarCarencia(["Antibiótico", "Antiparasitário"].includes(valor));
@@ -270,6 +273,10 @@ export default function CadastroProduto({ onFechar, onSalvar }) {
       principiosAtivos: [...listaPrincipios],
       principioAtivo: listaPrincipios.join(", ")
     };
+
+    if (!atualizado.tipoDeUso && atualizado.categoria) {
+      atualizado.tipoDeUso = inferirTipoUso(atualizado.categoria);
+    }
 
     if (!atualizado.agrupamento && atualizado.categoria) {
       let agrupamento = "";
