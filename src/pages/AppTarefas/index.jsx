@@ -69,13 +69,15 @@ export default function AppTarefas() {
       </div>
 
       {/* CONTEÚDO PRINCIPAL COM COLUNA LATERAL */}
-      <div className="mt-6 flex gap-6 items-start">
-        <div className="flex-1">
+      <div
+        style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start', marginTop: '2rem' }}
+      >
+        <div style={{ flex: 2 }}>
           <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center' }}>
             <TarefasCentrais />
           </div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
           <CardLateral>
             <ResumoEstoqueCritico />
           </CardLateral>
