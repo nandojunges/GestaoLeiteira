@@ -4,6 +4,7 @@ import AlertasAtuais from './componentes/AlertasAtuais';
 import GraficosRepro from './componentes/GraficosRepro';
 import InsightsInteligentes from './componentes/InsightsInteligentes';
 import ResumoEstoqueCritico from './componentes/ResumoEstoqueCritico';
+import CardLateral from './componentes/CardLateral';
 
 export default function AppTarefas() {
   const [resumo, setResumo] = useState({
@@ -72,10 +73,18 @@ export default function AppTarefas() {
         <div className="flex-1">
           <AlertasAtuais />
         </div>
-        <div className="w-[300px] flex flex-col gap-4">
-          <ResumoEstoqueCritico />
-          <GraficosRepro />
-          <InsightsInteligentes />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+          <CardLateral>
+            <ResumoEstoqueCritico />
+          </CardLateral>
+
+          <CardLateral>
+            <GraficosRepro />
+          </CardLateral>
+
+          <CardLateral>
+            <InsightsInteligentes />
+          </CardLateral>
         </div>
       </div>
     </div>
