@@ -95,7 +95,7 @@ export default function AppTarefas() {
       {/* DUAS COLUNAS: ESQUERDA (principal), DIREITA (lateral) */}
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 mt-8">
         {/* COLUNA PRINCIPAL (ESQUERDA) */}
-        <div className="flex flex-col gap-6">
+        <main className="flex flex-col gap-6">
           {/* ALERTAS ATUAIS – GRANDE E EM DESTAQUE */}
           <Card>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
@@ -165,10 +165,10 @@ export default function AppTarefas() {
             <button className="botao-acao">📦 Ver estoque</button>
             <button className="botao-acao">📊 Ver relatório</button>
           </div>
-        </div>
+        </main>
 
         {/* COLUNA LATERAL (DIREITA) */}
-        <div className="flex flex-col gap-6">
+        <aside className="flex flex-col gap-6">
           <Card>
             <GraficosRepro />
           </Card>
@@ -178,7 +178,7 @@ export default function AppTarefas() {
           <Card>
             <InsightsInteligentes />
           </Card>
-        </div>
+        </aside>
       </div>
     </div>
   );
