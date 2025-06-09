@@ -4,7 +4,6 @@ import {
   eventosDeHoje,
   resumoEventosHoje,
 } from './utilsDashboard';
-import AlertasAtuais from './componentes/AlertasAtuais';
 import GraficosRepro from './componentes/GraficosRepro';
 import InsightsInteligentes from './componentes/InsightsInteligentes';
 import ResumoEstoqueCritico from './componentes/ResumoEstoqueCritico';
@@ -77,7 +76,7 @@ export default function AppTarefas() {
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'Poppins, sans-serif' }}>
-      {/* RESUMO */}
+      {/* RESUMO NO TOPO */}
       <div
         style={{
           display: 'flex',
@@ -93,14 +92,9 @@ export default function AppTarefas() {
         <BlocoResumo titulo="Carência leite/carne" valor={resumo.carencias} icone="⚠️" cor="#eab308" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-        <AlertasAtuais />
-        <ResumoEstoqueCritico />
-        <InsightsInteligentes />
-      </div>
-
+      {/* CONTEÚDO CENTRAL COM COLUNAS */}
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 mt-8">
-        {/* COLUNA ESQUERDA - Conteúdo principal */}
+        {/* COLUNA PRINCIPAL */}
         <div className="flex flex-col gap-6">
           <Card>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
@@ -132,9 +126,16 @@ export default function AppTarefas() {
 
           <Card>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-              🧬 Diagnósticos Reprodutivos
+              📦 Estoque Crítico
             </h2>
-            Ainda não há diagnósticos lançados.
+            <ResumoEstoqueCritico />
+          </Card>
+
+          <Card>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
+              💡 Insights Inteligentes
+            </h2>
+            <InsightsInteligentes />
           </Card>
 
           <Card>
@@ -153,28 +154,37 @@ export default function AppTarefas() {
               </ul>
             )}
           </Card>
+
+          <Card>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
+              🧬 Diagnósticos Reprodutivos
+            </h2>
+            Ainda não há diagnósticos lançados.
+          </Card>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: '1rem',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+            }}
+          >
+            <button className="botao-acao">➕ Iniciar protocolo</button>
+            <button className="botao-acao">🩺 Lançar diagnóstico</button>
+            <button className="botao-acao">📦 Ver estoque</button>
+            <button className="botao-acao">📊 Ver relatório</button>
+          </div>
         </div>
 
-        {/* COLUNA DIREITA - Gráficos (vertical) */}
+        {/* COLUNA LATERAL: GRÁFICOS */}
         <div className="flex flex-col gap-6">
-          <GraficosRepro />
-        </div>
-      </div>
+          <Card>
+            <GraficosRepro />
+          </Card>
 
-      {/* AÇÕES RÁPIDAS */}
-      <div
-        style={{
-          marginTop: '2rem',
-          display: 'flex',
-          gap: '1rem',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-        }}
-      >
-        <button className="botao-acao">➕ Iniciar protocolo</button>
-        <button className="botao-acao">🩺 Lançar diagnóstico</button>
-        <button className="botao-acao">📦 Ver estoque</button>
-        <button className="botao-acao">📊 Ver relatório</button>
+          {/* Adicione mais gráficos no mesmo estilo, se quiser */}
+        </div>
       </div>
     </div>
   );
