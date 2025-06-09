@@ -142,6 +142,37 @@ export function resumoEventosHoje() {
   return resumo;
 }
 
+export function eventosDoMes() {
+  const todos = gerarEventosCalendario();
+  const hoje = new Date();
+  const mes = hoje.getMonth();
+  const ano = hoje.getFullYear();
+  return todos
+    .filter((ev) => {
+      const d = new Date(ev.date);
+      return d.getMonth() === mes && d.getFullYear() === ano;
+    })
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
+export function producaoLeiteUltimos7Dias() {
+  const hoje = new Date();
+  const dias = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(hoje);
+    d.setDate(hoje.getDate() - i);
+    dias.push(d.toISOString().split('T')[0]);
+  }
+  return dias.map((data) => {
+    const registro = JSON.parse(localStorage.getItem(`medicaoLeite_${data}`) || '{}');
+    const total = Object.values(registro.dados || {}).reduce(
+      (acc, val) => acc + parseFloat(val.total || 0),
+      0
+    );
+    return { data, total: Number(total.toFixed(1)) };
+  });
+}
+
 export function produtosVencendo() {
   const hoje = new Date();
   const limite = new Date();
