@@ -1,22 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import {
-  contagemStatusVacas,
-  eventosDeHoje,
-  resumoEventosHoje,
-} from './utilsDashboard';
+import { contagemStatusVacas } from './utilsDashboard';
 import AlertasAtuais from './componentes/AlertasAtuais';
 import GraficosRepro from './componentes/GraficosRepro';
 import InsightsInteligentes from './componentes/InsightsInteligentes';
 import ResumoEstoqueCritico from './componentes/ResumoEstoqueCritico';
 
 export default function AppTarefas() {
-  const [alertas, setAlertas] = useState([]);
-  const [eventosHoje, setEventosHoje] = useState([]);
-  const [resumoEventos, setResumoEventos] = useState({
-    partos: 0,
-    vacinacoes: 0,
-    secagens: 0,
-  });
   const [resumo, setResumo] = useState({
     lactacao: 0,
     pev: 0,
@@ -26,7 +15,7 @@ export default function AppTarefas() {
   });
 
   useEffect(() => {
-    const atualizarAlertas = () => {
+    const atualizarCarencias = () => {
       const lista = JSON.parse(localStorage.getItem('alertasCarencia') || '[]');
       const hoje = new Date();
       const parse = (d) => {
@@ -40,7 +29,6 @@ export default function AppTarefas() {
         return (l && l >= hoje) || (c && c >= hoje);
       });
       localStorage.setItem('alertasCarencia', JSON.stringify(ativos));
-      setAlertas(ativos);
       setResumo((r) => ({ ...r, carencias: ativos.length }));
     };
 
@@ -49,29 +37,14 @@ export default function AppTarefas() {
       setResumo((r) => ({ ...r, ...dados }));
     };
 
-    const atualizarEventos = () => {
-      setEventosHoje(eventosDeHoje());
-      setResumoEventos(resumoEventosHoje());
-    };
-
-    atualizarAlertas();
+    atualizarCarencias();
     atualizarResumo();
-    atualizarEventos();
 
-    window.addEventListener('alertasCarenciaAtualizados', atualizarAlertas);
+    window.addEventListener('alertasCarenciaAtualizados', atualizarCarencias);
     window.addEventListener('animaisAtualizados', atualizarResumo);
-    const eventos = [
-      'animaisAtualizados',
-      'manejosSanitariosAtualizados',
-      'produtosAtualizados',
-      'examesSanitariosAtualizados',
-      'eventosExtrasAtualizados',
-    ];
-    eventos.forEach((e) => window.addEventListener(e, atualizarEventos));
     return () => {
-      window.removeEventListener('alertasCarenciaAtualizados', atualizarAlertas);
+      window.removeEventListener('alertasCarenciaAtualizados', atualizarCarencias);
       window.removeEventListener('animaisAtualizados', atualizarResumo);
-      eventos.forEach((e) => window.removeEventListener(e, atualizarEventos));
     };
   }, []);
 
@@ -103,83 +76,6 @@ export default function AppTarefas() {
         <GraficosRepro />
       </div>
 
-      {/* ALERTAS ATUAIS */}
-      <div style={{ marginTop: '2rem' }}>
-        <Card>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-            🔔 Alertas Atuais
-          </h2>
-          {alertas.length === 0 && (
-            <div style={{ color: '#6b7280', fontStyle: 'italic' }}>
-              Nenhum alerta de carência no momento
-            </div>
-          )}
-          {alertas.map((a, i) => (
-            <div
-              key={i}
-              style={{
-                backgroundColor: '#fef3c7',
-                padding: '1rem',
-                borderRadius: '1rem',
-                marginBottom: '0.5rem',
-                fontWeight: 600,
-                boxShadow: '0 0 10px rgba(0,0,0,0.05)',
-              }}
-            >
-              ⚠️ Vaca {a.numeroAnimal} em carência de leite até {a.leiteAte || '-'} e carne até{' '}
-              {a.carneAte || '-'}
-            </div>
-          ))}
-        </Card>
-      </div>
-
-      {/* DIAGNÓSTICOS */}
-      <div style={{ marginTop: '2rem' }}>
-        <Card>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-            🧬 Diagnósticos Reprodutivos
-          </h2>
-          {/* Conteúdo futuro aqui */}
-          Ainda não há diagnósticos lançados.
-        </Card>
-      </div>
-
-      {/* DESTAQUES DO DIA */}
-      <div style={{ marginTop: '2rem' }}>
-        <Card className="fade-in">
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-            📅 Destaques do Dia
-          </h2>
-          {eventosHoje.length === 0 && (
-            <div style={{ color: '#6b7280', fontStyle: 'italic' }}>
-              Nenhum evento para hoje.
-            </div>
-          )}
-          {eventosHoje.length > 0 && (
-            <ul style={{ paddingLeft: '1.25rem', listStyleType: 'disc' }}>
-              {eventosHoje.slice(0, 5).map((ev, i) => (
-                <li key={i}>{ev.title}</li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </div>
-
-      {/* AÇÕES RÁPIDAS */}
-      <div
-        style={{
-          marginTop: '2rem',
-          display: 'flex',
-          gap: '1rem',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-        }}
-      >
-        <button className="botao-acao">➕ Iniciar protocolo</button>
-        <button className="botao-acao">🩺 Lançar diagnóstico</button>
-        <button className="botao-acao">📦 Ver estoque</button>
-        <button className="botao-acao">📊 Ver relatório</button>
-      </div>
     </div>
   );
 }
@@ -215,21 +111,3 @@ function BlocoResumo({ titulo, valor, icone, cor }) {
   );
 }
 
-function Card({ children, className }) {
-  return (
-    <div
-      className={className}
-      style={{
-        backgroundColor: '#fff',
-        borderRadius: '1rem',
-        boxShadow: '0 10px 15px rgba(0,0,0,0.1)',
-        padding: '2rem',
-        transition: 'transform 0.2s ease-in-out',
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.03)')}
-      onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-    >
-      {children}
-    </div>
-  );
-}
