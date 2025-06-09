@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import gerarTarefasAutomaticas from '../../utils/gerarTarefasAutomaticas';
 
 export default function AppTarefas() {
   const hoje = new Date().toISOString().slice(0, 10);
@@ -7,23 +8,37 @@ export default function AppTarefas() {
   const [mostrarHistorico, setMostrarHistorico] = useState(false);
 
   useEffect(() => {
-    const armazenadas = JSON.parse(localStorage.getItem('tarefas') || '[]');
-    const atualizadas = armazenadas.map((t) => {
-      if (t.status === 'pendente' && t.data < hoje) {
-        return { ...t, status: 'atrasado' };
-      }
-      return t;
-    });
+    const carregar = () => {
+      gerarTarefasAutomaticas();
+      let armazenadas = JSON.parse(localStorage.getItem('tarefas') || '[]');
+      const atualizadas = armazenadas.map((t) => {
+        if (t.status === 'pendente' && t.data < hoje && t.tipo !== 'estoque') {
+          return { ...t, status: 'atrasado' };
+        }
+        return t;
+      });
 
-    const agrupadas = {};
-    atualizadas.forEach((t) => {
-      if (!agrupadas[t.data]) agrupadas[t.data] = [];
-      agrupadas[t.data].push(t);
-    });
+      const agrupadas = {};
+      atualizadas.forEach((t) => {
+        if (!agrupadas[t.data]) agrupadas[t.data] = [];
+        agrupadas[t.data].push(t);
+      });
 
-    setTarefas(agrupadas[hoje] || []);
-    setHistorico(agrupadas);
-    localStorage.setItem('tarefas', JSON.stringify(atualizadas));
+      setTarefas(agrupadas[hoje] || []);
+      setHistorico(agrupadas);
+      localStorage.setItem('tarefas', JSON.stringify(atualizadas));
+    };
+
+    carregar();
+    const eventos = [
+      'manejosSanitariosAtualizados',
+      'tratamentosAtualizados',
+      'produtosAtualizados',
+      'alertasCarenciaAtualizados',
+      'eventosExtrasAtualizados',
+    ];
+    eventos.forEach((ev) => window.addEventListener(ev, carregar));
+    return () => eventos.forEach((ev) => window.removeEventListener(ev, carregar));
   }, []);
 
   const atualizarStorage = (novas) => {
@@ -69,7 +84,7 @@ export default function AppTarefas() {
         boxShadow: '0 10px 15px rgba(0,0,0,0.1)',
         padding: '2rem',
         width: '100%',
-        maxWidth: '420px',
+        maxWidth: '680px',
         border: '1px solid #e2e8f0'
       }}>
         <h2 style={{
@@ -111,7 +126,7 @@ export default function AppTarefas() {
                 color: t.status === 'feito' ? '#9ca3af' : '#111827',
                 fontWeight: '600'
               }}>{t.descricao}</span>
-              {t.status !== 'feito' && (
+              {t.status !== 'feito' && t.tipo !== 'estoque' && (
                 <button onClick={() => marcarComoConcluida(t.id)} style={{
                   backgroundColor: '#3b82f6',
                   color: '#fff',
@@ -170,7 +185,7 @@ export default function AppTarefas() {
                         fontWeight: '600'
                       }}>
                         <span>{t.status === 'feito' ? '✅' : '❌'} {t.descricao}</span>
-                        {t.status === 'pendente' && (
+                        {t.status === 'pendente' && t.tipo !== 'estoque' && (
                           <button onClick={() => remarcarTarefa(data, t)} style={{
                             marginLeft: '0.5rem',
                             backgroundColor: '#f59e0b',
