@@ -90,7 +90,8 @@ export default function Estoque() {
         </div>
       </div>
 
-      <table className="tabela-padrao" style={{ tableLayout: "fixed", width: "100%" }}>
+      <div style={{ overflowX: "auto" }}>
+        <table className="tabela-padrao" style={{ tableLayout: "fixed", width: "100%" }}>
         <thead>
           <tr>
             {[
@@ -109,7 +110,7 @@ export default function Estoque() {
                 style={{
                   textAlign: "left",
                   whiteSpace: "nowrap",
-                  width: titulo === "Ação" ? "1%" : titulo === "Nome Comercial" ? "20%" : "auto"
+                  width: titulo === "Ação" ? "110px" : titulo === "Nome Comercial" ? "20%" : "auto"
                 }}
               >
                 {titulo}
@@ -132,12 +133,12 @@ export default function Estoque() {
 
               return (
                 <tr key={index}>
-                  <td style={{ fontWeight: 600 }}>{p.nomeComercial || "—"}</td>
-                  <td>{p.categoria || "—"}</td>
-                  <td>{p.quantidade ? `${p.quantidade} ${p.unidade || ""}` : "—"}</td>
-                  <td>{p.valorTotal ? `R$ ${Number(p.valorTotal).toFixed(2)}` : "—"}</td>
-                  <td>{p.apresentacao || "—"}</td>
-                  <td>{p.validade || "—"}</td>
+                  <td style={{ fontWeight: 600, whiteSpace: "nowrap" }}>{p.nomeComercial || "—"}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{p.categoria || "—"}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{p.quantidade ? `${p.quantidade} ${p.unidade || ""}` : "—"}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{p.valorTotal ? `R$ ${Number(p.valorTotal).toFixed(2)}` : "—"}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{p.apresentacao || "—"}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{p.validade || "—"}</td>
                   <td
                     style={{
                       color: alerta.status === "ok" ? "green" : alerta.status === "insuficiente" ? "red" : "orange",
@@ -151,7 +152,7 @@ export default function Estoque() {
                     {alerta.status === "baixo" && `🟠 Estoque baixo${alerta.mensagem ? ` (${alerta.mensagem})` : ''}`}
                     {alerta.status === "ok" && "🟢 OK"}
                   </td>
-                  <td style={{ color: alertaValidade ? "orange" : "green", fontWeight: 600 }}>
+                  <td style={{ color: alertaValidade ? "orange" : "green", fontWeight: 600, whiteSpace: "nowrap" }}>
                     {alertaValidade ? "⚠️ Vencendo" : "OK"}
                   </td>
                   <td style={{ whiteSpace: "nowrap" }}>
@@ -175,7 +176,8 @@ export default function Estoque() {
             })
           )}
         </tbody>
-      </table>
+        </table>
+      </div>
 
       {mostrarCadastro && (
         <CadastroProduto
