@@ -6,6 +6,7 @@ export default function AppTarefas() {
   const [tarefas, setTarefas] = useState([]);
   const [historico, setHistorico] = useState({});
   const [mostrarHistorico, setMostrarHistorico] = useState(false);
+  const [feedback, setFeedback] = useState({});
 
   useEffect(() => {
     const carregar = () => {
@@ -54,6 +55,30 @@ export default function AppTarefas() {
     setTarefas(novas);
     setHistorico(novoHist);
     atualizarStorage(novoHist);
+    setFeedback((f) => ({ ...f, [id]: 'feito' }));
+    setTimeout(() => {
+      setFeedback((f) => {
+        const { [id]: _, ...rest } = f;
+        return rest;
+      });
+    }, 800);
+  };
+
+  const desfazerTarefa = (id) => {
+    const novas = tarefas.map((t) =>
+      t.id === id ? { ...t, status: 'pendente' } : t
+    );
+    const novoHist = { ...historico, [hoje]: novas };
+    setTarefas(novas);
+    setHistorico(novoHist);
+    atualizarStorage(novoHist);
+    setFeedback((f) => ({ ...f, [id]: 'desfeito' }));
+    setTimeout(() => {
+      setFeedback((f) => {
+        const { [id]: _, ...rest } = f;
+        return rest;
+      });
+    }, 800);
   };
 
   const remarcarTarefa = (dataAntiga, tarefa) => {
@@ -94,7 +119,12 @@ export default function AppTarefas() {
           color: '#1e3a8a',
           marginBottom: '1rem'
         }}>
-          🔔 Tarefas do Dia
+          <span
+            style={{ transition: 'all 0.2s ease-in-out' }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = 'none')}
+          >🔔</span>{' '}
+          Tarefas do Dia
         </h2>
 
         <p style={{
@@ -103,7 +133,12 @@ export default function AppTarefas() {
           marginBottom: '1.5rem',
           fontWeight: '700'
         }}>
-          ✅ {feitas} de {tarefas.length} tarefas concluídas
+          <span
+            style={{ transition: 'all 0.2s ease-in-out' }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = 'none')}
+          >✅</span>{' '}
+          {feitas} de {tarefas.length} tarefas concluídas
         </p>
 
         {tarefas.length === 0 ? (
@@ -111,15 +146,23 @@ export default function AppTarefas() {
             Nenhuma tarefa para hoje.
           </p>
         ) : (
-          tarefas.map((t) => (
+          tarefas.map((t) => {
+            const bg =
+              feedback[t.id] === 'feito'
+                ? '#d1fae5'
+                : feedback[t.id] === 'desfeito'
+                ? '#fef3c7'
+                : '#f1f5f9';
+            return (
             <div key={t.id} style={{
-              backgroundColor: '#f1f5f9',
+              backgroundColor: bg,
               padding: '0.75rem 1rem',
               borderRadius: '0.5rem',
               marginBottom: '0.75rem',
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center'
+              alignItems: 'center',
+              transition: 'background-color 0.3s ease'
             }}>
               <span style={{
                 textDecoration: t.status === 'feito' ? 'line-through' : 'none',
@@ -127,32 +170,71 @@ export default function AppTarefas() {
                 fontWeight: '600'
               }}>{t.descricao}</span>
               {t.status !== 'feito' && t.tipo !== 'estoque' && (
-                <button onClick={() => marcarComoConcluida(t.id)} style={{
-                  backgroundColor: '#3b82f6',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '0.4rem 0.75rem',
-                  borderRadius: '0.375rem',
-                  cursor: 'pointer',
-                  fontWeight: '700'
-                }}>
+                <button
+                  onClick={() => marcarComoConcluida(t.id)}
+                  style={{
+                    backgroundColor: '#3b82f6',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '0.4rem 0.75rem',
+                    borderRadius: '0.375rem',
+                    cursor: 'pointer',
+                    fontWeight: '700',
+                    transition: 'filter 0.2s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.filter = 'brightness(0.9)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.filter = 'none')}
+                >
                   Concluir
                 </button>
               )}
+              {t.status === 'feito' && (
+                <button
+                  onClick={() => desfazerTarefa(t.id)}
+                  style={{
+                    marginLeft: '0.5rem',
+                    backgroundColor: '#e5e7eb',
+                    color: '#374151',
+                    border: 'none',
+                    padding: '0.3rem 0.6rem',
+                    borderRadius: '0.375rem',
+                    cursor: 'pointer',
+                    fontWeight: '700',
+                    fontSize: '0.75rem',
+                    transition: 'filter 0.2s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.filter = 'brightness(0.9)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.filter = 'none')}
+                >
+                  ↩️ Desfazer
+                </button>
+              )}
             </div>
-          ))
+            )})
         )}
 
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-          <button onClick={() => setMostrarHistorico(!mostrarHistorico)} style={{
-            backgroundColor: '#e5e7eb',
-            fontWeight: '700',
-            color: '#111827',
-            padding: '0.4rem 0.75rem',
-            borderRadius: '0.375rem',
-            border: 'none',
-            cursor: 'pointer'
-          }}>
+          <button
+            onClick={() => setMostrarHistorico(!mostrarHistorico)}
+            style={{
+              backgroundColor: '#e5e7eb',
+              fontWeight: '700',
+              color: '#111827',
+              padding: '0.4rem 0.75rem',
+              borderRadius: '0.375rem',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease-in-out',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#d1d5db';
+              e.currentTarget.style.fontWeight = '800';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#e5e7eb';
+              e.currentTarget.style.fontWeight = '700';
+            }}
+          >
             {mostrarHistorico ? '🔙 Ocultar Histórico' : '🕓 Ver Histórico'}
           </button>
         </div>
@@ -172,7 +254,14 @@ export default function AppTarefas() {
                   borderBottom: '1px solid #e5e7eb',
                   paddingBottom: '0.5rem'
                 }}>
-                  <strong style={{ color: '#1e3a8a', fontSize: '1rem', fontWeight: '700' }}>📅 {data}</strong>
+                  <strong style={{ color: '#1e3a8a', fontSize: '1rem', fontWeight: '700' }}>
+                    <span
+                      style={{ transition: 'all 0.2s ease-in-out' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.transform = 'none')}
+                    >📅</span>{' '}
+                    {data}
+                  </strong>
                   <ul style={{ marginLeft: '1rem', marginTop: '0.25rem' }}>
                     {lista.map((t) => (
                       <li key={t.id} style={{
@@ -186,17 +275,23 @@ export default function AppTarefas() {
                       }}>
                         <span>{t.status === 'feito' ? '✅' : '❌'} {t.descricao}</span>
                         {t.status === 'pendente' && t.tipo !== 'estoque' && (
-                          <button onClick={() => remarcarTarefa(data, t)} style={{
-                            marginLeft: '0.5rem',
-                            backgroundColor: '#f59e0b',
-                            color: '#fff',
-                            fontSize: '0.75rem',
-                            borderRadius: '0.375rem',
-                            padding: '0.2rem 0.5rem',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontWeight: '700'
-                          }}>
+                          <button
+                            onClick={() => remarcarTarefa(data, t)}
+                            style={{
+                              marginLeft: '0.5rem',
+                              backgroundColor: '#f59e0b',
+                              color: '#fff',
+                              fontSize: '0.75rem',
+                              borderRadius: '0.375rem',
+                              padding: '0.2rem 0.5rem',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontWeight: '700',
+                              transition: 'filter 0.2s',
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.filter = 'brightness(0.9)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.filter = 'none')}
+                          >
                             🔁 Remarcar
                           </button>
                         )}
