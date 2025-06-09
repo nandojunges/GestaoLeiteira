@@ -46,18 +46,6 @@ export default function Estoque() {
     window.dispatchEvent(new Event("produtosAtualizados"));
   };
 
-  const calcularValorUnitario = (produto) => {
-    if (!produto) return null;
-    if (produto.valorTotal && produto.quantidade && produto.volume) {
-      let vol = parseFloat(produto.volume);
-      if (produto.volumeUnidade && produto.volumeUnidade.toLowerCase().includes("l")) {
-        vol *= 1000;
-      }
-      const totalVolume = produto.quantidade * vol;
-      return totalVolume > 0 ? produto.valorTotal / totalVolume : null;
-    }
-    return null;
-  };
 
   const verificarAlertaValidade = (validade) => {
     if (!validade) return false;
@@ -106,24 +94,39 @@ export default function Estoque() {
         <thead>
           <tr>
             {[
-              "Nome Comercial", "Categoria", "Quantidade", "Valor Total", "Apresentação", "Volume",
-              "Valor Unitário", "Validade", "Alerta Estoque", "Alerta Validade", "Ação"
+              "Nome Comercial",
+              "Categoria",
+              "Quantidade",
+              "Valor Total",
+              "Apresentação",
+              "Validade",
+              "Alerta Estoque",
+              "Alerta Validade",
+              "Ação"
             ].map((titulo, index) => (
-              <th key={index} style={{ textAlign: "left", whiteSpace: "nowrap" }}>{titulo}</th>
+              <th
+                key={index}
+                style={{
+                  textAlign: "left",
+                  whiteSpace: "nowrap",
+                  width: titulo === "Ação" ? "1%" : titulo === "Nome Comercial" ? "20%" : "auto"
+                }}
+              >
+                {titulo}
+              </th>
             ))}
           </tr>
         </thead>
         <tbody>
           {produtosFiltrados.length === 0 ? (
             <tr>
-              <td colSpan={11} style={{ textAlign: "center", padding: "20px" }}>
+              <td colSpan={9} style={{ textAlign: "center", padding: "20px" }}>
                 Nenhum produto cadastrado.
               </td>
             </tr>
           ) : (
             produtosFiltrados.map((p, index) => {
               if (!p || typeof p !== "object") return null;
-              const valorUnitario = calcularValorUnitario(p);
               const alerta = verificarAlertaEstoqueInteligente(p);
               const alertaValidade = verificarAlertaValidade(p.validade);
 
@@ -134,8 +137,6 @@ export default function Estoque() {
                   <td>{p.quantidade ? `${p.quantidade} ${p.unidade || ""}` : "—"}</td>
                   <td>{p.valorTotal ? `R$ ${Number(p.valorTotal).toFixed(2)}` : "—"}</td>
                   <td>{p.apresentacao || "—"}</td>
-                  <td>{p.volume ? `${p.volume} ${p.volumeUnidade || ""}` : "—"}</td>
-                  <td>{valorUnitario ? `R$ ${valorUnitario.toFixed(2)} / ${p.unidade}` : "—"}</td>
                   <td>{p.validade || "—"}</td>
                   <td
                     style={{

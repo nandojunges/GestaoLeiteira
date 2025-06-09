@@ -30,25 +30,12 @@ export default function ListaProdutos({ categoriaFiltro }) {
     "Quantidade",
     "Valor Total",
     "Apresentação",
-    "Volume",
-    "Valor Unitário",
     "Validade",
     "Alerta Estoque",
     "Alerta Validade",
     "Ação"
   ];
 
-  const calcularValorUnitario = (produto) => {
-    if (produto.valorTotal && produto.quantidade && produto.volume) {
-      let vol = parseFloat(produto.volume);
-      if (produto.volumeUnidade && produto.volumeUnidade.toLowerCase().includes("l")) {
-        vol *= 1000;
-      }
-      const totalVolume = produto.quantidade * vol;
-      return totalVolume > 0 ? produto.valorTotal / totalVolume : null;
-    }
-    return null;
-  };
 
 
   const verificarAlertaValidade = (validade) => {
@@ -83,7 +70,7 @@ export default function ListaProdutos({ categoriaFiltro }) {
                 className={colunaHover === index ? "coluna-hover" : ""}
                 style={{
                   whiteSpace: "nowrap",
-                  width: titulo === "Ação" ? "1%" : "auto",
+                  width: titulo === "Ação" ? "1%" : titulo === "Nome Comercial" ? "20%" : "auto",
                   textAlign: "left"
                 }}
               >
@@ -110,7 +97,6 @@ export default function ListaProdutos({ categoriaFiltro }) {
               )
                 return null;
 
-              const valorUnitario = calcularValorUnitario(p);
               const alerta = verificarAlertaEstoqueInteligente(p);
               const alertaValidade = verificarAlertaValidade(p.validade);
 
@@ -121,8 +107,6 @@ export default function ListaProdutos({ categoriaFiltro }) {
                   <td>{p.quantidade ? `${p.quantidade} ${p.unidade || ""}` : "—"}</td>
                   <td>{p.valorTotal ? `R$ ${Number(p.valorTotal).toFixed(2)}` : "—"}</td>
                   <td>{p.apresentacao || "—"}</td>
-                  <td>{p.volume ? `${p.volume} ${p.volumeUnidade || ""}` : "—"}</td>
-                  <td>{valorUnitario ? `R$ ${valorUnitario.toFixed(2)} / ${p.unidade}` : "—"}</td>
                   <td>{p.validade || "—"}</td>
                   <td style={{ color: alerta.status === "ok" ? "green" : alerta.status === "insuficiente" ? "red" : "orange", fontWeight: 600 }}>
                     {alerta.status === "insuficiente" && "🔴 Insuficiente"}
