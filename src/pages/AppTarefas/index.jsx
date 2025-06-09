@@ -1,8 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { contagemStatusVacas } from './utilsDashboard';
+import {
+  contagemStatusVacas,
+  eventosDeHoje,
+  resumoEventosHoje,
+} from './utilsDashboard';
 
 export default function AppTarefas() {
   const [alertas, setAlertas] = useState([]);
+  const [eventosHoje, setEventosHoje] = useState([]);
+  const [resumoEventos, setResumoEventos] = useState({
+    partos: 0,
+    vacinacoes: 0,
+    secagens: 0,
+  });
   const [resumo, setResumo] = useState({
     lactacao: 0,
     pev: 0,
@@ -35,13 +45,29 @@ export default function AppTarefas() {
       setResumo((r) => ({ ...r, ...dados }));
     };
 
+    const atualizarEventos = () => {
+      setEventosHoje(eventosDeHoje());
+      setResumoEventos(resumoEventosHoje());
+    };
+
     atualizarAlertas();
     atualizarResumo();
+    atualizarEventos();
+
     window.addEventListener('alertasCarenciaAtualizados', atualizarAlertas);
     window.addEventListener('animaisAtualizados', atualizarResumo);
+    const eventos = [
+      'animaisAtualizados',
+      'manejosSanitariosAtualizados',
+      'produtosAtualizados',
+      'examesSanitariosAtualizados',
+      'eventosExtrasAtualizados',
+    ];
+    eventos.forEach((e) => window.addEventListener(e, atualizarEventos));
     return () => {
       window.removeEventListener('alertasCarenciaAtualizados', atualizarAlertas);
       window.removeEventListener('animaisAtualizados', atualizarResumo);
+      eventos.forEach((e) => window.removeEventListener(e, atualizarEventos));
     };
   }, []);
 
@@ -103,6 +129,43 @@ export default function AppTarefas() {
           Ainda não há diagnósticos lançados.
         </Card>
       </div>
+
+      {/* DESTAQUES DO DIA */}
+      <div style={{ marginTop: '2rem' }}>
+        <Card className="fade-in">
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
+            📅 Destaques do Dia
+          </h2>
+          {eventosHoje.length === 0 && (
+            <div style={{ color: '#6b7280', fontStyle: 'italic' }}>
+              Nenhum evento para hoje.
+            </div>
+          )}
+          {eventosHoje.length > 0 && (
+            <ul style={{ paddingLeft: '1.25rem', listStyleType: 'disc' }}>
+              {eventosHoje.slice(0, 5).map((ev, i) => (
+                <li key={i}>{ev.title}</li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
+
+      {/* AÇÕES RÁPIDAS */}
+      <div
+        style={{
+          marginTop: '2rem',
+          display: 'flex',
+          gap: '1rem',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+        }}
+      >
+        <button className="botao-acao">➕ Iniciar protocolo</button>
+        <button className="botao-acao">🩺 Lançar diagnóstico</button>
+        <button className="botao-acao">📦 Ver estoque</button>
+        <button className="botao-acao">📊 Ver relatório</button>
+      </div>
     </div>
   );
 }
@@ -110,6 +173,7 @@ export default function AppTarefas() {
 function BlocoResumo({ titulo, valor, icone, cor }) {
   return (
     <div
+      className="fade-in"
       style={{
         backgroundColor: '#fff',
         borderRadius: '1rem',
@@ -137,9 +201,10 @@ function BlocoResumo({ titulo, valor, icone, cor }) {
   );
 }
 
-function Card({ children }) {
+function Card({ children, className }) {
   return (
     <div
+      className={className}
       style={{
         backgroundColor: '#fff',
         borderRadius: '1rem',
