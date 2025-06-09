@@ -72,7 +72,7 @@ export default function TarefasCentrais() {
   return (
     <div className="bg-white rounded-xl shadow p-4 max-w-xl w-full">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-lg font-bold">\u{1F4CB} Tarefas</h3>
+        <h3 className="text-lg font-bold">📋 Tarefas</h3>
         <input
           type="date"
           className="border rounded px-2 py-1 text-sm"
@@ -89,7 +89,7 @@ export default function TarefasCentrais() {
               <span className="text-sm">{t.descricao}</span>
               {t.status === 'pendente' && (
                 <button className="text-green-600 text-sm" onClick={() => concluirTarefa(t.id)}>
-                  \u2714\uFE0F Concluir
+                  ✅ Concluir
                 </button>
               )}
             </li>
@@ -98,10 +98,10 @@ export default function TarefasCentrais() {
       </ul>
       <div className="flex gap-4 mt-4 text-sm">
         <button className="text-yellow-700 hover:underline" onClick={() => setShowAtrasadas(true)}>
-          \u26A0\uFE0F Atrasadas ({atrasadas.length})
+          ⚠️ Atrasadas ({atrasadas.length})
         </button>
         <button className="text-blue-700 hover:underline" onClick={() => setShowFeitas(true)}>
-          \u{1F4C1} Histórico ({feitas.length})
+          📁 Histórico ({feitas.length})
         </button>
       </div>
       {showAtrasadas && (
