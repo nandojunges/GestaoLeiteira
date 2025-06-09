@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import DashboardGraficos from './DashboardGraficos';
 import {
   contagemStatusVacas,
   eventosDeHoje,
   resumoEventosHoje,
+  produtosVencendo,
+  parseDate,
 } from './utilsDashboard';
 
 export default function AppTarefas() {
@@ -20,6 +23,7 @@ export default function AppTarefas() {
     preParto: 0,
     carencias: 0,
   });
+  const [sugestoes, setSugestoes] = useState([]);
 
   useEffect(() => {
     const atualizarAlertas = () => {
@@ -71,96 +75,40 @@ export default function AppTarefas() {
     };
   }, []);
 
+  useEffect(() => {
+    const gerar = () => {
+      const sugs = [];
+      const vencendo = produtosVencendo();
+      if (vencendo.length > 0) {
+        const p = vencendo[0];
+        const dias = Math.ceil((parseDate(p.validade) - new Date()) / (1000 * 60 * 60 * 24));
+        sugs.push({ icone: '✍️', texto: `Repor ${p.nomeComercial}: estoque baixo, previsão de esgotar em ${dias} dias.` });
+      }
+      if (resumo.pev > 0) {
+        sugs.push({ icone: '⚕️', texto: `Iniciar protocolo de pré-sincronização em ${resumo.pev} vacas nos próximos 5 dias.` });
+      }
+      setSugestoes(sugs.slice(0, 3));
+    };
+    gerar();
+  }, [resumo, alertas]);
+
   return (
-    <div style={{ padding: '2rem', fontFamily: 'Poppins, sans-serif' }}>
-      {/* RESUMO */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '1.5rem',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-        }}
-      >
-        <BlocoResumo titulo="Vacas em Lactação" valor={resumo.lactacao} icone="🐄" cor="#16a34a" />
-        <BlocoResumo titulo="Vacas em PEV" valor={resumo.pev} icone="🧪" cor="#f97316" />
-        <BlocoResumo titulo="Negativos" valor={resumo.negativas} icone="❌" cor="#dc2626" />
-        <BlocoResumo titulo="Pré-parto" valor={resumo.preParto} icone="🤰" cor="#2563eb" />
-        <BlocoResumo titulo="Carência leite/carne" valor={resumo.carencias} icone="⚠️" cor="#eab308" />
+    <div className="p-8 space-y-8 font-poppins">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
+        <BlocoResumo titulo="Vacas em Lactação" valor={resumo.lactacao} icone="🐄" cor="text-green-600" aba="animais" />
+        <BlocoResumo titulo="Vacas em PEV" valor={resumo.pev} icone="🧪" cor="text-orange-500" aba="reproducao" />
+        <BlocoResumo titulo="Diagnóstico negativo" valor={resumo.negativas} icone="❌" cor="text-red-600" aba="reproducao" />
+        <BlocoResumo titulo="Pré-parto" valor={resumo.preParto} icone="🤰" cor="text-blue-600" aba="reproducao" />
+        <BlocoResumo titulo="Carência leite/carne" valor={resumo.carencias} icone="⚠️" cor="text-yellow-600" aba="reproducao" />
       </div>
 
-      {/* ALERTAS ATUAIS */}
-      <div style={{ marginTop: '2rem' }}>
-        <Card>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-            🔔 Alertas Atuais
-          </h2>
-          {alertas.length === 0 && (
-            <div style={{ color: '#6b7280', fontStyle: 'italic' }}>
-              Nenhum alerta de carência no momento
-            </div>
-          )}
-          {alertas.map((a, i) => (
-            <div
-              key={i}
-              style={{
-                backgroundColor: '#fef3c7',
-                padding: '1rem',
-                borderRadius: '1rem',
-                marginBottom: '0.5rem',
-                fontWeight: 600,
-                boxShadow: '0 0 10px rgba(0,0,0,0.05)',
-              }}
-            >
-              ⚠️ Vaca {a.numeroAnimal} em carência de leite até {a.leiteAte || '-'} e carne até{' '}
-              {a.carneAte || '-'}
-            </div>
-          ))}
-        </Card>
-      </div>
+      <AlertasCard alertas={alertas} />
 
-      {/* DIAGNÓSTICOS */}
-      <div style={{ marginTop: '2rem' }}>
-        <Card>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-            🧬 Diagnósticos Reprodutivos
-          </h2>
-          {/* Conteúdo futuro aqui */}
-          Ainda não há diagnósticos lançados.
-        </Card>
-      </div>
+      <DashboardGraficos />
 
-      {/* DESTAQUES DO DIA */}
-      <div style={{ marginTop: '2rem' }}>
-        <Card className="fade-in">
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-            📅 Destaques do Dia
-          </h2>
-          {eventosHoje.length === 0 && (
-            <div style={{ color: '#6b7280', fontStyle: 'italic' }}>
-              Nenhum evento para hoje.
-            </div>
-          )}
-          {eventosHoje.length > 0 && (
-            <ul style={{ paddingLeft: '1.25rem', listStyleType: 'disc' }}>
-              {eventosHoje.slice(0, 5).map((ev, i) => (
-                <li key={i}>{ev.title}</li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </div>
+      <Sugestoes itens={sugestoes} />
 
-      {/* AÇÕES RÁPIDAS */}
-      <div
-        style={{
-          marginTop: '2rem',
-          display: 'flex',
-          gap: '1rem',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-        }}
-      >
+      <div className="flex flex-wrap justify-center gap-3">
         <button className="botao-acao">➕ Iniciar protocolo</button>
         <button className="botao-acao">🩺 Lançar diagnóstico</button>
         <button className="botao-acao">📦 Ver estoque</button>
@@ -170,52 +118,71 @@ export default function AppTarefas() {
   );
 }
 
-function BlocoResumo({ titulo, valor, icone, cor }) {
+function BlocoResumo({ titulo, valor, icone, cor, aba }) {
   return (
-    <div
-      className="fade-in"
-      style={{
-        backgroundColor: '#fff',
-        borderRadius: '1rem',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-        padding: '1.25rem',
-        flex: 1,
-        minWidth: '200px',
-        transition: 'transform 0.2s ease-in-out',
-        cursor: 'default',
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.03)')}
-      onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+    <button
+      onClick={() =>
+        window.dispatchEvent(new CustomEvent('navegarParaAba', { detail: aba }))
+      }
+      className="bg-white rounded-xl shadow p-4 text-left transition hover:shadow-lg hover:scale-105"
     >
-      <div
-        style={{
-          fontSize: '1.25rem',
-          color: cor || '#111827',
-          fontWeight: 700,
-        }}
-      >
-        {icone} {titulo}
-      </div>
-      <div style={{ fontSize: '2rem', fontWeight: 800 }}>{valor}</div>
-    </div>
+      <div className={`text-sm font-semibold ${cor}`}>{icone} {titulo}</div>
+      <div className="text-2xl font-bold">{valor}</div>
+    </button>
   );
 }
 
 function Card({ children, className }) {
   return (
     <div
-      className={className}
-      style={{
-        backgroundColor: '#fff',
-        borderRadius: '1rem',
-        boxShadow: '0 10px 15px rgba(0,0,0,0.1)',
-        padding: '2rem',
-        transition: 'transform 0.2s ease-in-out',
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.03)')}
-      onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+      className={`bg-white rounded-xl shadow p-6 transition hover:scale-105 ${className || ''}`}
     >
       {children}
     </div>
   );
 }
+
+function AlertasCard({ alertas }) {
+  const [aberto, setAberto] = useState(false);
+  return (
+    <div className="bg-yellow-100 rounded-xl shadow p-4 space-y-2">
+      <h2 className="font-bold">🔔 Alertas Atuais</h2>
+      {alertas.length === 0 && (
+        <div className="italic text-gray-600">Nenhum alerta de carência no momento</div>
+      )}
+      {alertas.length > 0 && (
+        <>
+          {aberto ? (
+            <ul className="list-disc pl-5 space-y-1">
+              {alertas.map((a, i) => (
+                <li key={i}>⚠️ Vaca {a.numeroAnimal} em carência de leite até {a.leiteAte || '-'} e carne até {a.carneAte || '-'}</li>
+              ))}
+            </ul>
+          ) : (
+            <div>
+              ⚠️ Vaca {alertas[0].numeroAnimal} em carência de leite até {alertas[0].leiteAte || '-'} e carne até {alertas[0].carneAte || '-'}
+            </div>
+          )}
+          <button className="botao-acao" onClick={() => setAberto(!aberto)}>
+            {aberto ? 'Fechar' : 'Ver detalhes'}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Sugestoes({ itens }) {
+  if (!itens || itens.length === 0) return null;
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {itens.map((s, i) => (
+        <div key={i} className="bg-white rounded-xl shadow p-4 flex items-start gap-2">
+          <span className="text-xl">{s.icone}</span>
+          <span>{s.texto}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+

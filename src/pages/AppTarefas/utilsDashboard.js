@@ -2,6 +2,10 @@
 import { calcularDEL } from '../Animais/utilsAnimais';
 import { getStatusVaca, obterAjustePEV } from '../Reproducao/utilsReproducao';
 import gerarEventosCalendario from '../../utils/gerarEventosCalendario';
+import {
+  calcularConsumoDiario,
+  calcularDemandaProtocolos,
+} from '../../utils/verificarAlertaEstoque';
 
 export function parseDate(d) {
   if (!d) return null;
@@ -147,4 +151,23 @@ export function produtosVencendo() {
     const dv = parseDate(p.validade);
     return dv && dv >= hoje && dv <= limite;
   });
+}
+
+export function consumoVsEstoque() {
+  const produtos = JSON.parse(localStorage.getItem('produtos') || '[]');
+  return produtos.map((p) => ({
+    produto: p.nomeComercial,
+    estoque: parseFloat(p.quantidade || 0),
+    consumoDiario: calcularConsumoDiario(p.nomeComercial, p.unidade),
+  }));
+}
+
+export function consumoPorProtocolo() {
+  const produtos = JSON.parse(localStorage.getItem('produtos') || '[]');
+  return produtos
+    .map((p) => ({
+      produto: p.nomeComercial,
+      demanda: calcularDemandaProtocolos(p.nomeComercial),
+    }))
+    .filter((p) => p.demanda > 0);
 }

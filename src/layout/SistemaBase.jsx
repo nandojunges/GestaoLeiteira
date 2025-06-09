@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import NavegacaoPrincipal from './NavegacaoPrincipal';
 
 import AppTarefas from '../pages/AppTarefas/index.jsx';
@@ -15,6 +15,14 @@ import "../styles/tabelaModerna.css";
 
 export default function SistemaBase() {
   const [abaAtiva, setAbaAtiva] = useState('inicio');
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail) setAbaAtiva(e.detail);
+    };
+    window.addEventListener('navegarParaAba', handler);
+    return () => window.removeEventListener('navegarParaAba', handler);
+  }, []);
 
   const renderizarConteudo = () => {
     if (abaAtiva === 'inicio') return <AppTarefas />;
