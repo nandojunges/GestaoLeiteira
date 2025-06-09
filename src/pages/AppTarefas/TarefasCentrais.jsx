@@ -1,115 +1,198 @@
 import React, { useEffect, useState } from 'react';
 
-function ModalLista({ titulo, tarefas, onClose }) {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white p-4 rounded-xl max-w-md w-full">
-        <h3 className="text-lg font-bold mb-2">{titulo}</h3>
-        {tarefas.length === 0 ? (
-          <p className="text-gray-500 italic">Nenhuma tarefa.</p>
-        ) : (
-          <ul className="list-disc pl-5 space-y-1 max-h-60 overflow-auto">
-            {tarefas.map((t) => (
-              <li key={t.id}>{t.descricao}</li>
-            ))}
-          </ul>
-        )}
-        <div className="text-right mt-4">
-          <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={onClose}>
-            Fechar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function TarefasCentrais() {
+export default function AppTarefas() {
+  const hoje = new Date().toISOString().slice(0, 10);
   const [tarefas, setTarefas] = useState([]);
-  const [dataSelecionada, setDataSelecionada] = useState(() => new Date().toISOString().split('T')[0]);
-  const [showAtrasadas, setShowAtrasadas] = useState(false);
-  const [showFeitas, setShowFeitas] = useState(false);
+  const [historico, setHistorico] = useState({});
+  const [mostrarHistorico, setMostrarHistorico] = useState(false);
 
   useEffect(() => {
-    const hoje = new Date().toISOString().split('T')[0];
-    let lista = JSON.parse(localStorage.getItem('tarefas') || '[]');
-    let mudou = false;
-    lista = lista.map((t) => {
+    const armazenadas = JSON.parse(localStorage.getItem('tarefas') || '[]');
+    const atualizadas = armazenadas.map((t) => {
       if (t.status === 'pendente' && t.data < hoje) {
-        mudou = true;
         return { ...t, status: 'atrasado' };
       }
       return t;
     });
-    if (mudou) localStorage.setItem('tarefas', JSON.stringify(lista));
-    setTarefas(lista);
+
+    const agrupadas = {};
+    atualizadas.forEach((t) => {
+      if (!agrupadas[t.data]) agrupadas[t.data] = [];
+      agrupadas[t.data].push(t);
+    });
+
+    setTarefas(agrupadas[hoje] || []);
+    setHistorico(agrupadas);
+    localStorage.setItem('tarefas', JSON.stringify(atualizadas));
   }, []);
 
-  const concluirTarefa = (id) => {
-    let lista = [...tarefas];
-    const idx = lista.findIndex((t) => t.id === id);
-    if (idx === -1) return;
-    const tarefa = lista[idx];
-    if (tarefa.tipo === 'estoque') {
-      const produtos = JSON.parse(localStorage.getItem('produtos') || '[]');
-      const existe = produtos.some((p) => tarefa.descricao.toLowerCase().includes((p.nomeComercial || '').toLowerCase()));
-      if (existe) {
-        lista.splice(idx, 1);
-      } else {
-        lista[idx] = { ...tarefa, status: 'feito' };
-      }
-    } else {
-      lista[idx] = { ...tarefa, status: 'feito' };
-    }
-    localStorage.setItem('tarefas', JSON.stringify(lista));
-    setTarefas(lista);
+  const atualizarStorage = (novas) => {
+    const todas = Object.values(novas).flat();
+    localStorage.setItem('tarefas', JSON.stringify(todas));
   };
 
-  const tarefasDoDia = tarefas.filter((t) => t.data === dataSelecionada && t.status === 'pendente');
-  const atrasadas = tarefas.filter((t) => t.status === 'atrasado');
-  const feitas = tarefas.filter((t) => t.status === 'feito');
+  const marcarComoConcluida = (id) => {
+    const novas = tarefas.map((t) =>
+      t.id === id ? { ...t, status: 'feito' } : t
+    );
+    const novoHist = { ...historico, [hoje]: novas };
+    setTarefas(novas);
+    setHistorico(novoHist);
+    atualizarStorage(novoHist);
+  };
+
+  const remarcarTarefa = (dataAntiga, tarefa) => {
+    const novoHist = { ...historico };
+    novoHist[dataAntiga] = novoHist[dataAntiga].filter((t) => t.id !== tarefa.id);
+    novoHist[hoje] = [...(novoHist[hoje] || []), { ...tarefa, status: 'pendente', data: hoje }];
+    setHistorico(novoHist);
+    if (dataAntiga === hoje) {
+      setTarefas(novoHist[hoje]);
+    }
+    atualizarStorage(novoHist);
+  };
+
+  const feitas = tarefas.filter((t) => t.status === 'feito').length;
 
   return (
-    <div className="bg-white rounded-xl shadow p-4 max-w-xl w-full">
-      <div className="flex justify-between items-center mb-3">
-        <h3 className="text-lg font-bold">📋 Tarefas</h3>
-        <input
-          type="date"
-          className="border rounded px-2 py-1 text-sm"
-          value={dataSelecionada}
-          onChange={(e) => setDataSelecionada(e.target.value)}
-        />
-      </div>
-      <ul className="space-y-2">
-        {tarefasDoDia.length === 0 ? (
-          <li className="text-gray-500 italic">Nenhuma tarefa para esta data.</li>
+    <div style={{
+      fontFamily: 'Poppins, sans-serif',
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'center',
+      paddingTop: '1rem',
+      marginBottom: '2rem'
+    }}>
+      <div style={{
+        backgroundColor: '#fff',
+        borderRadius: '1rem',
+        boxShadow: '0 10px 15px rgba(0,0,0,0.1)',
+        padding: '2rem',
+        width: '100%',
+        maxWidth: '420px',
+        border: '1px solid #e2e8f0'
+      }}>
+        <h2 style={{
+          fontSize: '1.5rem',
+          fontWeight: '800',
+          textAlign: 'center',
+          color: '#1e3a8a',
+          marginBottom: '1rem'
+        }}>
+          🔔 Tarefas do Dia
+        </h2>
+
+        <p style={{
+          textAlign: 'center',
+          color: feitas === tarefas.length ? '#10b981' : '#374151',
+          marginBottom: '1.5rem',
+          fontWeight: '700'
+        }}>
+          ✅ {feitas} de {tarefas.length} tarefas concluídas
+        </p>
+
+        {tarefas.length === 0 ? (
+          <p style={{ textAlign: 'center', fontStyle: 'italic', color: '#9ca3af' }}>
+            Nenhuma tarefa para hoje.
+          </p>
         ) : (
-          tarefasDoDia.map((t) => (
-            <li key={t.id} className="flex justify-between items-center bg-gray-50 rounded-md p-2 shadow">
-              <span className="text-sm">{t.descricao}</span>
-              {t.status === 'pendente' && (
-                <button className="text-green-600 text-sm" onClick={() => concluirTarefa(t.id)}>
-                  ✅ Concluir
+          tarefas.map((t) => (
+            <div key={t.id} style={{
+              backgroundColor: '#f1f5f9',
+              padding: '0.75rem 1rem',
+              borderRadius: '0.5rem',
+              marginBottom: '0.75rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span style={{
+                textDecoration: t.status === 'feito' ? 'line-through' : 'none',
+                color: t.status === 'feito' ? '#9ca3af' : '#111827',
+                fontWeight: '600'
+              }}>{t.descricao}</span>
+              {t.status !== 'feito' && (
+                <button onClick={() => marcarComoConcluida(t.id)} style={{
+                  backgroundColor: '#3b82f6',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '0.4rem 0.75rem',
+                  borderRadius: '0.375rem',
+                  cursor: 'pointer',
+                  fontWeight: '700'
+                }}>
+                  Concluir
                 </button>
               )}
-            </li>
+            </div>
           ))
         )}
-      </ul>
-      <div className="flex gap-4 mt-4 text-sm">
-        <button className="text-yellow-700 hover:underline" onClick={() => setShowAtrasadas(true)}>
-          ⚠️ Atrasadas ({atrasadas.length})
-        </button>
-        <button className="text-blue-700 hover:underline" onClick={() => setShowFeitas(true)}>
-          📁 Histórico ({feitas.length})
-        </button>
+
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <button onClick={() => setMostrarHistorico(!mostrarHistorico)} style={{
+            backgroundColor: '#e5e7eb',
+            fontWeight: '700',
+            color: '#111827',
+            padding: '0.4rem 0.75rem',
+            borderRadius: '0.375rem',
+            border: 'none',
+            cursor: 'pointer'
+          }}>
+            {mostrarHistorico ? '🔙 Ocultar Histórico' : '🕓 Ver Histórico'}
+          </button>
+        </div>
+
+        {mostrarHistorico && (
+          <div style={{
+            marginTop: '1rem',
+            maxHeight: '250px',
+            overflowY: 'auto'
+          }}>
+            {Object.entries(historico)
+              .filter(([data]) => data !== hoje)
+              .sort((a, b) => b[0].localeCompare(a[0]))
+              .map(([data, lista]) => (
+                <div key={data} style={{
+                  marginBottom: '1rem',
+                  borderBottom: '1px solid #e5e7eb',
+                  paddingBottom: '0.5rem'
+                }}>
+                  <strong style={{ color: '#1e3a8a', fontSize: '1rem', fontWeight: '700' }}>📅 {data}</strong>
+                  <ul style={{ marginLeft: '1rem', marginTop: '0.25rem' }}>
+                    {lista.map((t) => (
+                      <li key={t.id} style={{
+                        color: t.status === 'feito' ? '#10b981' : '#ef4444',
+                        textDecoration: t.status === 'feito' ? 'line-through' : 'none',
+                        marginBottom: '0.25rem',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        fontWeight: '600'
+                      }}>
+                        <span>{t.status === 'feito' ? '✅' : '❌'} {t.descricao}</span>
+                        {t.status === 'pendente' && (
+                          <button onClick={() => remarcarTarefa(data, t)} style={{
+                            marginLeft: '0.5rem',
+                            backgroundColor: '#f59e0b',
+                            color: '#fff',
+                            fontSize: '0.75rem',
+                            borderRadius: '0.375rem',
+                            padding: '0.2rem 0.5rem',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontWeight: '700'
+                          }}>
+                            🔁 Remarcar
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+          </div>
+        )}
       </div>
-      {showAtrasadas && (
-        <ModalLista titulo="Tarefas Atrasadas" tarefas={atrasadas} onClose={() => setShowAtrasadas(false)} />
-      )}
-      {showFeitas && (
-        <ModalLista titulo="Histórico de Tarefas" tarefas={feitas} onClose={() => setShowFeitas(false)} />
-      )}
     </div>
   );
 }
