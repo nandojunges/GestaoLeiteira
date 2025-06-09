@@ -5,6 +5,7 @@ import GraficosRepro from './componentes/GraficosRepro';
 import InsightsInteligentes from './componentes/InsightsInteligentes';
 import ResumoEstoqueCritico from './componentes/ResumoEstoqueCritico';
 import CardLateral from './componentes/CardLateral';
+import CardTarefasDoDia from './componentes/CardTarefasDoDia';
 
 export default function AppTarefas() {
   const [resumo, setResumo] = useState({
@@ -76,6 +77,10 @@ export default function AppTarefas() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
           <CardLateral>
             <ResumoEstoqueCritico />
+          </CardLateral>
+
+          <CardLateral>
+            <CardTarefasDoDia />
           </CardLateral>
 
           <CardLateral>
