@@ -1,188 +1,91 @@
-import React, { useEffect, useState } from 'react';
-import DashboardGraficos from './DashboardGraficos';
-import {
-  contagemStatusVacas,
-  eventosDeHoje,
-  resumoEventosHoje,
-  produtosVencendo,
-  parseDate,
-} from './utilsDashboard';
+import React, { useEffect, useState } from "react";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+
+const COLORS = ["#6366f1", "#f43f5e", "#10b981", "#facc15", "#3b82f6"];
 
 export default function AppTarefas() {
-  const [alertas, setAlertas] = useState([]);
-  const [eventosHoje, setEventosHoje] = useState([]);
-  const [resumoEventos, setResumoEventos] = useState({
-    partos: 0,
-    vacinacoes: 0,
-    secagens: 0,
-  });
-  const [resumo, setResumo] = useState({
-    lactacao: 0,
-    pev: 0,
-    negativas: 0,
+  const [carencias, setCarencias] = useState([]);
+  const [dados, setDados] = useState({
+    lactacao: 4,
+    pev: 2,
+    negativos: 0,
     preParto: 0,
-    carencias: 0,
+    carencia: 1,
   });
-  const [sugestoes, setSugestoes] = useState([]);
 
   useEffect(() => {
-    const atualizarAlertas = () => {
-      const lista = JSON.parse(localStorage.getItem('alertasCarencia') || '[]');
-      const hoje = new Date();
-      const parse = (d) => {
-        if (!d) return null;
-        const [dia, mes, ano] = d.split('/');
-        return new Date(ano, mes - 1, dia);
-      };
-      const ativos = lista.filter((a) => {
-        const l = parse(a.leiteAte);
-        const c = parse(a.carneAte);
-        return (l && l >= hoje) || (c && c >= hoje);
-      });
-      localStorage.setItem('alertasCarencia', JSON.stringify(ativos));
-      setAlertas(ativos);
-      setResumo((r) => ({ ...r, carencias: ativos.length }));
-    };
-
-    const atualizarResumo = () => {
-      const dados = contagemStatusVacas();
-      setResumo((r) => ({ ...r, ...dados }));
-    };
-
-    const atualizarEventos = () => {
-      setEventosHoje(eventosDeHoje());
-      setResumoEventos(resumoEventosHoje());
-    };
-
-    atualizarAlertas();
-    atualizarResumo();
-    atualizarEventos();
-
-    window.addEventListener('alertasCarenciaAtualizados', atualizarAlertas);
-    window.addEventListener('animaisAtualizados', atualizarResumo);
-    const eventos = [
-      'animaisAtualizados',
-      'manejosSanitariosAtualizados',
-      'produtosAtualizados',
-      'examesSanitariosAtualizados',
-      'eventosExtrasAtualizados',
-    ];
-    eventos.forEach((e) => window.addEventListener(e, atualizarEventos));
-    return () => {
-      window.removeEventListener('alertasCarenciaAtualizados', atualizarAlertas);
-      window.removeEventListener('animaisAtualizados', atualizarResumo);
-      eventos.forEach((e) => window.removeEventListener(e, atualizarEventos));
-    };
+    const dadosCarencia = JSON.parse(localStorage.getItem("alertasCarencia") || "[]");
+    setCarencias(dadosCarencia);
   }, []);
 
-  useEffect(() => {
-    const gerar = () => {
-      const sugs = [];
-      const vencendo = produtosVencendo();
-      if (vencendo.length > 0) {
-        const p = vencendo[0];
-        const dias = Math.ceil((parseDate(p.validade) - new Date()) / (1000 * 60 * 60 * 24));
-        sugs.push({ icone: '✍️', texto: `Repor ${p.nomeComercial}: estoque baixo, previsão de esgotar em ${dias} dias.` });
-      }
-      if (resumo.pev > 0) {
-        sugs.push({ icone: '⚕️', texto: `Iniciar protocolo de pré-sincronização em ${resumo.pev} vacas nos próximos 5 dias.` });
-      }
-      setSugestoes(sugs.slice(0, 3));
-    };
-    gerar();
-  }, [resumo, alertas]);
+  const graficoRepro = [
+    { name: "Prenhez Confirmada", value: 1 },
+    { name: "PEV", value: dados.pev },
+    { name: "Negativo", value: dados.negativos },
+  ];
 
   return (
-    <div className="p-8 space-y-8 font-poppins">
-      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
-        <BlocoResumo titulo="Vacas em Lactação" valor={resumo.lactacao} icone="🐄" cor="text-green-600" aba="animais" />
-        <BlocoResumo titulo="Vacas em PEV" valor={resumo.pev} icone="🧪" cor="text-orange-500" aba="reproducao" />
-        <BlocoResumo titulo="Diagnóstico negativo" valor={resumo.negativas} icone="❌" cor="text-red-600" aba="reproducao" />
-        <BlocoResumo titulo="Pré-parto" valor={resumo.preParto} icone="🤰" cor="text-blue-600" aba="reproducao" />
-        <BlocoResumo titulo="Carência leite/carne" valor={resumo.carencias} icone="⚠️" cor="text-yellow-600" aba="reproducao" />
+    <div className="p-6 bg-gray-50 min-h-screen font-sans">
+      {/* Blocos de indicadores */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+        <Card indicador="🐄 Vacas em Lactação" valor={dados.lactacao} cor="text-green-600" />
+        <Card indicador="🧪 Vacas em PEV" valor={dados.pev} cor="text-orange-600" />
+        <Card indicador="❌ Negativos" valor={dados.negativos} cor="text-red-600" />
+        <Card indicador="🤰 Pré-parto" valor={dados.preParto} cor="text-blue-600" />
+        <Card indicador="⚠️ Carência leite/carne" valor={dados.carencia} cor="text-yellow-600" />
       </div>
 
-      <AlertasCard alertas={alertas} />
-
-      <DashboardGraficos />
-
-      <Sugestoes itens={sugestoes} />
-
-      <div className="flex flex-wrap justify-center gap-3">
-        <button className="botao-acao">➕ Iniciar protocolo</button>
-        <button className="botao-acao">🩺 Lançar diagnóstico</button>
-        <button className="botao-acao">📦 Ver estoque</button>
-        <button className="botao-acao">📊 Ver relatório</button>
+      {/* Alertas ativos */}
+      <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 mb-6 shadow">
+        <h2 className="text-lg font-bold mb-2">🔔 Alertas Atuais</h2>
+        {carencias.length === 0 && <p className="text-gray-500">Nenhum alerta ativo.</p>}
+        {carencias.map((c, i) => (
+          <div key={i} className="text-sm font-medium text-yellow-800">
+            ⚠️ Vaca {c.numeroAnimal} em carência de leite até {c.leiteAte} e carne até {c.carneAte}
+          </div>
+        ))}
       </div>
-    </div>
-  );
-}
 
-function BlocoResumo({ titulo, valor, icone, cor, aba }) {
-  return (
-    <button
-      onClick={() =>
-        window.dispatchEvent(new CustomEvent('navegarParaAba', { detail: aba }))
-      }
-      className="bg-white rounded-xl shadow p-4 text-left transition hover:shadow-lg hover:scale-105"
-    >
-      <div className={`text-sm font-semibold ${cor}`}>{icone} {titulo}</div>
-      <div className="text-2xl font-bold">{valor}</div>
-    </button>
-  );
-}
-
-function Card({ children, className }) {
-  return (
-    <div
-      className={`bg-white rounded-xl shadow p-6 transition hover:scale-105 ${className || ''}`}
-    >
-      {children}
-    </div>
-  );
-}
-
-function AlertasCard({ alertas }) {
-  const [aberto, setAberto] = useState(false);
-  return (
-    <div className="bg-yellow-100 rounded-xl shadow p-4 space-y-2">
-      <h2 className="font-bold">🔔 Alertas Atuais</h2>
-      {alertas.length === 0 && (
-        <div className="italic text-gray-600">Nenhum alerta de carência no momento</div>
-      )}
-      {alertas.length > 0 && (
-        <>
-          {aberto ? (
-            <ul className="list-disc pl-5 space-y-1">
-              {alertas.map((a, i) => (
-                <li key={i}>⚠️ Vaca {a.numeroAnimal} em carência de leite até {a.leiteAte || '-'} e carne até {a.carneAte || '-'}</li>
+      {/* Gráfico reprodutivo */}
+      <div className="bg-white p-6 rounded-xl shadow mb-6">
+        <h2 className="text-lg font-bold mb-4">🧬 Diagnósticos Reprodutivos</h2>
+        <ResponsiveContainer width="100%" height={220}>
+          <PieChart>
+            <Pie
+              data={graficoRepro}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={80}
+              label
+            >
+              {graficoRepro.map((_, index) => (
+                <Cell key={index} fill={COLORS[index % COLORS.length]} />
               ))}
-            </ul>
-          ) : (
-            <div>
-              ⚠️ Vaca {alertas[0].numeroAnimal} em carência de leite até {alertas[0].leiteAte || '-'} e carne até {alertas[0].carneAte || '-'}
-            </div>
-          )}
-          <button className="botao-acao" onClick={() => setAberto(!aberto)}>
-            {aberto ? 'Fechar' : 'Ver detalhes'}
-          </button>
-        </>
-      )}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Sugestões inteligentes */}
+      <div className="bg-white p-6 rounded-xl shadow">
+        <h2 className="text-lg font-bold mb-2">💡 Sugestões Inteligentes</h2>
+        <ul className="list-disc pl-5 text-sm text-gray-700">
+          <li>🔁 Programe pré-sincronização para vaca 15 — PEV prestes a encerrar</li>
+          <li>📦 Estoque de Alcamax previsto para acabar em 3 dias</li>
+          <li>📅 Realizar diagnóstico reprodutivo em 2 vacas com +30 dias de IA</li>
+        </ul>
+      </div>
     </div>
   );
 }
 
-function Sugestoes({ itens }) {
-  if (!itens || itens.length === 0) return null;
+function Card({ indicador, valor, cor }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {itens.map((s, i) => (
-        <div key={i} className="bg-white rounded-xl shadow p-4 flex items-start gap-2">
-          <span className="text-xl">{s.icone}</span>
-          <span>{s.texto}</span>
-        </div>
-      ))}
+    <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center justify-center text-center">
+      <span className={`text-xs font-semibold mb-1 ${cor}`}>{indicador}</span>
+      <span className="text-3xl font-bold">{valor}</span>
     </div>
   );
 }
-
