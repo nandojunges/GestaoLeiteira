@@ -99,70 +99,66 @@ export default function AppTarefas() {
         <InsightsInteligentes />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
-        <GraficosRepro />
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 mt-8">
+        {/* COLUNA ESQUERDA - Conteúdo principal */}
+        <div className="flex flex-col gap-6">
+          <Card>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
+              🔔 Alertas Atuais
+            </h2>
+            {alertas.length === 0 ? (
+              <div style={{ color: '#6b7280', fontStyle: 'italic' }}>
+                Nenhum alerta de carência no momento
+              </div>
+            ) : (
+              alertas.map((a, i) => (
+                <div
+                  key={i}
+                  style={{
+                    backgroundColor: '#fef3c7',
+                    padding: '1rem',
+                    borderRadius: '1rem',
+                    marginBottom: '0.5rem',
+                    fontWeight: 600,
+                    boxShadow: '0 0 10px rgba(0,0,0,0.05)',
+                  }}
+                >
+                  ⚠️ Vaca {a.numeroAnimal} em carência de leite até {a.leiteAte || '-'} e carne até{' '}
+                  {a.carneAte || '-'}
+                </div>
+              ))
+            )}
+          </Card>
 
-      {/* ALERTAS ATUAIS */}
-      <div style={{ marginTop: '2rem' }}>
-        <Card>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-            🔔 Alertas Atuais
-          </h2>
-          {alertas.length === 0 && (
-            <div style={{ color: '#6b7280', fontStyle: 'italic' }}>
-              Nenhum alerta de carência no momento
-            </div>
-          )}
-          {alertas.map((a, i) => (
-            <div
-              key={i}
-              style={{
-                backgroundColor: '#fef3c7',
-                padding: '1rem',
-                borderRadius: '1rem',
-                marginBottom: '0.5rem',
-                fontWeight: 600,
-                boxShadow: '0 0 10px rgba(0,0,0,0.05)',
-              }}
-            >
-              ⚠️ Vaca {a.numeroAnimal} em carência de leite até {a.leiteAte || '-'} e carne até{' '}
-              {a.carneAte || '-'}
-            </div>
-          ))}
-        </Card>
-      </div>
+          <Card>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
+              🧬 Diagnósticos Reprodutivos
+            </h2>
+            Ainda não há diagnósticos lançados.
+          </Card>
 
-      {/* DIAGNÓSTICOS */}
-      <div style={{ marginTop: '2rem' }}>
-        <Card>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-            🧬 Diagnósticos Reprodutivos
-          </h2>
-          {/* Conteúdo futuro aqui */}
-          Ainda não há diagnósticos lançados.
-        </Card>
-      </div>
+          <Card>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
+              📅 Destaques do Dia
+            </h2>
+            {eventosHoje.length === 0 ? (
+              <div style={{ color: '#6b7280', fontStyle: 'italic' }}>
+                Nenhum evento para hoje.
+              </div>
+            ) : (
+              <ul style={{ paddingLeft: '1.25rem', listStyleType: 'disc' }}>
+                {eventosHoje.slice(0, 5).map((ev, i) => (
+                  <li key={i}>{ev.title}</li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
 
-      {/* DESTAQUES DO DIA */}
-      <div style={{ marginTop: '2rem' }}>
-        <Card className="fade-in">
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-            📅 Destaques do Dia
-          </h2>
-          {eventosHoje.length === 0 && (
-            <div style={{ color: '#6b7280', fontStyle: 'italic' }}>
-              Nenhum evento para hoje.
-            </div>
-          )}
-          {eventosHoje.length > 0 && (
-            <ul style={{ paddingLeft: '1.25rem', listStyleType: 'disc' }}>
-              {eventosHoje.slice(0, 5).map((ev, i) => (
-                <li key={i}>{ev.title}</li>
-              ))}
-            </ul>
-          )}
-        </Card>
+        {/* COLUNA DIREITA - Gráficos (vertical) */}
+        <div className="flex flex-col gap-6">
+          <GraficosRepro />
+        </div>
       </div>
 
       {/* AÇÕES RÁPIDAS */}
