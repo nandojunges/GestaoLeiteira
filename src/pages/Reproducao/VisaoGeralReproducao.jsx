@@ -4,6 +4,7 @@ import ModalHistoricoCompleto from "../Animais/ModalHistoricoCompleto";
 import ModalConfiguracaoPEV from "./ModalConfiguracaoPEV";
 import { getStatusVaca, getAcoesDisponiveis, filtrarAnimaisAtivos } from './utilsReproducao';
 import ModalRegistrarOcorrencia from './ModalRegistrarOcorrencia';
+import ResumoReproducaoCards from './ResumoReproducaoCards';
 import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
 
@@ -19,6 +20,10 @@ export default function VisaoGeralReproducao() {
     permitirPreSincronizacao: false,
     permitirSecagem: true
   });
+  const [filtroStatus, setFiltroStatus] = useState('todos');
+  const [filtroDelMin, setFiltroDelMin] = useState('');
+  const [filtroDelMax, setFiltroDelMax] = useState('');
+  const [selecionados, setSelecionados] = useState([]);
 
   useEffect(() => {
     const animais = carregarAnimaisDoLocalStorage();
@@ -45,7 +50,16 @@ export default function VisaoGeralReproducao() {
   };
 
   const titulos = [
-    "Número", "Brinco", "DEL", "Status Atual", "Última Ação", "Próxima Ação", "Data Prevista", "Ações", "Ficha"
+    "",
+    "Número",
+    "Brinco",
+    "DEL",
+    "Status Atual",
+    "Última Ação",
+    "Próxima Ação",
+    "Data Prevista",
+    "Ações",
+    "Ficha",
   ];
 
   const obterStatus = (vaca, del) => {
@@ -88,15 +102,79 @@ export default function VisaoGeralReproducao() {
     );
   };
 
+  const dadosResumo = (() => {
+    const pev = vacas.filter(v => {
+      const del = v.ultimoParto ? calcularDEL(v.ultimoParto) : 0;
+      return getStatusVaca(del) !== 'Liberada';
+    }).length;
+    const protocolo = vacas.filter(v => v.protocoloAtivo).length;
+    const pendentes = vacas.filter(v => (v.proximaAcao?.tipo || '').toLowerCase().includes('diagn')).length;
+    const prenhes = vacas.filter(v => (v.statusReprodutivo || '').toLowerCase() === 'prenhe').length;
+    const totalIa = vacas.length || 1;
+    const taxa = Math.round((prenhes / totalIa) * 100);
+    return { pev, protocolo, pendentes, prenhes, taxa };
+  })();
+
+  const alternarSelecionado = (num) => {
+    setSelecionados((prev) =>
+      prev.includes(num) ? prev.filter((n) => n !== num) : [...prev, num]
+    );
+  };
+
+  const vacasFiltradas = vacas.filter((v) => {
+    const del = v.ultimoParto ? calcularDEL(v.ultimoParto) : 0;
+    if (filtroStatus === 'pev' && getStatusVaca(del) === 'Liberada') return false;
+    if (filtroStatus === 'liberada' && getStatusVaca(del) !== 'Liberada') return false;
+    if (filtroDelMin && del < parseInt(filtroDelMin)) return false;
+    if (filtroDelMax && del > parseInt(filtroDelMax)) return false;
+    return true;
+  });
+
+  const todasSelecionadas = selecionados.length === vacasFiltradas.length && vacasFiltradas.length > 0;
+
+  const selecionarTodas = (v) => {
+    if (v.target.checked) setSelecionados(vacasFiltradas.map((v) => v.numero));
+    else setSelecionados([]);
+  };
+
+  const aplicarAcaoLote = (acao) => {
+    if (!acao) return;
+    alert(`Aplicar "${acao}" para: ${selecionados.join(', ')}`);
+  };
+
   return (
     <div className="w-full px-8 py-6 font-sans">
-      <div style={{ marginBottom: "1rem", textAlign: "right" }}>
-        <button
-          onClick={() => setMostrarModalPEV(true)}
-          className="botao-acao"
+      <ResumoReproducaoCards dados={dadosResumo} />
+
+      <div className="flex flex-wrap gap-2 items-end mb-4">
+        <select
+          value={filtroStatus}
+          onChange={(e) => setFiltroStatus(e.target.value)}
+          className="border p-2 rounded"
         >
-          ⚙️ Configurar PEV
-        </button>
+          <option value="todos">Todos Status</option>
+          <option value="pev">Pós-parto</option>
+          <option value="liberada">Liberada</option>
+        </select>
+        <input
+          type="number"
+          placeholder="DEL mínimo"
+          value={filtroDelMin}
+          onChange={(e) => setFiltroDelMin(e.target.value)}
+          className="border p-2 rounded w-24"
+        />
+        <input
+          type="number"
+          placeholder="DEL máximo"
+          value={filtroDelMax}
+          onChange={(e) => setFiltroDelMax(e.target.value)}
+          className="border p-2 rounded w-24"
+        />
+        <div className="ml-auto">
+          <button onClick={() => setMostrarModalPEV(true)} className="botao-acao">
+            ⚙️ Configurar PEV
+          </button>
+        </div>
       </div>
 
       <table className="tabela-padrao">
@@ -109,22 +187,43 @@ export default function VisaoGeralReproducao() {
                 onMouseLeave={() => setColunaHover(null)}
                 className={colunaHover === index ? 'coluna-hover' : ''}
               >
-                {titulo}
+                {index === 0 ? (
+                  <input type="checkbox" checked={todasSelecionadas} onChange={selecionarTodas} />
+                ) : (
+                  titulo
+                )}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {vacas.map((vaca, index) => {
+          {vacasFiltradas.map((vaca, index) => {
             const del = vaca.ultimoParto ? calcularDEL(vaca.ultimoParto) : null;
             const statusAtual = obterStatus(vaca, del);
             const proximaAcao = obterProximaAcao(vaca);
             const dataProximaAcao = obterDataProximaAcao(vaca);
 
             const dados = [
+              <input
+                type="checkbox"
+                checked={selecionados.includes(vaca.numero)}
+                onChange={() => alternarSelecionado(vaca.numero)}
+              />,
               vaca.numero,
               vaca.brinco || '—',
-              del,
+              <span
+                className={
+                  del === null
+                    ? ''
+                    : del < 30
+                    ? 'text-yellow-600'
+                    : del > 60
+                    ? 'text-red-600'
+                    : 'text-green-600'
+                }
+              >
+                {del}
+              </span>,
               statusAtual,
               vaca.ultimaAcao?.tipo || '—',
               proximaAcao,
@@ -150,6 +249,17 @@ export default function VisaoGeralReproducao() {
           })}
         </tbody>
       </table>
+
+      {selecionados.length > 0 && (
+        <div className="flex items-center gap-2 mt-4">
+          <input type="checkbox" checked={todasSelecionadas} onChange={selecionarTodas} />
+          <select id="bulk-action" onChange={(e) => aplicarAcaoLote(e.target.value)} className="border p-2 rounded">
+            <option value="">Ações em lote...</option>
+            <option value="Iniciar Protocolo">Iniciar Protocolo</option>
+            <option value="Alterar Status">Alterar Status</option>
+          </select>
+        </div>
+      )}
 
       {mostrarFicha && animalFicha && (
         <ModalHistoricoCompleto
