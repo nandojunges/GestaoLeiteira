@@ -92,10 +92,11 @@ export default function AppTarefas() {
         <BlocoResumo titulo="Carência leite/carne" valor={resumo.carencias} icone="⚠️" cor="#eab308" />
       </div>
 
-      {/* CONTEÚDO CENTRAL COM COLUNAS */}
+      {/* DUAS COLUNAS: ESQUERDA (principal), DIREITA (lateral) */}
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 mt-8">
-        {/* COLUNA PRINCIPAL */}
+        {/* COLUNA PRINCIPAL (ESQUERDA) */}
         <div className="flex flex-col gap-6">
+          {/* ALERTAS ATUAIS – GRANDE E EM DESTAQUE */}
           <Card>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
               🔔 Alertas Atuais
@@ -124,20 +125,7 @@ export default function AppTarefas() {
             )}
           </Card>
 
-          <Card>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-              📦 Estoque Crítico
-            </h2>
-            <ResumoEstoqueCritico />
-          </Card>
-
-          <Card>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-              💡 Insights Inteligentes
-            </h2>
-            <InsightsInteligentes />
-          </Card>
-
+          {/* DESTAQUES DO DIA */}
           <Card>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
               📅 Destaques do Dia
@@ -155,6 +143,7 @@ export default function AppTarefas() {
             )}
           </Card>
 
+          {/* DIAGNÓSTICOS */}
           <Card>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
               🧬 Diagnósticos Reprodutivos
@@ -162,6 +151,7 @@ export default function AppTarefas() {
             Ainda não há diagnósticos lançados.
           </Card>
 
+          {/* AÇÕES RÁPIDAS */}
           <div
             style={{
               display: 'flex',
@@ -177,13 +167,17 @@ export default function AppTarefas() {
           </div>
         </div>
 
-        {/* COLUNA LATERAL: GRÁFICOS */}
+        {/* COLUNA LATERAL (DIREITA) */}
         <div className="flex flex-col gap-6">
           <Card>
             <GraficosRepro />
           </Card>
-
-          {/* Adicione mais gráficos no mesmo estilo, se quiser */}
+          <Card>
+            <ResumoEstoqueCritico />
+          </Card>
+          <Card>
+            <InsightsInteligentes />
+          </Card>
         </div>
       </div>
     </div>
