@@ -33,8 +33,20 @@ export default function ListaProdutos({ categoriaFiltro }) {
     "Validade",
     "Alerta Estoque",
     "Alerta Validade",
-    "Ação"
+    "Ação",
   ];
+
+  const estiloCabecalho = {
+    "Nome Comercial": { width: "160px" },
+    Categoria: { width: "120px", whiteSpace: "nowrap", textAlign: "center" },
+    Quantidade: { width: "100px", whiteSpace: "nowrap", textAlign: "center" },
+    "Valor Total": { width: "120px", whiteSpace: "nowrap", textAlign: "center" },
+    Apresentação: { width: "120px", whiteSpace: "nowrap", textAlign: "center" },
+    Validade: { width: "120px", whiteSpace: "nowrap", textAlign: "center" },
+    "Alerta Estoque": { width: "100px", whiteSpace: "nowrap", textAlign: "center" },
+    "Alerta Validade": { width: "120px", whiteSpace: "nowrap", textAlign: "center" },
+    Ação: { width: "140px", whiteSpace: "nowrap", textAlign: "center" },
+  };
 
 
 
@@ -59,7 +71,7 @@ export default function ListaProdutos({ categoriaFiltro }) {
 
   return (
     <div className="w-full px-8 py-6 font-sans">
-      <table className="tabela-padrao" style={{ tableLayout: "auto", width: "100%" }}>
+      <table className="tabela-padrao" style={{ tableLayout: "fixed", width: "100%" }}>
         <thead>
           <tr>
             {titulos.map((titulo, index) => (
@@ -68,11 +80,7 @@ export default function ListaProdutos({ categoriaFiltro }) {
                 onMouseEnter={() => setColunaHover(index)}
                 onMouseLeave={() => setColunaHover(null)}
                 className={colunaHover === index ? "coluna-hover" : ""}
-                style={{
-                  whiteSpace: "nowrap",
-                  width: titulo === "Ação" ? "1%" : titulo === "Nome Comercial" ? "20%" : "auto",
-                  textAlign: "left"
-                }}
+                style={estiloCabecalho[titulo]}
               >
                 {titulo}
               </th>
@@ -103,20 +111,20 @@ export default function ListaProdutos({ categoriaFiltro }) {
               return (
                 <tr key={index}>
                   <td style={{ fontWeight: 600 }}>{p.nomeComercial || "—"}</td>
-                  <td>{p.categoria || "—"}</td>
-                  <td>{p.quantidade ? `${p.quantidade} ${p.unidade || ""}` : "—"}</td>
-                  <td>{p.valorTotal ? `R$ ${Number(p.valorTotal).toFixed(2)}` : "—"}</td>
-                  <td>{p.apresentacao || "—"}</td>
-                  <td>{p.validade || "—"}</td>
-                  <td style={{ color: alerta.status === "ok" ? "green" : alerta.status === "insuficiente" ? "red" : "orange", fontWeight: 600 }}>
+                  <td style={{ textAlign: "center" }}>{p.categoria || "—"}</td>
+                  <td style={{ textAlign: "center" }}>{p.quantidade ? `${p.quantidade} ${p.unidade || ""}` : "—"}</td>
+                  <td style={{ textAlign: "center" }}>{p.valorTotal ? `R$ ${Number(p.valorTotal).toFixed(2)}` : "—"}</td>
+                  <td style={{ textAlign: "center" }}>{p.apresentacao || "—"}</td>
+                  <td style={{ textAlign: "center" }}>{p.validade || "—"}</td>
+                  <td style={{ textAlign: "center", color: alerta.status === "ok" ? "green" : alerta.status === "insuficiente" ? "red" : "orange", fontWeight: 600 }}>
                     {alerta.status === "insuficiente" && "🔴 Insuficiente"}
                     {alerta.status === "baixo" && `🟠 Estoque baixo${alerta.mensagem ? ` (${alerta.mensagem})` : ''}`}
                     {alerta.status === "ok" && "🟢 OK"}
                   </td>
-                  <td style={{ color: alertaValidade ? "orange" : "green", fontWeight: 600 }}>
+                  <td style={{ textAlign: "center", color: alertaValidade ? "orange" : "green", fontWeight: 600 }}>
                     {alertaValidade ? "⚠️ Vencendo" : "OK"}
                   </td>
-                  <td style={{ whiteSpace: "nowrap" }}>
+                  <td style={{ whiteSpace: "nowrap", textAlign: "center" }}>
                     <div style={{ display: "flex", gap: "0.4rem" }}>
                       <button
                         type="button"
