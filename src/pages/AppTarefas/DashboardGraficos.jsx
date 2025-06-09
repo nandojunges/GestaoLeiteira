@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
   diagnosticosPorStatus,
-  volumeLeitePorGrupo,
-  consumoPorCategoria,
+  consumoVsEstoque,
+  consumoPorProtocolo,
 } from './utilsDashboard';
 import {
   ResponsiveContainer,
@@ -19,22 +19,20 @@ import {
 
 export default function DashboardGraficos() {
   const [diag, setDiag] = useState([]);
-  const [leite, setLeite] = useState([]);
-  const [consumo, setConsumo] = useState([]);
+  const [estoque, setEstoque] = useState([]);
+  const [protocolo, setProtocolo] = useState([]);
 
   useEffect(() => {
     const atualizar = () => {
       setDiag(diagnosticosPorStatus());
-      setLeite(volumeLeitePorGrupo());
-      setConsumo(consumoPorCategoria());
+      setEstoque(consumoVsEstoque());
+      setProtocolo(consumoPorProtocolo());
     };
     atualizar();
     window.addEventListener('animaisAtualizados', atualizar);
-    window.addEventListener('medicoesAtualizadas', atualizar);
     window.addEventListener('produtosAtualizados', atualizar);
     return () => {
       window.removeEventListener('animaisAtualizados', atualizar);
-      window.removeEventListener('medicoesAtualizadas', atualizar);
       window.removeEventListener('produtosAtualizados', atualizar);
     };
   }, []);
@@ -58,27 +56,28 @@ export default function DashboardGraficos() {
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow">
-        <h3 className="font-bold mb-2">Leite por Grupo (mês)</h3>
+        <h3 className="font-bold mb-2">Consumo vs. Estoque</h3>
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={leite} layout="vertical">
+          <BarChart data={estoque} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis type="number" />
-            <YAxis dataKey="grupo" type="category" width={80} />
+            <YAxis dataKey="produto" type="category" width={100} />
             <Tooltip />
-            <Bar dataKey="litros" fill="#60a5fa" />
+            <Bar dataKey="estoque" fill="#60a5fa" name="Estoque" />
+            <Bar dataKey="consumoDiario" fill="#f87171" name="Consumo/dia" />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow">
-        <h3 className="font-bold mb-2">Consumo por Categoria</h3>
+        <h3 className="font-bold mb-2">Consumo por Protocolo</h3>
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={consumo} layout="vertical">
+          <BarChart data={protocolo} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis type="number" />
-            <YAxis dataKey="categoria" type="category" width={100} />
+            <YAxis dataKey="produto" type="category" width={100} />
             <Tooltip />
-            <Bar dataKey="quantidade" fill="#fb923c" />
+            <Bar dataKey="demanda" fill="#fb923c" />
           </BarChart>
         </ResponsiveContainer>
       </div>
