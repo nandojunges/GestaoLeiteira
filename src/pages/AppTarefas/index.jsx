@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { contagemStatusVacas } from './utilsDashboard';
-import AlertasAtuais from './componentes/AlertasAtuais';
+import TarefasDiarias from './componentes/TarefasDiarias';
 import GraficosRepro from './componentes/GraficosRepro';
 import InsightsInteligentes from './componentes/InsightsInteligentes';
 import ResumoEstoqueCritico from './componentes/ResumoEstoqueCritico';
@@ -69,11 +69,10 @@ export default function AppTarefas() {
       </div>
 
       {/* CONTEÚDO PRINCIPAL COM COLUNA LATERAL */}
-      <div className="mt-6 flex gap-6 items-start">
-        <div className="flex-1">
-          <AlertasAtuais />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+        <TarefasDiarias />
+
+        <div className="grid grid-cols-1 gap-4">
           <CardLateral>
             <ResumoEstoqueCritico />
           </CardLateral>
