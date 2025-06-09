@@ -63,6 +63,19 @@ export default function gerarTarefasAutomaticas() {
     }
   });
 
+  // Validade de produtos
+  const diasAlerta = parseInt(localStorage.getItem('diasAlertaValidade') || '10');
+  produtos.forEach((p) => {
+    if (!p.validade) return;
+    const dv = parseData(p.validade);
+    if (!dv) return;
+    const diff = Math.ceil((dv - hoje) / (1000 * 60 * 60 * 24));
+    if (diff >= 0 && diff <= diasAlerta) {
+      const id = `venc_prod_${p.nomeComercial}`;
+      adicionar(id, `Validade próxima: ${p.nomeComercial} vence em ${p.validade}`, 'validade');
+    }
+  });
+
   // Eventos do dia (partos, vacinas etc.)
   eventosDeHoje().forEach((ev, i) => {
     const id = `evento-${i}-${hojeISO}`;
