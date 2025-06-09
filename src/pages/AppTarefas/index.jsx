@@ -4,6 +4,10 @@ import {
   eventosDeHoje,
   resumoEventosHoje,
 } from './utilsDashboard';
+import AlertasAtuais from './componentes/AlertasAtuais';
+import GraficosRepro from './componentes/GraficosRepro';
+import InsightsInteligentes from './componentes/InsightsInteligentes';
+import ResumoEstoqueCritico from './componentes/ResumoEstoqueCritico';
 
 export default function AppTarefas() {
   const [alertas, setAlertas] = useState([]);
@@ -87,6 +91,16 @@ export default function AppTarefas() {
         <BlocoResumo titulo="Negativos" valor={resumo.negativas} icone="❌" cor="#dc2626" />
         <BlocoResumo titulo="Pré-parto" valor={resumo.preParto} icone="🤰" cor="#2563eb" />
         <BlocoResumo titulo="Carência leite/carne" valor={resumo.carencias} icone="⚠️" cor="#eab308" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        <AlertasAtuais />
+        <ResumoEstoqueCritico />
+        <InsightsInteligentes />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+        <GraficosRepro />
       </div>
 
       {/* ALERTAS ATUAIS */}
