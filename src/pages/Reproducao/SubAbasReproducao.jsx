@@ -12,8 +12,10 @@ export default function SubAbasReproducao({
 }) {
   const subAbas = [
     { id: 'visaoGeral', label: '📊 Visão Geral' },
-    { id: 'protocolos', label: '📅 Protocolos' },
-    { id: 'diagnostico', label: '🔎 Diagnóstico' },
+    { id: 'protocolos', label: '📅 Protocolos Ativos' },
+    { id: 'diagnosticos', label: '🩺 Diagnósticos' },
+    { id: 'configPEV', label: '⚙️ Configurar PEV' },
+    { id: 'historico', label: '📚 Histórico Completo' },
   ];
 
   return (

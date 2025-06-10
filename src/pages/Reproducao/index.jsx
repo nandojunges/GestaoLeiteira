@@ -3,6 +3,8 @@ import SubAbasReproducao from './SubAbasReproducao';
 import VisaoGeralReproducao from './VisaoGeralReproducao';
 import ProtocolosReprodutivos from './ProtocolosReprodutivos';
 import DiagnosticoCio from './DiagnosticoCio';
+import ConfigurarPEV from './ConfigurarPEV';
+import HistoricoCompleto from './HistoricoCompleto';
 
 export default function Index() {
   const [abaAtiva, setAbaAtiva] = useState('visaoGeral');
@@ -13,8 +15,12 @@ export default function Index() {
         return <VisaoGeralReproducao />;
       case 'protocolos':
         return <ProtocolosReprodutivos />;
-      case 'diagnosticoCio':
+      case 'diagnosticos':
         return <DiagnosticoCio />;
+      case 'configPEV':
+        return <ConfigurarPEV />;
+      case 'historico':
+        return <HistoricoCompleto />;
       default:
         return <VisaoGeralReproducao />;
     }
