@@ -4,7 +4,6 @@ import ModalHistoricoCompleto from "../Animais/ModalHistoricoCompleto";
 import ModalConfiguracaoPEV from "./ModalConfiguracaoPEV";
 import { getStatusVaca, getAcoesDisponiveis, filtrarAnimaisAtivos } from './utilsReproducao';
 import ModalRegistrarOcorrencia from './ModalRegistrarOcorrencia';
-import ResumoReproducaoCards from './ResumoReproducaoCards';
 import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
 
@@ -102,18 +101,6 @@ export default function VisaoGeralReproducao() {
     );
   };
 
-  const dadosResumo = (() => {
-    const pev = vacas.filter(v => {
-      const del = v.ultimoParto ? calcularDEL(v.ultimoParto) : 0;
-      return getStatusVaca(del) !== 'Liberada';
-    }).length;
-    const protocolo = vacas.filter(v => v.protocoloAtivo).length;
-    const pendentes = vacas.filter(v => (v.proximaAcao?.tipo || '').toLowerCase().includes('diagn')).length;
-    const prenhes = vacas.filter(v => (v.statusReprodutivo || '').toLowerCase() === 'prenhe').length;
-    const totalIa = vacas.length || 1;
-    const taxa = Math.round((prenhes / totalIa) * 100);
-    return { pev, protocolo, pendentes, prenhes, taxa };
-  })();
 
   const alternarSelecionado = (num) => {
     setSelecionados((prev) =>
@@ -144,8 +131,6 @@ export default function VisaoGeralReproducao() {
 
   return (
     <div className="w-full px-8 py-6 font-sans">
-      <ResumoReproducaoCards dados={dadosResumo} />
-
       <div className="flex flex-wrap gap-2 items-end mb-4">
         <select
           value={filtroStatus}
