@@ -1,16 +1,23 @@
 import React, { useState } from "react";
 import "../../styles/modalPadrao.css";
+import {
+  contarEstoqueImplantes,
+  registrarAvisoInicial,
+  movimentarImplanteEstoque,
+} from "./utilsReproducao";
 
 export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [etapas, setEtapas] = useState([]);
+  const [erroImplante, setErroImplante] = useState("");
 
   const [etapa, setEtapa] = useState({
     dia: "",
     acao: "",
     dispositivo: false,
     hormônios: {},
+    usoImplante: "1",
   });
 
   const hormoniosDisponiveis = [
@@ -44,21 +51,6 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
     }));
   };
 
-  const movimentarImplanteEstoque = () => {
-    const implante = JSON.parse(localStorage.getItem('implante_inicio_protocolo') || 'null');
-    if (!implante) return;
-
-    const estoque = JSON.parse(localStorage.getItem('estoque_implantes') || '[]');
-    const idx = estoque.findIndex((i) => i.id === implante.id);
-    if (idx !== -1) {
-      const usoAtual = estoque[idx].uso || 1;
-      if (usoAtual === 1) estoque[idx].uso = 2;
-      else if (usoAtual === 2) estoque[idx].uso = 3;
-      else if (usoAtual >= 3) estoque.splice(idx, 1);
-    }
-    localStorage.setItem('estoque_implantes', JSON.stringify(estoque));
-    localStorage.removeItem('implante_inicio_protocolo');
-  };
 
   const adicionarEtapa = () => {
     if (etapa.dia === "") {
@@ -73,11 +65,21 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
     }
 
     if (etapa.acao === "Retirar Implante") {
-      movimentarImplanteEstoque();
+      if (contarEstoqueImplantes(etapa.usoImplante) === 0) {
+        setErroImplante(
+          "Não há implantes de " + etapa.usoImplante + "º uso disponíveis."
+        );
+        registrarAvisoInicial(
+          `Estoque zerado de implantes de ${etapa.usoImplante}º uso para protocolo ${nome}`
+        );
+        return;
+      }
+      setErroImplante("");
+      movimentarImplanteEstoque(etapa.usoImplante);
     }
 
     setEtapas([...etapas, { ...etapa, dia: parseInt(etapa.dia, 10) }]);
-    setEtapa({ dia: "", acao: "", dispositivo: false, hormônios: {} });
+    setEtapa({ dia: "", acao: "", dispositivo: false, hormônios: {}, usoImplante: "1" });
   };
 
   const removerEtapa = (index) => {
@@ -168,6 +170,8 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
               acao: e.target.value,
               dispositivo:
                 e.target.value === "Retirar Implante" ? false : p.dispositivo,
+              usoImplante:
+                e.target.value === "Retirar Implante" ? "1" : p.usoImplante,
             }))
           }
           style={input}
@@ -175,6 +179,26 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
           <option value="">Selecione</option>
           <option value="Retirar Implante">Retirar Implante</option>
         </select>
+
+        {etapa.acao === "Retirar Implante" && (
+          <>
+            <label>Uso do Implante:</label>
+            <select
+              value={etapa.usoImplante}
+              onChange={(e) =>
+                setEtapa((p) => ({ ...p, usoImplante: e.target.value }))
+              }
+              style={input}
+            >
+              {["1", "2", "3"].map((n) => (
+                <option key={n} value={n}>{`${n}º uso (${contarEstoqueImplantes(n)} no estoque)`}</option>
+              ))}
+            </select>
+            {erroImplante && (
+              <div style={{ color: 'red', fontSize: '0.8rem' }}>{erroImplante}</div>
+            )}
+          </>
+        )}
 
         <label>Dispositivo de Progesterona:</label>
         <div style={{ marginBottom: "0.5rem" }}>
@@ -238,7 +262,8 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
               >
                 <span>
                   Dia {etapa.dia}{" "}
-                  {etapa.acao === "Retirar Implante" && "| Retirar Implante"}{" "}
+                  {etapa.acao === "Retirar Implante" &&
+                    `| Retirar Implante (${etapa.usoImplante}º uso)`}{" "}
                   {etapa.dispositivo && "| Dispositivo"}{" "}
                   {Object.entries(etapa.hormônios)
                     .filter(([, cfg]) => cfg.ativo)

@@ -65,3 +65,28 @@ export const filtrarAnimaisAtivos = (animais) => {
     return possuiDadosReprodutivos(a);
   });
 };
+
+export const contarEstoqueImplantes = (uso) => {
+  const implantes = JSON.parse(localStorage.getItem('implantes') || '[]');
+  return implantes.filter((i) => String(i.uso) === String(uso)).length;
+};
+
+export const registrarAvisoInicial = (msg) => {
+  const avisos = JSON.parse(localStorage.getItem('avisos') || '[]');
+  localStorage.setItem(
+    'avisos',
+    JSON.stringify([...avisos, { msg, data: new Date().toISOString() }])
+  );
+  window.dispatchEvent(new Event('avisosAtualizados'));
+};
+
+export const movimentarImplanteEstoque = (uso) => {
+  const implantes = JSON.parse(localStorage.getItem('implantes') || '[]');
+  const idx = implantes.findIndex((i) => String(i.uso) === String(uso));
+  if (idx !== -1) {
+    if (uso === '1') implantes[idx].uso = '2';
+    else if (uso === '2') implantes[idx].uso = '3';
+    else implantes.splice(idx, 1);
+    localStorage.setItem('implantes', JSON.stringify(implantes));
+  }
+};
