@@ -8,6 +8,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
 
   const [etapa, setEtapa] = useState({
     dia: "",
+    acao: "",
     dispositivo: false,
     hormônios: {},
   });
@@ -43,6 +44,22 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
     }));
   };
 
+  const movimentarImplanteEstoque = () => {
+    const implante = JSON.parse(localStorage.getItem('implante_inicio_protocolo') || 'null');
+    if (!implante) return;
+
+    const estoque = JSON.parse(localStorage.getItem('estoque_implantes') || '[]');
+    const idx = estoque.findIndex((i) => i.id === implante.id);
+    if (idx !== -1) {
+      const usoAtual = estoque[idx].uso || 1;
+      if (usoAtual === 1) estoque[idx].uso = 2;
+      else if (usoAtual === 2) estoque[idx].uso = 3;
+      else if (usoAtual >= 3) estoque.splice(idx, 1);
+    }
+    localStorage.setItem('estoque_implantes', JSON.stringify(estoque));
+    localStorage.removeItem('implante_inicio_protocolo');
+  };
+
   const adicionarEtapa = () => {
     if (etapa.dia === "") {
       alert("Selecione o dia!");
@@ -50,13 +67,17 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
     }
 
     const algumHormoneAtivo = Object.values(etapa.hormônios).some((h) => h.ativo);
-    if (!algumHormoneAtivo && !etapa.dispositivo) {
+    if (!algumHormoneAtivo && !etapa.dispositivo && etapa.acao !== "Retirar Implante") {
       alert("Adicione pelo menos um hormônio ou selecione o dispositivo.");
       return;
     }
 
+    if (etapa.acao === "Retirar Implante") {
+      movimentarImplanteEstoque();
+    }
+
     setEtapas([...etapas, { ...etapa, dia: parseInt(etapa.dia, 10) }]);
-    setEtapa({ dia: "", dispositivo: false, hormônios: {} });
+    setEtapa({ dia: "", acao: "", dispositivo: false, hormônios: {} });
   };
 
   const removerEtapa = (index) => {
@@ -138,6 +159,23 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
           ))}
         </select>
 
+        <label>Ação:</label>
+        <select
+          value={etapa.acao}
+          onChange={(e) =>
+            setEtapa((p) => ({
+              ...p,
+              acao: e.target.value,
+              dispositivo:
+                e.target.value === "Retirar Implante" ? false : p.dispositivo,
+            }))
+          }
+          style={input}
+        >
+          <option value="">Selecione</option>
+          <option value="Retirar Implante">Retirar Implante</option>
+        </select>
+
         <label>Dispositivo de Progesterona:</label>
         <div style={{ marginBottom: "0.5rem" }}>
           <input
@@ -149,28 +187,32 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
           />{' '}Usar Dispositivo
         </div>
 
-        <label>Hormônios:</label>
-        {hormoniosDisponiveis.map((h) => (
-          <label key={h.id} className="flex items-center gap-2" style={{ marginBottom: '0.5rem' }}>
-            <input
-              type="checkbox"
-              checked={etapa.hormônios?.[h.id]?.ativo || false}
-              onChange={(e) => toggleHormone(h.id, e.target.checked)}
-            />
-            <span>{h.nome}</span>
-            {etapa.hormônios?.[h.id]?.ativo && (
-              <input
-                type="number"
-                min="0"
-                step="0.1"
-                placeholder="mL ou mg"
-                value={etapa.hormônios[h.id].dose}
-                className="input-dose"
-                onChange={(e) => alterarDose(h.id, e.target.value)}
-              />
-            )}
-          </label>
-        ))}
+        {etapa.dia && (
+          <>
+            <label>Hormônios:</label>
+            {hormoniosDisponiveis.map((h) => (
+              <label key={h.id} className="flex items-center gap-2" style={{ marginBottom: '0.5rem' }}>
+                <input
+                  type="checkbox"
+                  checked={etapa.hormônios?.[h.id]?.ativo || false}
+                  onChange={(e) => toggleHormone(h.id, e.target.checked)}
+                />
+                <span>{h.nome}</span>
+                {etapa.hormônios?.[h.id]?.ativo && (
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="mL ou mg"
+                    value={etapa.hormônios[h.id].dose}
+                    className="input-dose"
+                    onChange={(e) => alterarDose(h.id, e.target.value)}
+                  />
+                )}
+              </label>
+            ))}
+          </>
+        )}
 
         <button
           onClick={adicionarEtapa}
@@ -196,6 +238,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
               >
                 <span>
                   Dia {etapa.dia}{" "}
+                  {etapa.acao === "Retirar Implante" && "| Retirar Implante"}{" "}
                   {etapa.dispositivo && "| Dispositivo"}{" "}
                   {Object.entries(etapa.hormônios)
                     .filter(([, cfg]) => cfg.ativo)
