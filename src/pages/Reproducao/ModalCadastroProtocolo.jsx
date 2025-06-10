@@ -1,68 +1,62 @@
 import React, { useState } from "react";
+import "../../styles/modalPadrao.css";
 
 export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [etapas, setEtapas] = useState([]);
 
-  const [dia, setDia] = useState("");
-  const [dispositivo, setDispositivo] = useState(false);
-  const [usoDispositivo, setUsoDispositivo] = useState("1º uso");
+  const [etapa, setEtapa] = useState({
+    dia: "",
+    dispositivo: false,
+    hormônios: {},
+  });
 
-  const [hormôniosSelecionados, setHormôniosSelecionados] = useState([]);
+  const hormoniosDisponiveis = [
+    { id: "be", nome: "BE (Benzoato de Estradiol)" },
+    { id: "gnrh", nome: "GnRH" },
+    { id: "pgf2a", nome: "PGF₂α" },
+    { id: "ecp", nome: "ECP (Cipionato de Estradiol)" },
+  ];
 
-  // Exemplo de análogos e doses simulados (no futuro -> buscar do estoque)
-  const análogosDisponíveis = {
-    BE: ["Sincrodiol", "Gonadiol"],
-    GnRH: ["Cystorelin", "Sincroforte"],
-    PGF2α: ["Lutalyse", "Sincrocio"],
+  const toggleHormone = (id, checked) => {
+    setEtapa((prev) => ({
+      ...prev,
+      hormônios: {
+        ...prev.hormônios,
+        [id]: {
+          ...prev.hormônios[id],
+          ativo: checked,
+          dose: checked ? prev.hormônios[id]?.dose || "" : "",
+        },
+      },
+    }));
   };
 
-  const adicionarHormônio = (hormônio) => {
-    if (!hormôniosSelecionados.some((h) => h.nome === hormônio)) {
-      setHormôniosSelecionados([
-        ...hormôniosSelecionados,
-        { nome: hormônio, análogo: "", dose: "" },
-      ]);
-    }
-  };
-
-  const removerHormônio = (hormônio) => {
-    setHormôniosSelecionados(
-      hormôniosSelecionados.filter((h) => h.nome !== hormônio)
-    );
-  };
-
-  const atualizarHormônio = (nome, campo, valor) => {
-    setHormôniosSelecionados(
-      hormôniosSelecionados.map((h) =>
-        h.nome === nome ? { ...h, [campo]: valor } : h
-      )
-    );
+  const alterarDose = (id, valor) => {
+    setEtapa((prev) => ({
+      ...prev,
+      hormônios: {
+        ...prev.hormônios,
+        [id]: { ...prev.hormônios[id], dose: valor },
+      },
+    }));
   };
 
   const adicionarEtapa = () => {
-    if (!dia) {
+    if (etapa.dia === "") {
       alert("Selecione o dia!");
       return;
     }
-    if (hormôniosSelecionados.length === 0 && !dispositivo) {
+
+    const algumHormoneAtivo = Object.values(etapa.hormônios).some((h) => h.ativo);
+    if (!algumHormoneAtivo && !etapa.dispositivo) {
       alert("Adicione pelo menos um hormônio ou selecione o dispositivo.");
       return;
     }
 
-    const novaEtapa = {
-      dia,
-      dispositivo: dispositivo ? usoDispositivo : null,
-      hormonios: hormôniosSelecionados,
-    };
-    setEtapas([...etapas, novaEtapa]);
-
-    // Resetar campos
-    setDia("");
-    setDispositivo(false);
-    setUsoDispositivo("1º uso");
-    setHormôniosSelecionados([]);
+    setEtapas([...etapas, { ...etapa, dia: parseInt(etapa.dia, 10) }]);
+    setEtapa({ dia: "", dispositivo: false, hormônios: {} });
   };
 
   const removerEtapa = (index) => {
@@ -111,7 +105,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
 
   return (
     <div style={overlay} onClick={onFechar}>
-      <div style={modal} onClick={(e) => e.stopPropagation()}>
+      <div style={modal} onClick={(e) => e.stopPropagation()} className="modal-content">
         <h2 style={{ marginBottom: "1rem" }}>📝 Cadastrar Protocolo IATF</h2>
 
         <label>Nome do Protocolo:</label>
@@ -134,8 +128,8 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
 
         <label>Dia:</label>
         <select
-          value={dia}
-          onChange={(e) => setDia(e.target.value)}
+          value={etapa.dia}
+          onChange={(e) => setEtapa((p) => ({ ...p, dia: e.target.value }))}
           style={input}
         >
           <option value="">Selecione</option>
@@ -148,70 +142,34 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
         <div style={{ marginBottom: "0.5rem" }}>
           <input
             type="checkbox"
-            checked={dispositivo}
-            onChange={(e) => setDispositivo(e.target.checked)}
-          />{" "}
-          Usar Dispositivo
-          {dispositivo && (
-            <select
-              value={usoDispositivo}
-              onChange={(e) => setUsoDispositivo(e.target.value)}
-              style={{ ...input, marginTop: "0.5rem" }}
-            >
-              <option>1º uso</option>
-              <option>2º uso</option>
-              <option>3º uso (novilhas / pré-sincro)</option>
-            </select>
-          )}
+            checked={etapa.dispositivo}
+            onChange={(e) =>
+              setEtapa((p) => ({ ...p, dispositivo: e.target.checked }))
+            }
+          />{' '}Usar Dispositivo
         </div>
 
         <label>Hormônios:</label>
-        {["BE", "GnRH", "PGF2α"].map((h, i) => (
-          <div key={i} style={{ marginBottom: "0.5rem" }}>
-            <label>
+        {hormoniosDisponiveis.map((h) => (
+          <label key={h.id} className="flex items-center gap-2" style={{ marginBottom: '0.5rem' }}>
+            <input
+              type="checkbox"
+              checked={etapa.hormônios?.[h.id]?.ativo || false}
+              onChange={(e) => toggleHormone(h.id, e.target.checked)}
+            />
+            <span>{h.nome}</span>
+            {etapa.hormônios?.[h.id]?.ativo && (
               <input
-                type="checkbox"
-                checked={hormôniosSelecionados.some((ho) => ho.nome === h)}
-                onChange={(e) =>
-                  e.target.checked
-                    ? adicionarHormônio(h)
-                    : removerHormônio(h)
-                }
-              />{" "}
-              {h}
-            </label>
-            {hormôniosSelecionados.some((ho) => ho.nome === h) && (
-              <div style={{ marginLeft: "1rem", marginTop: "0.2rem" }}>
-                <select
-                  value={
-                    hormôniosSelecionados.find((ho) => ho.nome === h)?.análogo
-                  }
-                  onChange={(e) =>
-                    atualizarHormônio(h, "análogo", e.target.value)
-                  }
-                  style={{ ...input, marginBottom: "0.2rem" }}
-                >
-                  <option value="">Análogo</option>
-                  {análogosDisponíveis[h].map((a, idx) => (
-                    <option key={idx} value={a}>
-                      {a}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="text"
-                  placeholder="Dose"
-                  value={
-                    hormôniosSelecionados.find((ho) => ho.nome === h)?.dose
-                  }
-                  onChange={(e) =>
-                    atualizarHormônio(h, "dose", e.target.value)
-                  }
-                  style={{ ...input, width: "150px" }}
-                />
-              </div>
+                type="number"
+                min="0"
+                step="0.1"
+                placeholder="mL ou mg"
+                value={etapa.hormônios[h.id].dose}
+                className="input-dose"
+                onChange={(e) => alterarDose(h.id, e.target.value)}
+              />
             )}
-          </div>
+          </label>
         ))}
 
         <button
@@ -238,12 +196,10 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
               >
                 <span>
                   Dia {etapa.dia}{" "}
-                  {etapa.dispositivo && `| Dispositivo: ${etapa.dispositivo}`}{" "}
-                  {etapa.hormonios
-                    .map(
-                      (h) =>
-                        `| ${h.nome}: ${h.análogo || "—"} (${h.dose || "—"})`
-                    )
+                  {etapa.dispositivo && "| Dispositivo"}{" "}
+                  {Object.entries(etapa.hormônios)
+                    .filter(([, cfg]) => cfg.ativo)
+                    .map(([id, cfg]) => `| ${id.toUpperCase()}: ${cfg.dose}`)
                     .join(" ")}
                 </span>
                 <button
