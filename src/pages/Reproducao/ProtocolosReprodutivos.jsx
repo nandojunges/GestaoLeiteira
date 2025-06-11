@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ModalCadastroProtocolo from "./ModalCadastroProtocolo";
 import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
 import "../../styles/tabelaModerna.css";
@@ -11,12 +11,21 @@ export default function ProtocolosReprodutivos() {
   const [protocoloExpandido, setProtocoloExpandido] = useState(null);
   const [protocoloExcluir, setProtocoloExcluir] = useState(null);
 
+  useEffect(() => {
+    const salvos = JSON.parse(localStorage.getItem("protocolos") || "[]");
+    setProtocolos(salvos);
+  }, []);
+
   const salvarProtocolo = (novoProtocolo) => {
-    setProtocolos([...protocolos, novoProtocolo]);
+    const atualizados = [...protocolos, novoProtocolo];
+    setProtocolos(atualizados);
+    localStorage.setItem("protocolos", JSON.stringify(atualizados));
   };
 
   const removerProtocolo = (index) => {
-    setProtocolos(protocolos.filter((_, i) => i !== index));
+    const atualizados = protocolos.filter((_, i) => i !== index);
+    setProtocolos(atualizados);
+    localStorage.setItem("protocolos", JSON.stringify(atualizados));
     setProtocoloExcluir(null);
   };
 
