@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Select from "react-select";
 import "../../styles/modalPadrao.css";
-import { contarEstoqueImplantes, movimentarImplanteEstoque } from "./utilsReproducao";
+import { contarEstoqueImplantes } from "./utilsReproducao";
 
 const hormonios = [
   { id: "Benzoato de Estradiol", nome: "Benzoato de Estradiol" },
@@ -90,11 +90,6 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
       else arr.push(etapa);
       return { ...prev, [formDia]: arr };
     });
-    if (form.acaoDispositivo === 'Retirar') {
-      movimentarImplanteEstoque('1');
-      setEstoquePrimeiroUso(contarEstoqueImplantes(1));
-    }
-    setFormDia(null);
     setFormIndex(null);
     setForm({ hormonio: "", nomeComercial: "", dose: "", acaoDispositivo: "", tipoDispositivo: "" });
   };
@@ -275,7 +270,6 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
                           value={form.tipoDispositivo ? { value: form.tipoDispositivo, label: form.tipoDispositivo } : null}
                           onChange={opt => {
                             setForm({ ...form, tipoDispositivo: opt?.value || '' });
-                            if (contarEstoqueImplantes(1) === 0) alert('⚠️ Estoque insuficiente para primeiro uso');
                           }}
                           className="react-select-container"
                           classNamePrefix="react-select"
