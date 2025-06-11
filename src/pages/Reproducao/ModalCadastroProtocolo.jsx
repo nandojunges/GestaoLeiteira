@@ -1,98 +1,114 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../../styles/modalPadrao.css";
-import {
-  contarEstoqueImplantes,
-  registrarAvisoInicial,
-  movimentarImplanteEstoque,
-} from "./utilsReproducao";
+
+const hormonios = [
+  { id: "BE", nome: "BE" },
+  { id: "EB", nome: "EB" },
+  { id: "CE", nome: "CE" },
+  { id: "ECP", nome: "ECP" },
+  { id: "PGF2α", nome: "PGF2α" },
+  { id: "GnRH", nome: "GnRH" },
+];
 
 export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
+  const diasIniciais = Array.from({ length: 11 }, (_, i) => i);
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [etapas, setEtapas] = useState([]);
-  const [erroImplante, setErroImplante] = useState("");
-
-  const [etapa, setEtapa] = useState({
-    dia: "",
-    acao: "",
-    dispositivo: false,
-    hormônios: {},
-    usoImplante: "1",
+  const [dias, setDias] = useState(diasIniciais);
+  const [etapas, setEtapas] = useState({});
+  const [formDia, setFormDia] = useState(null);
+  const [formIndex, setFormIndex] = useState(null);
+  const [form, setForm] = useState({
+    hormonio: "",
+    nomeComercial: "",
+    dose: "",
+    dispositivo: "",
   });
+  const [produtos, setProdutos] = useState([]);
 
-  const hormoniosDisponiveis = [
-    { id: "be", nome: "BE (Benzoato de Estradiol)" },
-    { id: "gnrh", nome: "GnRH" },
-    { id: "pgf2a", nome: "PGF₂α" },
-    { id: "ecp", nome: "ECP (Cipionato de Estradiol)" },
-  ];
+  useEffect(() => {
+    const lista = JSON.parse(localStorage.getItem("produtos") || "[]");
+    setProdutos(lista);
+  }, []);
 
-  const toggleHormone = (id, checked) => {
-    setEtapa((prev) => ({
-      ...prev,
-      hormônios: {
-        ...prev.hormônios,
-        [id]: {
-          ...prev.hormônios[id],
-          ativo: checked,
-          dose: checked ? prev.hormônios[id]?.dose || "" : "",
-        },
-      },
-    }));
+  useEffect(() => {
+    localStorage.setItem(
+      "cadastroProtocoloTmp",
+      JSON.stringify({ nome, descricao, dias, etapas })
+    );
+  }, [nome, descricao, dias, etapas]);
+
+  const adicionarDia = () => {
+    const proximo = dias.length ? Math.max(...dias) + 1 : 0;
+    setDias([...dias, proximo]);
   };
 
-  const alterarDose = (id, valor) => {
-    setEtapa((prev) => ({
-      ...prev,
-      hormônios: {
-        ...prev.hormônios,
-        [id]: { ...prev.hormônios[id], dose: valor },
-      },
-    }));
+  const removerDia = (dia) => {
+    setDias(dias.filter((d) => d !== dia));
+    setEtapas((prev) => {
+      const novo = { ...prev };
+      delete novo[dia];
+      return novo;
+    });
   };
 
+  const abrirFormNovo = (dia) => {
+    setFormDia(dia);
+    setFormIndex(null);
+    setForm({ hormonio: "", nomeComercial: "", dose: "", dispositivo: "" });
+  };
 
-  const adicionarEtapa = () => {
-    if (etapa.dia === "") {
-      alert("Selecione o dia!");
+  const editarEtapa = (dia, idx) => {
+    const etapa = etapas[dia][idx];
+    setFormDia(dia);
+    setFormIndex(idx);
+    setForm({ ...etapa });
+  };
+
+  const salvarEtapa = () => {
+    if (formDia === null) return;
+    if (!form.hormonio && !form.dispositivo) {
+      alert("Selecione um hormônio ou dispositivo.");
       return;
     }
-
-    const algumHormoneAtivo = Object.values(etapa.hormônios).some((h) => h.ativo);
-    if (!algumHormoneAtivo && !etapa.dispositivo && etapa.acao !== "Retirar Implante") {
-      alert("Adicione pelo menos um hormônio ou selecione o dispositivo.");
-      return;
-    }
-
-    if (etapa.acao === "Retirar Implante") {
-      if (contarEstoqueImplantes(etapa.usoImplante) === 0) {
-        setErroImplante(
-          "Não há implantes de " + etapa.usoImplante + "º uso disponíveis."
-        );
-        registrarAvisoInicial(
-          `Estoque zerado de implantes de ${etapa.usoImplante}º uso para protocolo ${nome}`
-        );
-        return;
-      }
-      setErroImplante("");
-      movimentarImplanteEstoque(etapa.usoImplante);
-    }
-
-    setEtapas([...etapas, { ...etapa, dia: parseInt(etapa.dia, 10) }]);
-    setEtapa({ dia: "", acao: "", dispositivo: false, hormônios: {}, usoImplante: "1" });
+    setEtapas((prev) => {
+      const arr = prev[formDia] ? [...prev[formDia]] : [];
+      const etapa = { ...form };
+      if (formIndex !== null) arr[formIndex] = etapa;
+      else arr.push(etapa);
+      return { ...prev, [formDia]: arr };
+    });
+    setFormDia(null);
+    setFormIndex(null);
+    setForm({ hormonio: "", nomeComercial: "", dose: "", dispositivo: "" });
   };
 
-  const removerEtapa = (index) => {
-    setEtapas(etapas.filter((_, i) => i !== index));
+  const removerEtapa = (dia, idx) => {
+    setEtapas((prev) => {
+      const arr = prev[dia] ? [...prev[dia]] : [];
+      arr.splice(idx, 1);
+      return { ...prev, [dia]: arr };
+    });
   };
 
   const salvarProtocolo = () => {
-    if (!nome || etapas.length === 0) {
+    const etapasList = [];
+    Object.entries(etapas).forEach(([d, arr]) => {
+      arr.forEach((e) => etapasList.push({ ...e, dia: parseInt(d, 10) }));
+    });
+    if (!nome || etapasList.length === 0) {
       alert("Preencha o nome e adicione pelo menos uma etapa.");
       return;
     }
-    const novoProtocolo = { nome, descricao, etapas };
-    onSalvar(novoProtocolo);
+    const protocolo = {
+      nome,
+      descricao,
+      etapas: etapasList.sort((a, b) => a.dia - b.dia),
+    };
+    const salvos = JSON.parse(localStorage.getItem("protocolos") || "[]");
+    localStorage.setItem("protocolos", JSON.stringify([...salvos, protocolo]));
+    localStorage.removeItem("cadastroProtocoloTmp");
+    onSalvar && onSalvar(protocolo);
     onFechar();
   };
 
@@ -112,16 +128,16 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
   const modal = {
     background: "#fff",
     borderRadius: "1rem",
-    width: "550px",
-    maxWidth: "90vw",
-    padding: "1.5rem",
+    width: "640px",
+    maxWidth: "95vw",
+    padding: "1rem",
     fontFamily: "Poppins, sans-serif",
   };
 
-  const input = {
+  const headerInput = {
     width: "100%",
-    margin: "0.5rem 0",
-    padding: "0.5rem",
+    margin: "0.25rem 0",
+    padding: "0.4rem",
     borderRadius: "0.5rem",
     border: "1px solid #ccc",
   };
@@ -129,166 +145,105 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
   return (
     <div style={overlay} onClick={onFechar}>
       <div style={modal} onClick={(e) => e.stopPropagation()} className="modal-content">
-        <h2 style={{ marginBottom: "1rem" }}>📝 Cadastrar Protocolo IATF</h2>
-
-        <label>Nome do Protocolo:</label>
-        <input
-          type="text"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          style={input}
-        />
-
-        <label>Descrição:</label>
-        <input
-          type="text"
-          value={descricao}
-          onChange={(e) => setDescricao(e.target.value)}
-          style={input}
-        />
-
-        <h4 style={{ marginTop: "1rem" }}>Nova Etapa:</h4>
-
-        <label>Dia:</label>
-        <select
-          value={etapa.dia}
-          onChange={(e) => setEtapa((p) => ({ ...p, dia: e.target.value }))}
-          style={input}
-        >
-          <option value="">Selecione</option>
-          {[...Array(22).keys()].map((d) => (
-            <option key={d} value={d}>{`D${d}`}</option>
-          ))}
-        </select>
-
-        <label>Ação:</label>
-        <select
-          value={etapa.acao}
-          onChange={(e) =>
-            setEtapa((p) => ({
-              ...p,
-              acao: e.target.value,
-              dispositivo:
-                e.target.value === "Retirar Implante" ? false : p.dispositivo,
-              usoImplante:
-                e.target.value === "Retirar Implante" ? "1" : p.usoImplante,
-            }))
-          }
-          style={input}
-        >
-          <option value="">Selecione</option>
-          <option value="Retirar Implante">Retirar Implante</option>
-        </select>
-
-        {etapa.acao === "Retirar Implante" && (
-          <>
-            <label>Uso do Implante:</label>
-            <select
-              value={etapa.usoImplante}
-              onChange={(e) =>
-                setEtapa((p) => ({ ...p, usoImplante: e.target.value }))
-              }
-              style={input}
-            >
-              {["1", "2", "3"].map((n) => (
-                <option key={n} value={n}>{`${n}º uso (${contarEstoqueImplantes(n)} no estoque)`}</option>
-              ))}
-            </select>
-            {erroImplante && (
-              <div style={{ color: 'red', fontSize: '0.8rem' }}>{erroImplante}</div>
-            )}
-          </>
-        )}
-
-        <label>Dispositivo de Progesterona:</label>
-        <div style={{ marginBottom: "0.5rem" }}>
+        <h2 className="mb-2">📝 Cadastrar Protocolo IATF</h2>
+        <div className="sticky top-0 bg-white pb-2">
+          <label>Nome do Protocolo:</label>
           <input
-            type="checkbox"
-            checked={etapa.dispositivo}
-            onChange={(e) =>
-              setEtapa((p) => ({ ...p, dispositivo: e.target.checked }))
-            }
-          />{' '}Usar Dispositivo
+            type="text"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            style={headerInput}
+          />
+          <label>Descrição:</label>
+          <input
+            type="text"
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+            style={headerInput}
+          />
         </div>
-
-        {etapa.dia && (
-          <>
-            <label>Hormônios:</label>
-            {hormoniosDisponiveis.map((h) => (
-              <label key={h.id} className="flex items-center gap-2" style={{ marginBottom: '0.5rem' }}>
-                <input
-                  type="checkbox"
-                  checked={etapa.hormônios?.[h.id]?.ativo || false}
-                  onChange={(e) => toggleHormone(h.id, e.target.checked)}
-                />
-                <span>{h.nome}</span>
-                {etapa.hormônios?.[h.id]?.ativo && (
+        <div className="mt-2" style={{ maxHeight: "60vh", overflowY: "auto" }}>
+          {dias.map((d) => (
+            <div key={d} className="relative pl-6 mb-4 border-l">
+              <div className="absolute -left-3 top-0 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
+                {d}
+              </div>
+              <div className="flex justify-between items-center mb-1">
+                <strong>Dia {d}</strong>
+                <div className="flex gap-2">
+                  <button className="botao-acao pequeno" onClick={() => abrirFormNovo(d)}>+</button>
+                  <button className="botao-cancelar pequeno" onClick={() => removerDia(d)}>🗑️</button>
+                </div>
+              </div>
+              {(etapas[d] || []).map((e, i) => (
+                <div key={i} className="ml-2 pl-2 border-l mb-1 text-sm flex items-center gap-2">
+                  <span>
+                    {e.hormonio && `🧪 ${e.hormonio} ${e.dose ? `- ${e.dose} mL` : ""}`} {e.nomeComercial}
+                  </span>
+                  {e.dispositivo && <span>📎 {e.dispositivo}</span>}
+                  <button className="btn-editar" onClick={() => editarEtapa(d, i)}>✏️</button>
+                  <button className="btn-excluir" onClick={() => removerEtapa(d, i)}>🗑️</button>
+                </div>
+              ))}
+              {formDia === d && (
+                <div className="mt-2 p-2 border rounded bg-gray-50 text-sm">
+                  <div className="font-semibold mb-1">Adicionar Etapa</div>
+                  <label>Hormônio:</label>
+                  <select
+                    value={form.hormonio}
+                    onChange={(e) => setForm({ ...form, hormonio: e.target.value })}
+                    style={headerInput}
+                  >
+                    <option value="">Nenhum</option>
+                    {hormonios.map((h) => (
+                      <option key={h.id} value={h.id}>
+                        {h.nome}
+                      </option>
+                    ))}
+                  </select>
+                  <label>Nome Comercial:</label>
+                  <input
+                    list="produtos"
+                    value={form.nomeComercial}
+                    onChange={(e) => setForm({ ...form, nomeComercial: e.target.value })}
+                    style={headerInput}
+                  />
+                  <datalist id="produtos">
+                    {produtos.map((p) => (
+                      <option key={p.nomeComercial} value={p.nomeComercial} />
+                    ))}
+                  </datalist>
+                  <label>Dose:</label>
                   <input
                     type="number"
                     min="0"
                     step="0.1"
-                    placeholder="mL ou mg"
-                    value={etapa.hormônios[h.id].dose}
-                    className="input-dose"
-                    onChange={(e) => alterarDose(h.id, e.target.value)}
+                    value={form.dose}
+                    onChange={(e) => setForm({ ...form, dose: e.target.value })}
+                    style={headerInput}
                   />
-                )}
-              </label>
-            ))}
-          </>
-        )}
-
-        <button
-          onClick={adicionarEtapa}
-          className="botao-acao"
-          style={{ margin: "1rem 0" }}
-        >
-          ➕ Adicionar Etapa
-        </button>
-
-        <h4>Etapas Cadastradas:</h4>
-        {etapas.length === 0 ? (
-          <p style={{ fontSize: "0.9rem", color: "#777" }}>Nenhuma etapa adicionada.</p>
-        ) : (
-          <ul style={{ marginBottom: "1rem" }}>
-            {etapas.map((etapa, index) => (
-              <li
-                key={index}
-                style={{
-                  borderBottom: "1px solid #eee",
-                  padding: "0.2rem 0",
-                  margin: "0.2rem 0",
-                }}
-              >
-                <span>
-                  Dia {etapa.dia}{" "}
-                  {etapa.acao === "Retirar Implante" &&
-                    `| Retirar Implante (${etapa.usoImplante}º uso)`}{" "}
-                  {etapa.dispositivo && "| Dispositivo"}{" "}
-                  {Object.entries(etapa.hormônios)
-                    .filter(([, cfg]) => cfg.ativo)
-                    .map(([id, cfg]) => `| ${id.toUpperCase()}: ${cfg.dose}`)
-                    .join(" ")}
-                </span>
-                <button
-                  onClick={() => removerEtapa(index)}
-                  style={{
-                    color: "red",
-                    fontSize: "0.8rem",
-                    border: "none",
-                    background: "transparent",
-                    cursor: "pointer",
-                    marginLeft: "1rem",
-                  }}
-                >
-                  Remover
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
+                  <label>Dispositivo de Progesterona:</label>
+                  <select
+                    value={form.dispositivo}
+                    onChange={(e) => setForm({ ...form, dispositivo: e.target.value })}
+                    style={headerInput}
+                  >
+                    <option value="">Nenhum</option>
+                    <option value="Inserir">Inserir</option>
+                    <option value="Retirar">Retirar</option>
+                  </select>
+                  <button className="botao-acao mt-2" onClick={salvarEtapa}>
+                    ✔️ Salvar Etapa
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+          <button className="botao-acao" onClick={adicionarDia}>
+            Adicionar Dia
+          </button>
+        </div>
+        <div className="flex justify-end gap-2 mt-4">
           <button onClick={onFechar} className="botao-cancelar">
             Cancelar
           </button>
