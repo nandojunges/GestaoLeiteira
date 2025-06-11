@@ -59,8 +59,14 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
   };
 
   const abrirFormNovo = (dia) => {
-    setFormDia(dia);
-    setFormIndex(null);
+    if (formDia === dia) {
+      // recolhe o formulário se já estiver aberto
+      setFormDia(null);
+      setFormIndex(null);
+    } else {
+      setFormDia(dia);
+      setFormIndex(null);
+    }
     setForm({ hormonio: "", nomeComercial: "", dose: "", acaoDispositivo: "", tipoDispositivo: "" });
   };
 
@@ -173,26 +179,40 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
           />
         </div>
         <div className="mt-2" style={{ maxHeight: "60vh", overflowY: "auto" }}>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="space-y-4">
             {dias.map((d) => (
-              <div key={d} className="border rounded p-2 relative">
+              <div key={d} className="relative pl-4 border-l-2 border-blue-200">
                 <div className="flex justify-between items-center mb-1">
-                  <strong>Dia {d}</strong>
+                  <span className="font-semibold">🕒 Dia {d}</span>
                   <div className="flex gap-2">
-                    <button className="botao-acao pequeno" onClick={() => abrirFormNovo(d)}>+</button>
-                    <button className="botao-cancelar pequeno" onClick={() => removerDia(d)}>🗑️</button>
+                    <button
+                      className="botao-acao pequeno"
+                      onClick={() => abrirFormNovo(d)}
+                    >
+                      {formDia === d ? "-" : "+"}
+                    </button>
+                    <button
+                      className="botao-cancelar pequeno"
+                      onClick={() => removerDia(d)}
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </div>
-                {(etapas[d] || []).map((e, i) => (
-                  <div key={i} className="text-sm flex items-center gap-2 mb-1">
-                    <span>
-                      {e.hormonio && `🧪 ${e.hormonio} ${e.dose ? `- ${e.dose} mL` : ""}`} {e.nomeComercial}
-                    </span>
-                    {e.acaoDispositivo && <span>📎 {e.acaoDispositivo} {e.tipoDispositivo || ''}</span>}
-                    <button className="btn-editar" onClick={() => editarEtapa(d, i)}>✏️</button>
-                    <button className="btn-excluir" onClick={() => removerEtapa(d, i)}>🗑️</button>
-                  </div>
-                ))}
+                <div className="ml-2 space-y-1">
+                  {(etapas[d] || []).map((e, i) => (
+                    <div key={i} className="text-sm flex items-center gap-2">
+                      <span>
+                        {e.hormonio && `🧪 ${e.hormonio} ${e.dose ? `- ${e.dose} mL` : ""}`} {e.nomeComercial}
+                      </span>
+                      {e.acaoDispositivo && (
+                        <span>📎 {e.acaoDispositivo} {e.tipoDispositivo || ''}</span>
+                      )}
+                      <button className="btn-editar" onClick={() => editarEtapa(d, i)}>✏️</button>
+                      <button className="btn-excluir" onClick={() => removerEtapa(d, i)}>🗑️</button>
+                    </div>
+                  ))}
+                </div>
                 {formDia === d && (
                   <div className="mt-2 p-2 border rounded bg-gray-50 text-sm space-y-2">
                     <div className="font-semibold">Adicionar Etapa</div>
