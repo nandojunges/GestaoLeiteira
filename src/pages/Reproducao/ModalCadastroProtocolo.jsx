@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
+import Select from "react-select";
 import "../../styles/modalPadrao.css";
+import { contarEstoqueImplantes, movimentarImplanteEstoque } from "./utilsReproducao";
 
 const hormonios = [
-  { id: "BE", nome: "BE" },
-  { id: "EB", nome: "EB" },
-  { id: "CE", nome: "CE" },
-  { id: "ECP", nome: "ECP" },
+  { id: "Benzoato de Estradiol", nome: "Benzoato de Estradiol" },
+  { id: "Cipionato de Estradiol", nome: "Cipionato de Estradiol" },
   { id: "PGF2α", nome: "PGF2α" },
   { id: "GnRH", nome: "GnRH" },
+  { id: "eCG", nome: "eCG" },
+  { id: "hCG", nome: "hCG" },
 ];
 
 export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
@@ -22,13 +24,17 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
     hormonio: "",
     nomeComercial: "",
     dose: "",
-    dispositivo: "",
+    acaoDispositivo: "",
+    tipoDispositivo: "",
   });
+  const [estoquePrimeiroUso, setEstoquePrimeiroUso] = useState(0);
   const [produtos, setProdutos] = useState([]);
+  const dispositivos = Array.from(new Set(produtos.filter(p => p.nomeHormônio === "Dispositivo de Progesterona").map(p => p.nomeComercial)));
 
   useEffect(() => {
     const lista = JSON.parse(localStorage.getItem("produtos") || "[]");
     setProdutos(lista);
+    setEstoquePrimeiroUso(contarEstoqueImplantes(1));
   }, []);
 
   useEffect(() => {
@@ -55,7 +61,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
   const abrirFormNovo = (dia) => {
     setFormDia(dia);
     setFormIndex(null);
-    setForm({ hormonio: "", nomeComercial: "", dose: "", dispositivo: "" });
+    setForm({ hormonio: "", nomeComercial: "", dose: "", acaoDispositivo: "", tipoDispositivo: "" });
   };
 
   const editarEtapa = (dia, idx) => {
@@ -67,7 +73,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
 
   const salvarEtapa = () => {
     if (formDia === null) return;
-    if (!form.hormonio && !form.dispositivo) {
+    if (!form.hormonio && !form.acaoDispositivo) {
       alert("Selecione um hormônio ou dispositivo.");
       return;
     }
@@ -78,9 +84,13 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
       else arr.push(etapa);
       return { ...prev, [formDia]: arr };
     });
+    if (form.acaoDispositivo === 'Retirar') {
+      movimentarImplanteEstoque('1');
+      setEstoquePrimeiroUso(contarEstoqueImplantes(1));
+    }
     setFormDia(null);
     setFormIndex(null);
-    setForm({ hormonio: "", nomeComercial: "", dose: "", dispositivo: "" });
+    setForm({ hormonio: "", nomeComercial: "", dose: "", acaoDispositivo: "", tipoDispositivo: "" });
   };
 
   const removerEtapa = (dia, idx) => {
@@ -163,85 +173,104 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
           />
         </div>
         <div className="mt-2" style={{ maxHeight: "60vh", overflowY: "auto" }}>
-          {dias.map((d) => (
-            <div key={d} className="relative pl-6 mb-4 border-l">
-              <div className="absolute -left-3 top-0 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
-                {d}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {dias.map((d) => (
+              <div key={d} className="border rounded p-2 relative">
+                <div className="flex justify-between items-center mb-1">
+                  <strong>Dia {d}</strong>
+                  <div className="flex gap-2">
+                    <button className="botao-acao pequeno" onClick={() => abrirFormNovo(d)}>+</button>
+                    <button className="botao-cancelar pequeno" onClick={() => removerDia(d)}>🗑️</button>
+                  </div>
+                </div>
+                {(etapas[d] || []).map((e, i) => (
+                  <div key={i} className="text-sm flex items-center gap-2 mb-1">
+                    <span>
+                      {e.hormonio && `🧪 ${e.hormonio} ${e.dose ? `- ${e.dose} mL` : ""}`} {e.nomeComercial}
+                    </span>
+                    {e.acaoDispositivo && <span>📎 {e.acaoDispositivo} {e.tipoDispositivo || ''}</span>}
+                    <button className="btn-editar" onClick={() => editarEtapa(d, i)}>✏️</button>
+                    <button className="btn-excluir" onClick={() => removerEtapa(d, i)}>🗑️</button>
+                  </div>
+                ))}
+                {formDia === d && (
+                  <div className="mt-2 p-2 border rounded bg-gray-50 text-sm space-y-2">
+                    <div className="font-semibold">Adicionar Etapa</div>
+                    <div>
+                      <label>Hormônio:</label>
+                      <Select
+                        options={[{ value: '', label: 'Nenhum' }, ...hormonios.map(h => ({ value: h.id, label: h.nome }))]}
+                        value={form.hormonio ? { value: form.hormonio, label: form.hormonio } : { value: '', label: 'Nenhum' }}
+                        onChange={(opt) => setForm({ ...form, hormonio: opt?.value || '' })}
+                        className="react-select-container"
+                        classNamePrefix="react-select"
+                        placeholder="Selecione..."
+                      />
+                    </div>
+                    <div>
+                      <label>Nome Comercial:</label>
+                      <input
+                        list="produtos"
+                        value={form.nomeComercial}
+                        onChange={(e) => setForm({ ...form, nomeComercial: e.target.value })}
+                        style={headerInput}
+                      />
+                      <datalist id="produtos">
+                        {produtos.map((p) => (
+                          <option key={p.nomeComercial} value={p.nomeComercial} />
+                        ))}
+                      </datalist>
+                    </div>
+                    <div>
+                      <label>Dose:</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={form.dose}
+                        onChange={(e) => setForm({ ...form, dose: e.target.value })}
+                        style={headerInput}
+                      />
+                    </div>
+                    <div>
+                      <label>Ação com Dispositivo:</label>
+                      <Select
+                        options={[
+                          { value: '', label: 'Nenhum' },
+                          { value: 'Inserir', label: 'Inserir dispositivo' },
+                          { value: 'Retirar', label: 'Retirar dispositivo' },
+                        ]}
+                        value={form.acaoDispositivo ? { value: form.acaoDispositivo, label: form.acaoDispositivo } : { value: '', label: 'Nenhum' }}
+                        onChange={(opt) => setForm({ ...form, acaoDispositivo: opt?.value || '' })}
+                        className="react-select-container"
+                        classNamePrefix="react-select"
+                        placeholder="Selecione..."
+                      />
+                    </div>
+                    {form.acaoDispositivo === 'Inserir' && (
+                      <div>
+                        <label>Tipo de dispositivo</label>
+                        <Select
+                          options={dispositivos.map(disp => ({ value: disp, label: disp }))}
+                          value={form.tipoDispositivo ? { value: form.tipoDispositivo, label: form.tipoDispositivo } : null}
+                          onChange={opt => {
+                            setForm({ ...form, tipoDispositivo: opt?.value || '' });
+                            if (contarEstoqueImplantes(1) === 0) alert('⚠️ Estoque insuficiente para primeiro uso');
+                          }}
+                          className="react-select-container"
+                          classNamePrefix="react-select"
+                          placeholder="Selecione..."
+                        />
+                        <p className="text-xs text-gray-500">Estoque 1º uso: {estoquePrimeiroUso}</p>
+                      </div>
+                    )}
+                    <button className="botao-acao mt-1" onClick={salvarEtapa}>✔️ Salvar Etapa</button>
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between items-center mb-1">
-                <strong>Dia {d}</strong>
-                <div className="flex gap-2">
-                  <button className="botao-acao pequeno" onClick={() => abrirFormNovo(d)}>+</button>
-                  <button className="botao-cancelar pequeno" onClick={() => removerDia(d)}>🗑️</button>
-                </div>
-              </div>
-              {(etapas[d] || []).map((e, i) => (
-                <div key={i} className="ml-2 pl-2 border-l mb-1 text-sm flex items-center gap-2">
-                  <span>
-                    {e.hormonio && `🧪 ${e.hormonio} ${e.dose ? `- ${e.dose} mL` : ""}`} {e.nomeComercial}
-                  </span>
-                  {e.dispositivo && <span>📎 {e.dispositivo}</span>}
-                  <button className="btn-editar" onClick={() => editarEtapa(d, i)}>✏️</button>
-                  <button className="btn-excluir" onClick={() => removerEtapa(d, i)}>🗑️</button>
-                </div>
-              ))}
-              {formDia === d && (
-                <div className="mt-2 p-2 border rounded bg-gray-50 text-sm">
-                  <div className="font-semibold mb-1">Adicionar Etapa</div>
-                  <label>Hormônio:</label>
-                  <select
-                    value={form.hormonio}
-                    onChange={(e) => setForm({ ...form, hormonio: e.target.value })}
-                    style={headerInput}
-                  >
-                    <option value="">Nenhum</option>
-                    {hormonios.map((h) => (
-                      <option key={h.id} value={h.id}>
-                        {h.nome}
-                      </option>
-                    ))}
-                  </select>
-                  <label>Nome Comercial:</label>
-                  <input
-                    list="produtos"
-                    value={form.nomeComercial}
-                    onChange={(e) => setForm({ ...form, nomeComercial: e.target.value })}
-                    style={headerInput}
-                  />
-                  <datalist id="produtos">
-                    {produtos.map((p) => (
-                      <option key={p.nomeComercial} value={p.nomeComercial} />
-                    ))}
-                  </datalist>
-                  <label>Dose:</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={form.dose}
-                    onChange={(e) => setForm({ ...form, dose: e.target.value })}
-                    style={headerInput}
-                  />
-                  <label>Dispositivo de Progesterona:</label>
-                  <select
-                    value={form.dispositivo}
-                    onChange={(e) => setForm({ ...form, dispositivo: e.target.value })}
-                    style={headerInput}
-                  >
-                    <option value="">Nenhum</option>
-                    <option value="Inserir">Inserir</option>
-                    <option value="Retirar">Retirar</option>
-                  </select>
-                  <button className="botao-acao mt-2" onClick={salvarEtapa}>
-                    ✔️ Salvar Etapa
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-          <button className="botao-acao" onClick={adicionarDia}>
-            Adicionar Dia
-          </button>
+            ))}
+          </div>
+          <button className="botao-acao mt-2" onClick={adicionarDia}>Adicionar Dia</button>
         </div>
         <div className="flex justify-end gap-2 mt-4">
           <button onClick={onFechar} className="botao-cancelar">
