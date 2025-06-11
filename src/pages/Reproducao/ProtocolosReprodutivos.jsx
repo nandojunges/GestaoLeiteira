@@ -85,7 +85,8 @@ export default function ProtocolosReprodutivos() {
                   <td className={colunaHover === 2 ? "coluna-hover" : ""}>
                     {protocolo.etapas.map((etapa, i) => (
                       <div key={i}>
-                        Dia {etapa.dia}: {etapa.acao}
+                        Dia {etapa.dia}: {etapa.hormonio}
+                        {etapa.acaoDispositivo ? ` - ${etapa.acaoDispositivo}` : ''}
                       </div>
                     ))}
                   </td>

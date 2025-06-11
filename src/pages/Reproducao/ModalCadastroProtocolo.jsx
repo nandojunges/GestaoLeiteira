@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Select from "react-select";
 import "../../styles/modalPadrao.css";
-import { contarEstoqueImplantes } from "./utilsReproducao";
 
 const hormonios = [
   { id: "Benzoato de Estradiol", nome: "Benzoato de Estradiol" },
@@ -22,20 +21,10 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
   const [formIndex, setFormIndex] = useState(null);
   const [form, setForm] = useState({
     hormonio: "",
-    nomeComercial: "",
-    dose: "",
     acaoDispositivo: "",
-    tipoDispositivo: "",
   });
-  const [estoquePrimeiroUso, setEstoquePrimeiroUso] = useState(0);
-  const [produtos, setProdutos] = useState([]);
-  const dispositivos = Array.from(new Set(produtos.filter(p => p.nomeHormônio === "Dispositivo de Progesterona").map(p => p.nomeComercial)));
 
-  useEffect(() => {
-    const lista = JSON.parse(localStorage.getItem("produtos") || "[]");
-    setProdutos(lista);
-    setEstoquePrimeiroUso(contarEstoqueImplantes(1));
-  }, []);
+
 
   useEffect(() => {
     localStorage.setItem(
@@ -67,7 +56,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
       setFormDia(dia);
       setFormIndex(null);
     }
-    setForm({ hormonio: "", nomeComercial: "", dose: "", acaoDispositivo: "", tipoDispositivo: "" });
+    setForm({ hormonio: "", acaoDispositivo: "" });
   };
 
   const editarEtapa = (dia, idx) => {
@@ -91,7 +80,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
       return { ...prev, [formDia]: arr };
     });
     setFormIndex(null);
-    setForm({ hormonio: "", nomeComercial: "", dose: "", acaoDispositivo: "", tipoDispositivo: "" });
+    setForm({ hormonio: "", acaoDispositivo: "" });
   };
 
   const removerEtapa = (dia, idx) => {
@@ -198,10 +187,10 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
                   {(etapas[d] || []).map((e, i) => (
                     <div key={i} className="text-sm flex items-center gap-2">
                       <span>
-                        {e.hormonio && `🧪 ${e.hormonio} ${e.dose ? `- ${e.dose} mL` : ""}`} {e.nomeComercial}
+                        {e.hormonio && `🧪 ${e.hormonio}`}
                       </span>
                       {e.acaoDispositivo && (
-                        <span>📎 {e.acaoDispositivo} {e.tipoDispositivo || ''}</span>
+                        <span>📎 {e.acaoDispositivo}</span>
                       )}
                       <button className="btn-editar" onClick={() => editarEtapa(d, i)}>✏️</button>
                       <button className="btn-excluir" onClick={() => removerEtapa(d, i)}>🗑️</button>
@@ -223,31 +212,6 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
                       />
                     </div>
                     <div>
-                      <label>Nome Comercial:</label>
-                      <input
-                        list="produtos"
-                        value={form.nomeComercial}
-                        onChange={(e) => setForm({ ...form, nomeComercial: e.target.value })}
-                        style={headerInput}
-                      />
-                      <datalist id="produtos">
-                        {produtos.map((p) => (
-                          <option key={p.nomeComercial} value={p.nomeComercial} />
-                        ))}
-                      </datalist>
-                    </div>
-                    <div>
-                      <label>Dose:</label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={form.dose}
-                        onChange={(e) => setForm({ ...form, dose: e.target.value })}
-                        style={headerInput}
-                      />
-                    </div>
-                    <div>
                       <label>Ação com Dispositivo:</label>
                       <Select
                         options={[
@@ -262,22 +226,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
                         placeholder="Selecione..."
                       />
                     </div>
-                    {form.acaoDispositivo === 'Inserir' && (
-                      <div>
-                        <label>Tipo de dispositivo</label>
-                        <Select
-                          options={dispositivos.map(disp => ({ value: disp, label: disp }))}
-                          value={form.tipoDispositivo ? { value: form.tipoDispositivo, label: form.tipoDispositivo } : null}
-                          onChange={opt => {
-                            setForm({ ...form, tipoDispositivo: opt?.value || '' });
-                          }}
-                          className="react-select-container"
-                          classNamePrefix="react-select"
-                          placeholder="Selecione..."
-                        />
-                        <p className="text-xs text-gray-500">Estoque 1º uso: {estoquePrimeiroUso}</p>
-                      </div>
-                    )}
+                    
                     <button className="botao-acao mt-1" onClick={salvarEtapa}>✔️ Salvar Etapa</button>
                   </div>
                 )}
