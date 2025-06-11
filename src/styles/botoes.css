@@ -33,6 +33,13 @@
   transition: background-color 0.2s ease;
 }
 
+/* Versão compacta para uso em modais menores */
+.botao-acao.pequeno,
+.botao-cancelar.pequeno {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
 .botao-acao:hover {
   background-color: #1d4ed8;
 }
