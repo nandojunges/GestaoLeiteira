@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Select from "react-select";
 import "../../styles/modalPadrao.css";
 
@@ -21,8 +21,17 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
   const [formIndex, setFormIndex] = useState(null);
   const [form, setForm] = useState({
     hormonio: "",
-    acaoDispositivo: "",
+    acao: "",
   });
+  const camposRef = useRef([]);
+
+  const handleEnter = (index) => (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const prox = camposRef.current[index + 1];
+      prox && prox.focus();
+    }
+  };
 
 
 
@@ -56,7 +65,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
       setFormDia(dia);
       setFormIndex(null);
     }
-    setForm({ hormonio: "", acaoDispositivo: "" });
+    setForm({ hormonio: "", acao: "" });
   };
 
   const editarEtapa = (dia, idx) => {
@@ -66,9 +75,22 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
     setForm({ ...etapa });
   };
 
+  useEffect(() => {
+    const esc = (e) => {
+      if (e.key === "Escape") {
+        if (formDia !== null) {
+          setFormDia(null);
+          setFormIndex(null);
+        } else onFechar();
+      }
+    };
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [formDia, onFechar]);
+
   const salvarEtapa = () => {
     if (formDia === null) return;
-    if (!form.hormonio && !form.acaoDispositivo) {
+    if (!form.hormonio && !form.acao) {
       alert("Selecione um hormônio ou dispositivo.");
       return;
     }
@@ -80,7 +102,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
       return { ...prev, [formDia]: arr };
     });
     setFormIndex(null);
-    setForm({ hormonio: "", acaoDispositivo: "" });
+    setForm({ hormonio: "", acao: "" });
   };
 
   const removerEtapa = (dia, idx) => {
@@ -134,6 +156,14 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
     fontFamily: "Poppins, sans-serif",
   };
 
+  const headerStyle = {
+    backgroundColor: "#004AAD",
+    color: "white",
+    padding: "8px 16px",
+    borderTopLeftRadius: "12px",
+    borderTopRightRadius: "12px",
+  };
+
   const headerInput = {
     width: "100%",
     marginBottom: "10px",
@@ -153,20 +183,24 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
   return (
     <div style={overlay} onClick={onFechar}>
       <div style={modal} onClick={(e) => e.stopPropagation()} className="modal-content">
-        <h2 className="mb-2">📝 Cadastrar Protocolo IATF</h2>
+        <div style={headerStyle}>📝 Cadastrar Protocolo IATF</div>
         <div className="sticky top-0 bg-white pb-2">
           <label>Nome do Protocolo:</label>
           <input
             type="text"
+            ref={(el) => (camposRef.current[0] = el)}
             value={nome}
             onChange={(e) => setNome(e.target.value)}
+            onKeyDown={handleEnter(0)}
             style={headerInput}
           />
           <label>Descrição:</label>
           <input
             type="text"
+            ref={(el) => (camposRef.current[1] = el)}
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
+            onKeyDown={handleEnter(1)}
             style={headerInput}
           />
         </div>
@@ -197,9 +231,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
                       <span>
                         {e.hormonio && `🧪 ${e.hormonio}`}
                       </span>
-                      {e.acaoDispositivo && (
-                        <span>📎 {e.acaoDispositivo}</span>
-                      )}
+                      {e.acao && <span>📎 {e.acao}</span>}
                       <button className="btn-editar" onClick={() => editarEtapa(d, i)}>✏️</button>
                       <button className="btn-excluir" onClick={() => removerEtapa(d, i)}>🗑️</button>
                     </div>
@@ -211,6 +243,8 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
                     <div>
                       <label>Hormônio:</label>
                       <Select
+                        ref={(el) => (camposRef.current[2] = el)}
+                        onKeyDown={handleEnter(2)}
                         options={[{ value: '', label: 'Nenhum' }, ...hormonios.map(h => ({ value: h.id, label: h.nome }))]}
                         value={form.hormonio ? { value: form.hormonio, label: form.hormonio } : { value: '', label: 'Nenhum' }}
                         onChange={(opt) => setForm({ ...form, hormonio: opt?.value || '' })}
@@ -220,28 +254,44 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
                       />
                     </div>
                     <div>
-                      <label>Ação com Dispositivo:</label>
+                      <label>Ação:</label>
                       <Select
+                        ref={(el) => (camposRef.current[3] = el)}
+                        onKeyDown={handleEnter(3)}
                         options={[
-                          { value: '', label: 'Nenhum' },
-                          { value: 'Inserir', label: 'Inserir dispositivo' },
-                          { value: 'Retirar', label: 'Retirar dispositivo' },
+                          { value: '', label: 'Nenhuma' },
+                          { value: 'Inserir Dispositivo', label: 'Inserir Dispositivo' },
+                          { value: 'Retirar Dispositivo', label: 'Retirar Dispositivo' },
+                          { value: 'Inseminação', label: 'Inseminação' },
                         ]}
-                        value={form.acaoDispositivo ? { value: form.acaoDispositivo, label: form.acaoDispositivo } : { value: '', label: 'Nenhum' }}
-                        onChange={(opt) => setForm({ ...form, acaoDispositivo: opt?.value || '' })}
+                        value={form.acao ? { value: form.acao, label: form.acao } : { value: '', label: 'Nenhuma' }}
+                        onChange={(opt) => setForm({ ...form, acao: opt?.value || '' })}
                         className="react-select-container"
                         classNamePrefix="react-select"
                         placeholder="Selecione..."
                       />
                     </div>
-                    
-                    <button
-                      className="botao-acao mt-2"
-                      style={{ padding: '8px 16px' }}
-                      onClick={salvarEtapa}
-                    >
-                      ✔️ Salvar Etapa
-                    </button>
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        className="botao-acao pequeno"
+                        onClick={() => {
+                          salvarEtapa();
+                          camposRef.current[2]?.focus();
+                        }}
+                      >
+                        ➕ Adicionar outro hormônio
+                      </button>
+                      <button
+                        className="botao-acao pequeno"
+                        onClick={() => {
+                          salvarEtapa();
+                          setFormDia(null);
+                          setFormIndex(null);
+                        }}
+                      >
+                        ✔ Finalizar Dia
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
