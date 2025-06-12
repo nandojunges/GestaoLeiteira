@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { carregarAnimaisDoLocalStorage, calcularDEL } from '../Animais/utilsAnimais';
 import ModalHistoricoCompleto from "../Animais/ModalHistoricoCompleto";
 import ModalConfiguracaoPEV from "./ModalConfiguracaoPEV";
-import { getStatusVaca, getAcoesDisponiveis, filtrarAnimaisAtivos } from './utilsReproducao';
+import { getStatusVaca, filtrarAnimaisAtivos } from './utilsReproducao';
 import ModalRegistrarOcorrencia from './ModalRegistrarOcorrencia';
 import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
@@ -78,26 +78,14 @@ export default function VisaoGeralReproducao() {
   };
 
   const renderizarMenuAcoes = (vaca, del) => {
-    const opcoes = getAcoesDisponiveis(del);
-
+    const statusPEV = getStatusVaca(del);
     return (
-      <select
-        onChange={(e) => {
-          const acao = e.target.value;
-          if (acao === 'Registrar Ocorrência') {
-            setVacaOcorrencia(vaca);
-          } else if (acao !== '—') {
-            alert(`Selecionado: ${acao} para a vaca ${vaca.numero}`);
-          }
-          e.target.selectedIndex = 0;
-        }}
-        style={{ width: "100%", padding: "0.4rem", borderRadius: "0.5rem", border: "1px solid #ccc" }}
+      <button
+        onClick={() => setVacaOcorrencia({ ...vaca, statusPEV })}
+        className="botao-editar"
       >
-        <option>—</option>
-        {opcoes.map((opcao, i) => (
-          <option key={i}>{opcao}</option>
-        ))}
-      </select>
+        📋 Registrar Ocorrência
+      </button>
     );
   };
 
@@ -266,6 +254,7 @@ export default function VisaoGeralReproducao() {
       {vacaOcorrencia && (
         <ModalRegistrarOcorrencia
           vaca={vacaOcorrencia}
+          status={vacaOcorrencia.statusPEV}
           onClose={() => setVacaOcorrencia(null)}
           onSalvar={() => setVacaOcorrencia(null)}
         />
