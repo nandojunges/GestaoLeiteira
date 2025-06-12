@@ -4,6 +4,10 @@ import { addDays } from 'date-fns';
 import { toast } from 'react-toastify';
 import { formatarDataDigitada, formatarDataBR } from '../Animais/utilsAnimais';
 import { addEventoCalendario } from '../../utils/eventosCalendario';
+import {
+  adicionarOcorrencia,
+  calcularProximaEtapa
+} from '../../utils/registroReproducao';
 
 export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onClose, onSalvar }) {
   const TIPOS_PEV = [
@@ -103,6 +107,12 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
     localStorage.setItem('ocorrencias', JSON.stringify(listaOc));
     window.dispatchEvent(new Event('ocorrenciasAtualizadas'));
 
+    const registro = {
+      tipo,
+      data: dataOcorrencia,
+      obs: observacoes
+    };
+
     if (iniciarTratamento && produto && dataInicioTratamento) {
       const tratamento = {
         numeroAnimal: vaca.numero,
@@ -197,9 +207,14 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
           const titulo = et.hormonio || et.acao || 'Etapa';
           addEventoCalendario({ title: `${titulo} - Vaca ${vaca.numero}`, date: data, tipo: 'protocolo' });
         });
+        registro.protocoloId = prot.id;
+        registro.nomeProtocolo = prot.nome;
+        registro.proximaEtapa = calcularProximaEtapa(prot, dataOcorrencia);
       }
       toast.success('Protocolo aplicado com sucesso!');
     }
+
+    adicionarOcorrencia(vaca.numero, registro);
 
     onSalvar?.(ocorrencia);
     onClose?.();

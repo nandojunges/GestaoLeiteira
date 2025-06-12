@@ -8,6 +8,7 @@ import GraficoIAPorCiclo from "./GraficoIAPorCiclo";
 import LinhaDoTempoReprodutiva from "./LinhaDoTempoReprodutiva";
 import { calcularDELPorCiclo } from "./utilsAnimais";
 import FichaAnimalResumoReprodutivo from "./FichaAnimalResumoReprodutivo";
+import { carregarRegistro } from "../../utils/registroReproducao";
 
 export default function FichaAnimalReproducao({ animal }) {
   const hoje = new Date();
@@ -131,6 +132,10 @@ export default function FichaAnimalReproducao({ animal }) {
       (ciclo.secagens || []).forEach((s) => {
         if (s?.data) eventos.push({ tipo: "Secagem", data: s.data, subtipo: s.subtipo || "", obs: s.obs || "—" });
       });
+    });
+    const regs = carregarRegistro(animal.numero);
+    regs.forEach(r => {
+      eventos.push({ tipo: r.tipo, data: r.data, subtipo: r.nomeProtocolo || "", obs: r.obs || "—" });
     });
     return eventos.sort((a, b) => new Date(a.data.split("/").reverse().join("-")) - new Date(b.data.split("/").reverse().join("-")));
   }, [animal, ciclosEditados, ciclos]);

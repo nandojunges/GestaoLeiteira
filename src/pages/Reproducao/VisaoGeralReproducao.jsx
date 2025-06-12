@@ -6,6 +6,7 @@ import { getStatusVaca, filtrarAnimaisAtivos, filtrarPorStatus } from './utilsRe
 import ModalRegistrarOcorrencia from './ModalRegistrarOcorrencia';
 import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
+import { carregarRegistro } from '../../utils/registroReproducao';
 
 export default function VisaoGeralReproducao() {
   const [vacas, setVacas] = useState([]);
@@ -26,7 +27,18 @@ export default function VisaoGeralReproducao() {
 
   useEffect(() => {
     const animais = carregarAnimaisDoLocalStorage();
-    const ativos = filtrarAnimaisAtivos(animais);
+    const ativos = filtrarAnimaisAtivos(animais).map(a => {
+      const registro = carregarRegistro(a.numero);
+      if (registro.length) {
+        const ultimo = registro[registro.length - 1];
+        a.ultimaAcao = { tipo: ultimo.tipo, data: ultimo.data };
+        if (ultimo.proximaEtapa) a.proximaAcao = {
+          tipo: ultimo.proximaEtapa.nome,
+          dataPrevista: ultimo.proximaEtapa.data
+        };
+      }
+      return a;
+    });
     setVacas(ativos);
 
     const config = JSON.parse(localStorage.getItem("configPEV") || "{}");
