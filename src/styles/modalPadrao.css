@@ -8,5 +8,13 @@
 .modal-body {
   max-height: 70vh;
   overflow-y: auto;
-  padding-right: 8px;
+  padding: 16px;
+}
+
+/* Espaçamento interno para formulários de etapa */
+.form-etapa label,
+.form-etapa select,
+.form-etapa button {
+  display: block;
+  margin-bottom: 12px;
 }

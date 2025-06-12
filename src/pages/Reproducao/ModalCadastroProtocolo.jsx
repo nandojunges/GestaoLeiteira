@@ -142,6 +142,14 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
     border: "1px solid #ccc",
   };
 
+  const diaBlock = {
+    marginBottom: "20px",
+    padding: "16px",
+    borderRadius: "8px",
+    backgroundColor: "#f9f9f9",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+  };
+
   return (
     <div style={overlay} onClick={onFechar}>
       <div style={modal} onClick={(e) => e.stopPropagation()} className="modal-content">
@@ -164,21 +172,18 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
         </div>
         <div className="modal-body mt-2">
           <div className="flex justify-end mb-4">
-            <button className="botao-acao mt-3" onClick={adicionarDia}>
+            <button className="botao-acao mt-2" onClick={adicionarDia}>
               ➕ Adicionar Novo Dia
             </button>
           </div>
           <div className="space-y-4">
             {dias.map((d) => (
-              <div
-                key={d}
-                className="bg-gray-50 rounded-lg shadow-sm p-4 space-y-2 mb-3"
-              >
+              <div key={d} style={diaBlock} className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold">🕒 Dia {d}</span>
                   <div className="flex gap-2">
                     <button
-                      className="botao-acao pequeno mt-3"
+                      className="botao-acao pequeno mt-2"
                       onClick={() => abrirFormNovo(d)}
                     >
                       {formDia === d ? "-" : "+ Nova Etapa"}
@@ -206,7 +211,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
                   ))}
                 </div>
                 {formDia === d && (
-                  <div className="mt-2 p-3 border rounded bg-gray-50 text-sm space-y-2 mb-3">
+                  <div className="form-etapa mt-2 p-3 border rounded bg-gray-50 text-sm space-y-2 mb-3">
                     <div className="font-semibold">Adicionar Etapa</div>
                     <div>
                       <label>Hormônio:</label>
