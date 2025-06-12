@@ -83,11 +83,15 @@ export default function ProtocolosReprodutivos() {
                     {protocolo.descricao || "—"}
                   </td>
                   <td className={colunaHover === 2 ? "coluna-hover" : ""}>
-                    {protocolo.etapas.map((etapa, i) => (
-                      <div key={i}>
-                        Dia {etapa.dia}: {etapa.hormonio}
-                        {etapa.acaoDispositivo ? ` - ${etapa.acaoDispositivo}` : ''}
-                      </div>
+                    {Object.entries(
+                      protocolo.etapas.reduce((acc, e) => {
+                        if (!acc[e.dia]) acc[e.dia] = [];
+                        if (e.hormonio) acc[e.dia].push(e.hormonio);
+                        if (e.acao) acc[e.dia].push(e.acao);
+                        return acc;
+                      }, {})
+                    ).map(([dia, itens]) => (
+                      <div key={dia}>Dia {dia}: {itens.join(', ')}</div>
                     ))}
                   </td>
                   <td

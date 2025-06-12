@@ -16,17 +16,24 @@ export default function gerarTarefasProtocolo(protocolo) {
       });
     }
 
-    if (etapa.acaoDispositivo) {
-      tarefas.push({
-        id: `d-${idx}-${data}`,
-        tipo: 'Manejo de Dispositivo',
-        data,
-        descricao:
-          etapa.acaoDispositivo === 'Inserir'
-            ? 'Inserir dispositivo'
-            : 'Retirar dispositivo',
-        status: 'pendente',
-      });
+    if (etapa.acao) {
+      if (etapa.acao.includes('Dispositivo')) {
+        tarefas.push({
+          id: `d-${idx}-${data}`,
+          tipo: 'Manejo de Dispositivo',
+          data,
+          descricao: etapa.acao,
+          status: 'pendente',
+        });
+      } else if (etapa.acao === 'Inseminação') {
+        tarefas.push({
+          id: `i-${idx}-${data}`,
+          tipo: 'Inseminação',
+          data,
+          descricao: 'Realizar inseminação',
+          status: 'pendente',
+        });
+      }
     }
   });
 
