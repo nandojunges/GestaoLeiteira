@@ -1,3 +1,5 @@
+import { calcularDEL } from '../Animais/utilsAnimais';
+
 export const carregarAnimaisReprodutivos = () => {
   const animais = JSON.parse(localStorage.getItem('animais') || '[]');
 
@@ -22,6 +24,19 @@ export const obterAjustePEV = () => {
 export const getStatusVaca = (del) => {
   const ajustePEV = obterAjustePEV();
   return del >= ajustePEV ? 'Liberada' : 'No PEV';
+};
+
+// Filtra animais conforme status e intervalo de DEL
+export const filtrarPorStatus = (animais, statusFiltro, delMin = '', delMax = '') => {
+  return (animais || []).filter(a => {
+    const del = a.ultimoParto ? calcularDEL(a.ultimoParto) : 0;
+    if (statusFiltro === 'pev' && getStatusVaca(del) === 'Liberada') return false;
+    if (statusFiltro === 'liberada' && getStatusVaca(del) !== 'Liberada') return false;
+    if (statusFiltro === 'prenhe' && (a.statusReprodutivo || '').toLowerCase() !== 'prenhe') return false;
+    if (delMin && del < parseInt(delMin)) return false;
+    if (delMax && del > parseInt(delMax)) return false;
+    return true;
+  });
 };
 
 // ✅ Ações permitidas conforme o DEL

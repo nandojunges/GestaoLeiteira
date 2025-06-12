@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { carregarAnimaisDoLocalStorage, calcularDEL } from '../Animais/utilsAnimais';
 import ModalHistoricoCompleto from "../Animais/ModalHistoricoCompleto";
 import ModalConfiguracaoPEV from "./ModalConfiguracaoPEV";
-import { getStatusVaca, filtrarAnimaisAtivos } from './utilsReproducao';
+import { getStatusVaca, filtrarAnimaisAtivos, filtrarPorStatus } from './utilsReproducao';
 import ModalRegistrarOcorrencia from './ModalRegistrarOcorrencia';
 import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
@@ -96,14 +96,7 @@ export default function VisaoGeralReproducao() {
     );
   };
 
-  const vacasFiltradas = vacas.filter((v) => {
-    const del = v.ultimoParto ? calcularDEL(v.ultimoParto) : 0;
-    if (filtroStatus === 'pev' && getStatusVaca(del) === 'Liberada') return false;
-    if (filtroStatus === 'liberada' && getStatusVaca(del) !== 'Liberada') return false;
-    if (filtroDelMin && del < parseInt(filtroDelMin)) return false;
-    if (filtroDelMax && del > parseInt(filtroDelMax)) return false;
-    return true;
-  });
+  const vacasFiltradas = filtrarPorStatus(vacas, filtroStatus, filtroDelMin, filtroDelMax);
 
   const todasSelecionadas = selecionados.length === vacasFiltradas.length && vacasFiltradas.length > 0;
 
@@ -158,10 +151,16 @@ export default function VisaoGeralReproducao() {
                 key={index}
                 onMouseEnter={() => setColunaHover(index)}
                 onMouseLeave={() => setColunaHover(null)}
-                className={colunaHover === index ? 'coluna-hover' : ''}
+                className={`${colunaHover === index ? 'coluna-hover' : ''} ${index === 8 ? 'coluna-acoes' : ''}`}
+                style={index === 8 ? { minWidth: '180px' } : {}}
               >
                 {index === 0 ? (
-                  <input type="checkbox" checked={todasSelecionadas} onChange={selecionarTodas} />
+                  <input
+                    type="checkbox"
+                    className="checkbox-tabela"
+                    checked={todasSelecionadas}
+                    onChange={selecionarTodas}
+                  />
                 ) : (
                   titulo
                 )}
@@ -179,6 +178,7 @@ export default function VisaoGeralReproducao() {
             const dados = [
               <input
                 type="checkbox"
+                className="checkbox-tabela"
                 checked={selecionados.includes(vaca.numero)}
                 onChange={() => alternarSelecionado(vaca.numero)}
               />,
@@ -213,7 +213,11 @@ export default function VisaoGeralReproducao() {
             return (
               <tr key={index} className={statusAtual.includes('Prenhe') ? 'tr-prenha' : ''}>
                 {dados.map((conteudo, colIdx) => (
-                  <td key={colIdx} className={colunaHover === colIdx ? 'coluna-hover' : ''}>
+                  <td
+                    key={colIdx}
+                    className={`${colunaHover === colIdx ? 'coluna-hover' : ''} ${colIdx === 8 ? 'coluna-acoes' : ''}`}
+                    style={colIdx === 8 ? { minWidth: '180px' } : {}}
+                  >
                     {conteudo}
                   </td>
                 ))}
@@ -225,7 +229,12 @@ export default function VisaoGeralReproducao() {
 
       {selecionados.length > 0 && (
         <div className="flex items-center gap-2 mt-4">
-          <input type="checkbox" checked={todasSelecionadas} onChange={selecionarTodas} />
+          <input
+            type="checkbox"
+            className="checkbox-tabela"
+            checked={todasSelecionadas}
+            onChange={selecionarTodas}
+          />
           <select id="bulk-action" onChange={(e) => aplicarAcaoLote(e.target.value)} className="border p-2 rounded">
             <option value="">Ações em lote...</option>
             <option value="Iniciar Protocolo">Iniciar Protocolo</option>

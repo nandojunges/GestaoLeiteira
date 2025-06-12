@@ -7,21 +7,23 @@ import { addEventoCalendario } from '../../utils/eventosCalendario';
 
 export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onClose, onSalvar }) {
   const TIPOS_PEV = [
-    'Retenção de placenta',
-    'Anestro',
-    'Cisto folicular',
-    'Cisto luteal',
     'Corrimento',
+    'Metrite',
+    'Endometrite',
+    'Retenção de placenta',
+    'Cisto folicular',
+    'Anestro',
     'Iniciar Pré-sincronização'
   ];
 
   const TIPOS_LIBERADA = [
     'Cisto folicular',
     'Cisto luteal',
-    'Anestro',
     'Corrimento',
-    'Iniciar Pré-sincronização',
-    'Iniciar Protocolo IATF'
+    'Anestro',
+    'Endometrite',
+    'Iniciar Protocolo IATF',
+    'Iniciar Pré-sincronização'
   ];
 
   const TIPOS = status === 'Liberada' ? TIPOS_LIBERADA : TIPOS_PEV;
@@ -71,7 +73,7 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
 
   const salvar = () => {
     if (!tipo) {
-      alert('Selecione o tipo de ocorrência');
+      toast.error('Selecione o tipo de ocorrência');
       return;
     }
     if (!dataOcorrencia || dataOcorrencia.length !== 10) {
@@ -163,7 +165,7 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
 
     if (tipo === 'Iniciar Pré-sincronização' || tipo === 'Iniciar Protocolo IATF') {
       if (!protocoloSelecionado) {
-        alert('Selecione o protocolo');
+        toast.warn('Selecione um protocolo');
         return;
       }
       const historicoKey = `historicoReprodutivo_${vaca.numero}`;
@@ -217,6 +219,7 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
               className="react-select-container"
               classNamePrefix="react-select"
               placeholder="Selecione..."
+              isSearchable
             />
           </div>
           {tipo === 'Outros' && (
@@ -255,18 +258,17 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
           {(tipo === 'Iniciar Pré-sincronização' || tipo === 'Iniciar Protocolo IATF') && (
             <div>
               <label>Protocolo</label>
-              <select
-                value={protocoloSelecionado}
-                onChange={e => setProtocoloSelecionado(e.target.value)}
-                style={input()}
-              >
-                <option value="">Selecione...</option>
-                {protocolos
+              <Select
+                options={protocolos
                   .filter(p => p.tipo === (tipo.includes('IATF') ? 'IATF' : 'Pré-sincronização'))
-                  .map((p, i) => (
-                    <option key={i} value={p.nome}>{p.nome}</option>
-                  ))}
-              </select>
+                  .map(p => ({ value: p.nome, label: p.nome }))}
+                value={protocoloSelecionado ? { value: protocoloSelecionado, label: protocoloSelecionado } : null}
+                onChange={opt => setProtocoloSelecionado(opt?.value || '')}
+                className="react-select-container"
+                classNamePrefix="react-select"
+                placeholder="Selecione..."
+                isSearchable
+              />
             </div>
           )}
           {tipo !== 'Cio natural' && (
@@ -299,6 +301,7 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
                   className="react-select-container"
                   classNamePrefix="react-select"
                   placeholder="Selecione..."
+                  isSearchable
                 />
               </div>
               <div>
@@ -356,7 +359,8 @@ const overlay = {
 const modal = {
   background: '#fff',
   borderRadius: '1rem',
-  width: '420px',
+  width: '600px',
+  maxWidth: '90vw',
   maxHeight: '90vh',
   overflowY: 'auto',
   fontFamily: 'Poppins, sans-serif',
