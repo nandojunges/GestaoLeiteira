@@ -159,7 +159,11 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
   const headerStyle = {
     backgroundColor: "#004AAD",
     color: "white",
-    padding: "8px 16px",
+    fontWeight: "bold",
+    padding: "10px 20px",
+    fontSize: "16px",
+    display: "flex",
+    alignItems: "center",
     borderTopLeftRadius: "12px",
     borderTopRightRadius: "12px",
   };
@@ -183,7 +187,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
   return (
     <div style={overlay} onClick={onFechar}>
       <div style={modal} onClick={(e) => e.stopPropagation()} className="modal-content">
-        <div style={headerStyle}>📝 Cadastrar Protocolo IATF</div>
+        <div style={headerStyle}>🧬 Cadastrar Protocolo IATF</div>
         <div className="sticky top-0 bg-white pb-2">
           <label>Nome do Protocolo:</label>
           <input
