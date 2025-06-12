@@ -171,11 +171,6 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
           />
         </div>
         <div className="modal-body mt-2">
-          <div className="flex justify-end mb-4">
-            <button className="botao-acao mt-2" onClick={adicionarDia}>
-              ➕ Adicionar Novo Dia
-            </button>
-          </div>
           <div className="space-y-4">
             {dias.map((d) => (
               <div key={d} style={diaBlock} className="space-y-2">
@@ -251,6 +246,11 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
                 )}
               </div>
             ))}
+          </div>
+          <div className="botao-novo-dia">
+            <button className="botao-acao mt-2" onClick={adicionarDia}>
+              ➕ Adicionar Novo Dia
+            </button>
           </div>
         </div>
         <div className="sticky bottom-0 bg-white pt-3 mt-4 flex justify-end gap-2">
