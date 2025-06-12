@@ -43,10 +43,15 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
   const [protocoloSelecionado, setProtocoloSelecionado] = useState(null);
   const camposRef = useRef([]);
 
+  const tipoEsperado =
+    tipo === 'Iniciar Protocolo IATF'
+      ? 'IATF'
+      : tipo === 'Iniciar Pré-sincronização'
+      ? 'PRÉ-SINCRONIZAÇÃO'
+      : '';
+
   const protocolosFiltrados = todosProtocolos.filter((p) => {
-    if (tipo === 'Iniciar Protocolo IATF') return p.tipo === 'IATF';
-    if (tipo === 'Iniciar Pré-sincronização') return p.tipo === 'Pré-sincronização';
-    return false;
+    return (p.tipo || '').toUpperCase() === tipoEsperado;
   });
 
   const handleEnter = (index) => (e) => {
@@ -179,7 +184,7 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
       const prot = todosProtocolos.find(p => p.id === protocoloSelecionado.value);
       historico.push({
         protocolo: protocoloSelecionado.label,
-        tipo: prot?.tipo || (tipo.includes('IATF') ? 'IATF' : 'Pré-sincronização'),
+        tipo: (prot?.tipo || (tipo.includes('IATF') ? 'IATF' : 'PRÉ-SINCRONIZAÇÃO')).toUpperCase(),
         dataInicio: dataOcorrencia
       });
       localStorage.setItem(historicoKey, JSON.stringify(historico));

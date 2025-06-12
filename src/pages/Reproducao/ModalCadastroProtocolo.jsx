@@ -16,7 +16,9 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar, protocoloIn
   const diasIniciais = Array.from({ length: 11 }, (_, i) => i);
   const [nome, setNome] = useState(protocoloInicial?.nome || "");
   const [descricao, setDescricao] = useState(protocoloInicial?.descricao || "");
-  const [tipo, setTipo] = useState(protocoloInicial?.tipo || "IATF");
+  const [tipo, setTipo] = useState(
+    protocoloInicial?.tipo?.toUpperCase() || "IATF"
+  );
   const [dias, setDias] = useState(
     protocoloInicial
       ? Array.from(new Set(protocoloInicial.etapas.map((e) => e.dia))).sort((a, b) => a - b)
@@ -218,11 +220,11 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar, protocoloIn
           <label>Tipo do Protocolo:</label>
           <select
             value={tipo}
-            onChange={(e) => setTipo(e.target.value)}
+            onChange={(e) => setTipo(e.target.value.toUpperCase())}
             style={headerInput}
           >
             <option value="IATF">IATF</option>
-            <option value="Pré-sincronização">Pré-sincronização</option>
+            <option value="PRÉ-SINCRONIZAÇÃO">Pré-sincronização</option>
           </select>
           <label>Nome do Protocolo:</label>
           <input
