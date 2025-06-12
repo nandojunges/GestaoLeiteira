@@ -133,12 +133,16 @@ export default function FichaAnimalReproducao({ animal }) {
         if (s?.data) eventos.push({ tipo: "Secagem", data: s.data, subtipo: s.subtipo || "", obs: s.obs || "—" });
       });
     });
-    const regs = carregarRegistro(animal.numero);
+    const regs = carregarRegistro(animal.numero).ocorrencias || [];
     regs.forEach(r => {
       eventos.push({ tipo: r.tipo, data: r.data, subtipo: r.nomeProtocolo || "", obs: r.obs || "—" });
     });
     return eventos.sort((a, b) => new Date(a.data.split("/").reverse().join("-")) - new Date(b.data.split("/").reverse().join("-")));
   }, [animal, ciclosEditados, ciclos]);
+
+  const registroOcorrencias = useMemo(() => {
+    return carregarRegistro(animal.numero).ocorrencias || [];
+  }, [animal]);
 
   return (
     <div>
@@ -201,6 +205,32 @@ export default function FichaAnimalReproducao({ animal }) {
             </div>
           );
         })}
+
+        {registroOcorrencias.length > 0 && (
+          <div style={{ marginTop: '2rem' }}>
+            <h4 style={{ color: '#1e40af', marginBottom: '0.5rem' }}>📑 Ocorrências Reprodutivas</h4>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+              <thead>
+                <tr style={{ background: '#f0f0f0' }}>
+                  <th>Data</th>
+                  <th>Evento</th>
+                  <th>Protocolo</th>
+                  <th>Observações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {registroOcorrencias.map((o, idx) => (
+                  <tr key={`reg-${idx}`}>
+                    <td>{o.data}</td>
+                    <td>{o.tipo}</td>
+                    <td>{o.nomeProtocolo || '–'}</td>
+                    <td>{o.obs || '–'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -108,7 +108,7 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
     window.dispatchEvent(new Event('ocorrenciasAtualizadas'));
 
     const registro = {
-      tipo,
+      tipo: tipo.startsWith('Iniciar ') ? `Início ${tipo.slice(8)}` : tipo,
       data: dataOcorrencia,
       obs: observacoes
     };
@@ -199,18 +199,19 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
       });
       localStorage.setItem(historicoKey, JSON.stringify(historico));
 
-      if (prot) {
-        const [d, m, a] = dataOcorrencia.split('/');
-        const inicio = new Date(`${a}-${m}-${d}`);
-        prot.etapas.forEach(et => {
-          const data = addDays(inicio, et.dia).toISOString().split('T')[0];
-          const titulo = et.hormonio || et.acao || 'Etapa';
-          addEventoCalendario({ title: `${titulo} - Vaca ${vaca.numero}`, date: data, tipo: 'protocolo' });
-        });
-        registro.protocoloId = prot.id;
-        registro.nomeProtocolo = prot.nome;
-        registro.proximaEtapa = calcularProximaEtapa(prot, dataOcorrencia);
-      }
+        if (prot) {
+          const [d, m, a] = dataOcorrencia.split('/');
+          const inicio = new Date(`${a}-${m}-${d}`);
+          prot.etapas.forEach(et => {
+            const data = addDays(inicio, et.dia).toISOString().split('T')[0];
+            const titulo = et.hormonio || et.acao || 'Etapa';
+            addEventoCalendario({ title: `${titulo} - Vaca ${vaca.numero}`, date: data, tipo: 'protocolo' });
+          });
+          registro.protocoloId = prot.id;
+          registro.nomeProtocolo = prot.nome;
+          registro.etapas = prot.etapas;
+          registro.proximaEtapa = calcularProximaEtapa(prot, dataOcorrencia);
+        }
       toast.success('Protocolo aplicado com sucesso!');
     }
 

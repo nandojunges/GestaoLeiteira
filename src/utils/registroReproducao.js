@@ -2,7 +2,15 @@ import { addDays } from 'date-fns';
 import { formatarDataBR } from '../pages/Animais/utilsAnimais';
 
 export function carregarRegistro(numero) {
-  return JSON.parse(localStorage.getItem(`registroReprodutivo_${numero}`) || '[]');
+  const raw = localStorage.getItem(`registroReprodutivo_${numero}`);
+  if (!raw) return { ocorrencias: [] };
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return { ocorrencias: parsed };
+    return parsed || { ocorrencias: [] };
+  } catch {
+    return { ocorrencias: [] };
+  }
 }
 
 export function salvarRegistro(numero, dados) {
@@ -10,9 +18,10 @@ export function salvarRegistro(numero, dados) {
 }
 
 export function adicionarOcorrencia(numero, ocorrencia) {
-  const dados = carregarRegistro(numero);
-  dados.push(ocorrencia);
-  salvarRegistro(numero, dados);
+  const registro = carregarRegistro(numero);
+  if (!Array.isArray(registro.ocorrencias)) registro.ocorrencias = [];
+  registro.ocorrencias.push(ocorrencia);
+  salvarRegistro(numero, registro);
   window.dispatchEvent(new Event('registroReprodutivoAtualizado'));
 }
 
@@ -36,9 +45,9 @@ export function listarAnimaisPorProtocolo(protocolId) {
   if (!protocolId) return [];
   const animais = JSON.parse(localStorage.getItem('animais') || '[]');
   return animais.reduce((acc, a) => {
-    const regs = carregarRegistro(a.numero);
-    const r = regs.find(t => t.protocoloId === protocolId && !t.concluido);
-    if (r) acc.push({ numero: a.numero, dataInicio: r.data });
+    const registro = carregarRegistro(a.numero);
+    const r = (registro.ocorrencias || []).find(t => t.protocoloId === protocolId && !t.concluido);
+    if (r) acc.push({ numero: a.numero, nome: a.brinco || a.nome || '', dataInicio: r.data, status: r.concluido ? 'Concluído' : 'Em andamento' });
     return acc;
   }, []);
 }

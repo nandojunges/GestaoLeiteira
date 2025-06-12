@@ -28,6 +28,8 @@ export default function ModalHistoricoCompleto({ animal, onClose }) {
   useEffect(() => {
     const p = JSON.parse(localStorage.getItem('pesagens') || '[]');
     const o = JSON.parse(localStorage.getItem('ocorrencias') || '[]');
+    const registro = JSON.parse(localStorage.getItem(`registroReprodutivo_${animal.numero}`) || '{}');
+    const ocorrProt = registro.ocorrencias || [];
     const t = JSON.parse(localStorage.getItem('tratamentos') || '[]');
     const l = JSON.parse(localStorage.getItem('leite') || '[]');
     const pts = JSON.parse(localStorage.getItem('partos') || '[]');
@@ -38,7 +40,7 @@ export default function ModalHistoricoCompleto({ animal, onClose }) {
     const filtrar = (arr) => arr.filter((ev) => ev.numeroAnimal === animal.numero);
 
     setPesagens(filtrar(p));
-    setOcorrencias(filtrar(o));
+    setOcorrencias(ocorrProt);
     setTratamentos(filtrar(t));
     setInseminacoes(filtrar(ias));
     setDiagnosticos(filtrar(dxs));
