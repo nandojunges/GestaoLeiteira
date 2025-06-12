@@ -39,9 +39,15 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
   const [duracao, setDuracao] = useState('');
   const [carencia, setCarencia] = useState(''); // exibida apenas para consulta
   const [produtos, setProdutos] = useState([]);
-  const [protocolos, setProtocolos] = useState([]);
-  const [protocoloSelecionado, setProtocoloSelecionado] = useState('');
+  const [todosProtocolos, setTodosProtocolos] = useState([]);
+  const [protocoloSelecionado, setProtocoloSelecionado] = useState(null);
   const camposRef = useRef([]);
+
+  const protocolosFiltrados = todosProtocolos.filter((p) => {
+    if (tipo === 'Iniciar Protocolo IATF') return p.tipo === 'IATF';
+    if (tipo === 'Iniciar Pré-sincronização') return p.tipo === 'Pré-sincronização';
+    return false;
+  });
 
   const handleEnter = (index) => (e) => {
     if (e.key === 'Enter') {
@@ -64,7 +70,7 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
     );
 
     const prot = JSON.parse(localStorage.getItem('protocolos') || '[]');
-    setProtocolos(prot);
+    setTodosProtocolos(prot);
 
     const esc = e => e.key === 'Escape' && onClose?.();
     window.addEventListener('keydown', esc);
@@ -170,9 +176,9 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
       }
       const historicoKey = `historicoReprodutivo_${vaca.numero}`;
       const historico = JSON.parse(localStorage.getItem(historicoKey) || '[]');
-      const prot = protocolos.find(p => p.nome === protocoloSelecionado);
+      const prot = todosProtocolos.find(p => p.id === protocoloSelecionado.value);
       historico.push({
-        protocolo: protocoloSelecionado,
+        protocolo: protocoloSelecionado.label,
         tipo: prot?.tipo || (tipo.includes('IATF') ? 'IATF' : 'Pré-sincronização'),
         dataInicio: dataOcorrencia
       });
@@ -258,17 +264,19 @@ export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onCl
           {(tipo === 'Iniciar Pré-sincronização' || tipo === 'Iniciar Protocolo IATF') && (
             <div>
               <label>Protocolo</label>
-              <Select
-                options={protocolos
-                  .filter(p => p.tipo === (tipo.includes('IATF') ? 'IATF' : 'Pré-sincronização'))
-                  .map(p => ({ value: p.nome, label: p.nome }))}
-                value={protocoloSelecionado ? { value: protocoloSelecionado, label: protocoloSelecionado } : null}
-                onChange={opt => setProtocoloSelecionado(opt?.value || '')}
-                className="react-select-container"
-                classNamePrefix="react-select"
-                placeholder="Selecione..."
-                isSearchable
-              />
+              {protocolosFiltrados.length === 0 ? (
+                <p style={{ color: 'gray' }}>⚠️ Nenhum protocolo do tipo disponível</p>
+              ) : (
+                <Select
+                  options={protocolosFiltrados.map(p => ({ value: p.id, label: p.nome }))}
+                  value={protocoloSelecionado}
+                  onChange={setProtocoloSelecionado}
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  placeholder="Selecione..."
+                  isSearchable
+                />
+              )}
             </div>
           )}
           {tipo !== 'Cio natural' && (
