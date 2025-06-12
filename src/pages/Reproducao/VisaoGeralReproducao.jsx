@@ -29,8 +29,9 @@ export default function VisaoGeralReproducao() {
     const animais = carregarAnimaisDoLocalStorage();
     const ativos = filtrarAnimaisAtivos(animais).map(a => {
       const registro = carregarRegistro(a.numero);
-      if (registro.length) {
-        const ultimo = registro[registro.length - 1];
+      const ocorr = registro.ocorrencias || [];
+      if (ocorr.length) {
+        const ultimo = ocorr[ocorr.length - 1];
         a.ultimaAcao = { tipo: ultimo.tipo, data: ultimo.data };
         if (ultimo.proximaEtapa) a.proximaAcao = {
           tipo: ultimo.proximaEtapa.nome,

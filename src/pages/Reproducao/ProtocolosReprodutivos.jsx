@@ -168,13 +168,26 @@ export default function ProtocolosReprodutivos() {
                           Nenhum animal ativo listado para este protocolo.
                         </div>
                       ) : (
-                        <ul className="list-disc ml-4 space-y-1">
-                          {vacasPorProtocolo[protocolo.id ?? index].map((v) => (
-                            <li key={v.numero}>
-                              #{v.numero} - iniciado em {v.dataInicio || '—'}
-                            </li>
-                          ))}
-                        </ul>
+                        <table className="w-full text-left border border-gray-200 mt-1">
+                          <thead>
+                            <tr className="bg-gray-100">
+                              <th className="px-2 py-1">Número</th>
+                              <th className="px-2 py-1">Nome/Brinco</th>
+                              <th className="px-2 py-1">Data de início</th>
+                              <th className="px-2 py-1">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {vacasPorProtocolo[protocolo.id ?? index].map((v) => (
+                              <tr key={v.numero} className="odd:bg-white even:bg-gray-50">
+                                <td className="px-2 py-1">{v.numero}</td>
+                                <td className="px-2 py-1">{v.nome || '—'}</td>
+                                <td className="px-2 py-1">{v.dataInicio || '—'}</td>
+                                <td className="px-2 py-1">{v.status || '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       )}
                     </td>
                   </tr>
