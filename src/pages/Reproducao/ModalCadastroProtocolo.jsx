@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Select from "react-select";
+import { toast } from "react-toastify";
 import "../../styles/modalPadrao.css";
 
 const hormonios = [
@@ -11,12 +12,25 @@ const hormonios = [
   { id: "hCG", nome: "hCG" },
 ];
 
-export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
+export default function ModalCadastroProtocolo({ onFechar, onSalvar, protocoloInicial = null, indiceEdicao = null }) {
   const diasIniciais = Array.from({ length: 11 }, (_, i) => i);
-  const [nome, setNome] = useState("");
-  const [descricao, setDescricao] = useState("");
-  const [dias, setDias] = useState(diasIniciais);
-  const [etapas, setEtapas] = useState({});
+  const [nome, setNome] = useState(protocoloInicial?.nome || "");
+  const [descricao, setDescricao] = useState(protocoloInicial?.descricao || "");
+  const [dias, setDias] = useState(
+    protocoloInicial
+      ? Array.from(new Set(protocoloInicial.etapas.map((e) => e.dia))).sort((a, b) => a - b)
+      : diasIniciais
+  );
+  const [etapas, setEtapas] = useState(
+    protocoloInicial
+      ? protocoloInicial.etapas.reduce((acc, e) => {
+          const { hormonio = "", acao = "", dia } = e;
+          if (!acc[dia]) acc[dia] = [];
+          acc[dia].push({ hormonio, acao });
+          return acc;
+        }, {})
+      : {}
+  );
   const [formDia, setFormDia] = useState(null);
   const [formIndex, setFormIndex] = useState(null);
   const [form, setForm] = useState({
@@ -128,9 +142,15 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
       etapas: etapasList.sort((a, b) => a.dia - b.dia),
     };
     const salvos = JSON.parse(localStorage.getItem("protocolos") || "[]");
-    localStorage.setItem("protocolos", JSON.stringify([...salvos, protocolo]));
+    if (indiceEdicao !== null) {
+      salvos[indiceEdicao] = protocolo;
+    } else {
+      salvos.push(protocolo);
+    }
+    localStorage.setItem("protocolos", JSON.stringify(salvos));
     localStorage.removeItem("cadastroProtocoloTmp");
     onSalvar && onSalvar(protocolo);
+    toast.success("✅ Protocolo salvo com sucesso!");
     onFechar();
   };
 
@@ -157,15 +177,16 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
   };
 
   const headerStyle = {
-    backgroundColor: "#004AAD",
+    backgroundColor: "#1F3FB6",
     color: "white",
-    fontWeight: "bold",
-    padding: "10px 20px",
+    padding: "12px 24px",
     fontSize: "16px",
-    display: "flex",
-    alignItems: "center",
+    fontWeight: 600,
     borderTopLeftRadius: "12px",
     borderTopRightRadius: "12px",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
   };
 
   const headerInput = {
@@ -187,7 +208,10 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
   return (
     <div style={overlay} onClick={onFechar}>
       <div style={modal} onClick={(e) => e.stopPropagation()} className="modal-content">
-        <div style={headerStyle}>🧬 Cadastrar Protocolo IATF</div>
+        <div style={headerStyle}>
+          <span>🧬</span>
+          <span>Cadastrar Protocolo IATF</span>
+        </div>
         <div className="sticky top-0 bg-white pb-2">
           <label>Nome do Protocolo:</label>
           <input

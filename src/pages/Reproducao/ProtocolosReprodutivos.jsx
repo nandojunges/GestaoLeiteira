@@ -6,6 +6,7 @@ import "../../styles/botoes.css";
 
 export default function ProtocolosReprodutivos() {
   const [modalAberto, setModalAberto] = useState(false);
+  const [indexEditar, setIndexEditar] = useState(null);
   const [protocolos, setProtocolos] = useState([]);
   const [colunaHover, setColunaHover] = useState(null);
   const [protocoloExpandido, setProtocoloExpandido] = useState(null);
@@ -16,8 +17,13 @@ export default function ProtocolosReprodutivos() {
     setProtocolos(salvos);
   }, []);
 
-  const salvarProtocolo = (novoProtocolo) => {
-    const atualizados = [...protocolos, novoProtocolo];
+  const salvarProtocolo = (prot, indice = null) => {
+    let atualizados = [];
+    if (indice !== null) {
+      atualizados = protocolos.map((p, i) => (i === indice ? prot : p));
+    } else {
+      atualizados = [...protocolos, prot];
+    }
     setProtocolos(atualizados);
     localStorage.setItem("protocolos", JSON.stringify(atualizados));
   };
@@ -30,7 +36,8 @@ export default function ProtocolosReprodutivos() {
   };
 
   const editarProtocolo = (index) => {
-    alert("Funcionalidade de edição em desenvolvimento. Index: " + index);
+    setIndexEditar(index);
+    setModalAberto(true);
   };
 
   const toggleExpandirProtocolo = (index) => {
@@ -45,9 +52,9 @@ export default function ProtocolosReprodutivos() {
       return acc;
     }, {});
     return Object.entries(agrupado).map(([dia, itens]) => (
-      <div key={dia} style={{ marginBottom: "4px" }}>
+      <div key={dia} style={{ marginBottom: "8px" }}>
         <div style={{ fontWeight: 600 }}>Dia {dia}:</div>
-        <ul className="list-disc ml-5">
+        <ul className="list-disc ml-4" style={{ wordBreak: "break-word" }}>
           {itens.map((it, idx) => (
             <li key={idx}>{it}</li>
           ))}
@@ -62,7 +69,10 @@ export default function ProtocolosReprodutivos() {
     <div className="w-full px-8 py-6 font-sans">
       <div style={{ marginBottom: "1rem", textAlign: "right" }}>
         <button
-          onClick={() => setModalAberto(true)}
+          onClick={() => {
+            setIndexEditar(null);
+            setModalAberto(true);
+          }}
           className="botao-acao"
         >
           ➕ Cadastrar Protocolo
@@ -101,8 +111,8 @@ export default function ProtocolosReprodutivos() {
                   <td className={colunaHover === 1 ? "coluna-hover" : ""}>
                     {protocolo.descricao || "—"}
                   </td>
-                  <td className={colunaHover === 2 ? "coluna-hover" : ""}>
-                    <div style={{ backgroundColor: "#eaf3ff", padding: "8px", borderRadius: "8px" }}>
+                  <td className={colunaHover === 2 ? "coluna-hover" : ""} style={{ whiteSpace: "normal", overflow: "visible" }}>
+                    <div style={{ backgroundColor: "#eaf3ff", padding: "12px 16px", borderRadius: "8px", fontSize: "14px" }}>
                       <div style={{ fontWeight: 600, color: "#004AAD" }}>Etapas:</div>
                       {formatarEtapas(protocolo.etapas)}
                     </div>
@@ -148,8 +158,17 @@ export default function ProtocolosReprodutivos() {
 
       {modalAberto && (
         <ModalCadastroProtocolo
-          onFechar={() => setModalAberto(false)}
-          onSalvar={salvarProtocolo}
+          onFechar={() => {
+            setModalAberto(false);
+            setIndexEditar(null);
+          }}
+          onSalvar={(p) => {
+            salvarProtocolo(p, indexEditar);
+            setModalAberto(false);
+            setIndexEditar(null);
+          }}
+          protocoloInicial={indexEditar !== null ? protocolos[indexEditar] : null}
+          indiceEdicao={indexEditar}
         />
       )}
 
