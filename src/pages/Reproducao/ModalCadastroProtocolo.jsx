@@ -162,23 +162,23 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
             style={headerInput}
           />
         </div>
-        <div className="mt-2" style={{ maxHeight: "60vh", overflowY: "auto" }}>
-          <div className="flex justify-end mb-2">
-            <button className="botao-acao" onClick={adicionarDia}>
+        <div className="modal-body mt-2">
+          <div className="flex justify-end mb-4">
+            <button className="botao-acao mt-3" onClick={adicionarDia}>
               ➕ Adicionar Novo Dia
             </button>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {dias.map((d) => (
               <div
                 key={d}
-                className="bg-white rounded-lg shadow p-4 space-y-2"
+                className="bg-gray-50 rounded-lg shadow-sm p-4 space-y-2 mb-3"
               >
                 <div className="flex justify-between items-center">
                   <span className="font-semibold">🕒 Dia {d}</span>
                   <div className="flex gap-2">
                     <button
-                      className="botao-acao pequeno"
+                      className="botao-acao pequeno mt-3"
                       onClick={() => abrirFormNovo(d)}
                     >
                       {formDia === d ? "-" : "+ Nova Etapa"}
@@ -206,7 +206,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar }) {
                   ))}
                 </div>
                 {formDia === d && (
-                  <div className="mt-2 p-4 border rounded bg-gray-50 text-sm space-y-2">
+                  <div className="mt-2 p-3 border rounded bg-gray-50 text-sm space-y-2 mb-3">
                     <div className="font-semibold">Adicionar Etapa</div>
                     <div>
                       <label>Hormônio:</label>
