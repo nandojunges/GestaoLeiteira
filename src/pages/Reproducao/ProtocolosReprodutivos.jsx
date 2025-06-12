@@ -37,6 +37,25 @@ export default function ProtocolosReprodutivos() {
     setProtocoloExpandido(protocoloExpandido === index ? null : index);
   };
 
+  const formatarEtapas = (lista) => {
+    const agrupado = lista.reduce((acc, e) => {
+      if (!acc[e.dia]) acc[e.dia] = [];
+      if (e.hormonio) acc[e.dia].push(e.hormonio);
+      if (e.acao) acc[e.dia].push(e.acao);
+      return acc;
+    }, {});
+    return Object.entries(agrupado).map(([dia, itens]) => (
+      <div key={dia} style={{ marginBottom: "4px" }}>
+        <div style={{ fontWeight: 600 }}>Dia {dia}:</div>
+        <ul className="list-disc ml-5">
+          {itens.map((it, idx) => (
+            <li key={idx}>{it}</li>
+          ))}
+        </ul>
+      </div>
+    ));
+  };
+
   const titulos = ["Nome", "Descrição", "Etapas", "Ações"];
 
   return (
@@ -83,16 +102,10 @@ export default function ProtocolosReprodutivos() {
                     {protocolo.descricao || "—"}
                   </td>
                   <td className={colunaHover === 2 ? "coluna-hover" : ""}>
-                    {Object.entries(
-                      protocolo.etapas.reduce((acc, e) => {
-                        if (!acc[e.dia]) acc[e.dia] = [];
-                        if (e.hormonio) acc[e.dia].push(e.hormonio);
-                        if (e.acao) acc[e.dia].push(e.acao);
-                        return acc;
-                      }, {})
-                    ).map(([dia, itens]) => (
-                      <div key={dia}>Dia {dia}: {itens.join(', ')}</div>
-                    ))}
+                    <div style={{ backgroundColor: "#eaf3ff", padding: "8px", borderRadius: "8px" }}>
+                      <div style={{ fontWeight: 600, color: "#004AAD" }}>Etapas:</div>
+                      {formatarEtapas(protocolo.etapas)}
+                    </div>
                   </td>
                   <td
                     className={`${colunaHover === 3 ? "coluna-hover" : ""} text-center`}
