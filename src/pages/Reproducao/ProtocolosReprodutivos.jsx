@@ -63,7 +63,7 @@ export default function ProtocolosReprodutivos() {
     ));
   };
 
-  const titulos = ["Nome", "Descrição", "Etapas", "Ações"];
+  const titulos = ["Nome", "Descrição", "Tipo", "Etapas", "Ações"];
 
   return (
     <div className="w-full px-8 py-6 font-sans">
@@ -97,7 +97,7 @@ export default function ProtocolosReprodutivos() {
         <tbody>
           {protocolos.length === 0 ? (
             <tr>
-              <td colSpan={4} className="text-center py-4 text-gray-500">
+              <td colSpan={5} className="text-center py-4 text-gray-500">
                 Nenhum protocolo cadastrado.
               </td>
             </tr>
@@ -111,14 +111,17 @@ export default function ProtocolosReprodutivos() {
                   <td className={colunaHover === 1 ? "coluna-hover" : ""}>
                     {protocolo.descricao || "—"}
                   </td>
-                  <td className={colunaHover === 2 ? "coluna-hover" : ""} style={{ whiteSpace: "normal", overflow: "visible" }}>
+                  <td className={colunaHover === 2 ? "coluna-hover" : ""}>
+                    {protocolo.tipo || '—'}
+                  </td>
+                  <td className={colunaHover === 3 ? "coluna-hover" : ""} style={{ whiteSpace: "normal", overflow: "visible" }}>
                     <div style={{ backgroundColor: "#eaf3ff", padding: "12px 16px", borderRadius: "8px", fontSize: "14px" }}>
                       <div style={{ fontWeight: 600, color: "#004AAD" }}>Etapas:</div>
                       {formatarEtapas(protocolo.etapas)}
                     </div>
                   </td>
                   <td
-                    className={`${colunaHover === 3 ? "coluna-hover" : ""} text-center`}
+                    className={`${colunaHover === 4 ? "coluna-hover" : ""} text-center`}
                   >
                     <div className="flex justify-center gap-2">
                       <button
@@ -145,7 +148,7 @@ export default function ProtocolosReprodutivos() {
 
                 {protocoloExpandido === index && (
                   <tr>
-                    <td colSpan={4} className="bg-gray-50 p-2 text-sm text-center text-gray-500">
+                    <td colSpan={5} className="bg-gray-50 p-2 text-sm text-center text-gray-500">
                       Nenhum animal ativo listado para este protocolo.
                     </td>
                   </tr>

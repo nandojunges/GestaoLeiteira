@@ -16,6 +16,7 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar, protocoloIn
   const diasIniciais = Array.from({ length: 11 }, (_, i) => i);
   const [nome, setNome] = useState(protocoloInicial?.nome || "");
   const [descricao, setDescricao] = useState(protocoloInicial?.descricao || "");
+  const [tipo, setTipo] = useState(protocoloInicial?.tipo || "IATF");
   const [dias, setDias] = useState(
     protocoloInicial
       ? Array.from(new Set(protocoloInicial.etapas.map((e) => e.dia))).sort((a, b) => a - b)
@@ -52,9 +53,9 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar, protocoloIn
   useEffect(() => {
     localStorage.setItem(
       "cadastroProtocoloTmp",
-      JSON.stringify({ nome, descricao, dias, etapas })
+      JSON.stringify({ nome, descricao, tipo, dias, etapas })
     );
-  }, [nome, descricao, dias, etapas]);
+  }, [nome, descricao, tipo, dias, etapas]);
 
   const adicionarDia = () => {
     const proximo = dias.length ? Math.max(...dias) + 1 : 0;
@@ -132,13 +133,14 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar, protocoloIn
     Object.entries(etapas).forEach(([d, arr]) => {
       arr.forEach((e) => etapasList.push({ ...e, dia: parseInt(d, 10) }));
     });
-    if (!nome || etapasList.length === 0) {
-      alert("Preencha o nome e adicione pelo menos uma etapa.");
+    if (!nome || etapasList.length === 0 || !tipo) {
+      alert("Preencha o nome, o tipo e adicione pelo menos uma etapa.");
       return;
     }
     const protocolo = {
       nome,
       descricao,
+      tipo,
       etapas: etapasList.sort((a, b) => a.dia - b.dia),
     };
     const salvos = JSON.parse(localStorage.getItem("protocolos") || "[]");
@@ -210,9 +212,18 @@ export default function ModalCadastroProtocolo({ onFechar, onSalvar, protocoloIn
       <div style={modal} onClick={(e) => e.stopPropagation()} className="modal-content">
         <div style={headerStyle}>
           <span>🧬</span>
-          <span>Cadastrar Protocolo IATF</span>
+          <span>Cadastrar Protocolo</span>
         </div>
         <div className="sticky top-0 bg-white pb-2">
+          <label>Tipo do Protocolo:</label>
+          <select
+            value={tipo}
+            onChange={(e) => setTipo(e.target.value)}
+            style={headerInput}
+          >
+            <option value="IATF">IATF</option>
+            <option value="Pré-sincronização">Pré-sincronização</option>
+          </select>
           <label>Nome do Protocolo:</label>
           <input
             type="text"

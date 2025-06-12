@@ -1,19 +1,30 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Select from 'react-select';
+import { addDays } from 'date-fns';
+import { toast } from 'react-toastify';
 import { formatarDataDigitada, formatarDataBR } from '../Animais/utilsAnimais';
 import { addEventoCalendario } from '../../utils/eventosCalendario';
 
-export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
-  const TIPOS = [
-    'Metrite',
-    'Endometrite',
-    'Infecção Subclínica',
-    'Cio natural',
-    'Descalcificação',
-    'Cetose',
+export default function ModalRegistrarOcorrencia({ vaca, status = 'No PEV', onClose, onSalvar }) {
+  const TIPOS_PEV = [
     'Retenção de placenta',
-    'Outros'
+    'Anestro',
+    'Cisto folicular',
+    'Cisto luteal',
+    'Corrimento',
+    'Iniciar Pré-sincronização'
   ];
+
+  const TIPOS_LIBERADA = [
+    'Cisto folicular',
+    'Cisto luteal',
+    'Anestro',
+    'Corrimento',
+    'Iniciar Pré-sincronização',
+    'Iniciar Protocolo IATF'
+  ];
+
+  const TIPOS = status === 'Liberada' ? TIPOS_LIBERADA : TIPOS_PEV;
 
   const [tipo, setTipo] = useState('');
   const [descricaoTipo, setDescricaoTipo] = useState('');
@@ -26,6 +37,8 @@ export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
   const [duracao, setDuracao] = useState('');
   const [carencia, setCarencia] = useState(''); // exibida apenas para consulta
   const [produtos, setProdutos] = useState([]);
+  const [protocolos, setProtocolos] = useState([]);
+  const [protocoloSelecionado, setProtocoloSelecionado] = useState('');
   const camposRef = useRef([]);
 
   const handleEnter = (index) => (e) => {
@@ -47,6 +60,10 @@ export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
         carenciaCarne: p.carenciaCarne
       }))
     );
+
+    const prot = JSON.parse(localStorage.getItem('protocolos') || '[]');
+    setProtocolos(prot);
+
     const esc = e => e.key === 'Escape' && onClose?.();
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
@@ -143,6 +160,34 @@ export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
       localStorage.setItem('alertasCarencia', JSON.stringify(alertas));
       window.dispatchEvent(new Event('alertasCarenciaAtualizados'));
     }
+
+    if (tipo === 'Iniciar Pré-sincronização' || tipo === 'Iniciar Protocolo IATF') {
+      if (!protocoloSelecionado) {
+        alert('Selecione o protocolo');
+        return;
+      }
+      const historicoKey = `historicoReprodutivo_${vaca.numero}`;
+      const historico = JSON.parse(localStorage.getItem(historicoKey) || '[]');
+      const prot = protocolos.find(p => p.nome === protocoloSelecionado);
+      historico.push({
+        protocolo: protocoloSelecionado,
+        tipo: prot?.tipo || (tipo.includes('IATF') ? 'IATF' : 'Pré-sincronização'),
+        dataInicio: dataOcorrencia
+      });
+      localStorage.setItem(historicoKey, JSON.stringify(historico));
+
+      if (prot) {
+        const [d, m, a] = dataOcorrencia.split('/');
+        const inicio = new Date(`${a}-${m}-${d}`);
+        prot.etapas.forEach(et => {
+          const data = addDays(inicio, et.dia).toISOString().split('T')[0];
+          const titulo = et.hormonio || et.acao || 'Etapa';
+          addEventoCalendario({ title: `${titulo} - Vaca ${vaca.numero}`, date: data, tipo: 'protocolo' });
+        });
+      }
+      toast.success('Protocolo aplicado com sucesso!');
+    }
+
     onSalvar?.(ocorrencia);
     onClose?.();
   };
@@ -207,6 +252,23 @@ export default function ModalRegistrarOcorrencia({ vaca, onClose, onSalvar }) {
               style={{ ...input(), height: '80px' }}
             />
           </div>
+          {(tipo === 'Iniciar Pré-sincronização' || tipo === 'Iniciar Protocolo IATF') && (
+            <div>
+              <label>Protocolo</label>
+              <select
+                value={protocoloSelecionado}
+                onChange={e => setProtocoloSelecionado(e.target.value)}
+                style={input()}
+              >
+                <option value="">Selecione...</option>
+                {protocolos
+                  .filter(p => p.tipo === (tipo.includes('IATF') ? 'IATF' : 'Pré-sincronização'))
+                  .map((p, i) => (
+                    <option key={i} value={p.nome}>{p.nome}</option>
+                  ))}
+              </select>
+            </div>
+          )}
           {tipo !== 'Cio natural' && (
             <div>
               <label>
