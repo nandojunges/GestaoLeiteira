@@ -90,6 +90,7 @@
   text-align: center;
   padding: 10px 8px;
   vertical-align: middle;
+  min-width: 180px;
 }
 
 /* === Agrupamento de botões dentro da célula de ações === */
@@ -126,4 +127,13 @@
   border-color: #2563eb;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
   outline: none;
+}
+
+/* === Estilo dos checkboxes na tabela === */
+.checkbox-tabela {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  accent-color: #1F3FB6;
+  cursor: pointer;
 }
