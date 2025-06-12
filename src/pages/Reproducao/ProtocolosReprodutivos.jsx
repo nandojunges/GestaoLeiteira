@@ -3,6 +3,7 @@ import ModalCadastroProtocolo from "./ModalCadastroProtocolo";
 import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
+import { listarAnimaisPorProtocolo } from "../../utils/registroReproducao";
 
 export default function ProtocolosReprodutivos() {
   const [modalAberto, setModalAberto] = useState(false);
@@ -11,6 +12,7 @@ export default function ProtocolosReprodutivos() {
   const [colunaHover, setColunaHover] = useState(null);
   const [protocoloExpandido, setProtocoloExpandido] = useState(null);
   const [protocoloExcluir, setProtocoloExcluir] = useState(null);
+  const [vacasPorProtocolo, setVacasPorProtocolo] = useState({});
 
   useEffect(() => {
     const salvos = JSON.parse(localStorage.getItem("protocolos") || "[]");
@@ -41,7 +43,17 @@ export default function ProtocolosReprodutivos() {
   };
 
   const toggleExpandirProtocolo = (index) => {
-    setProtocoloExpandido(protocoloExpandido === index ? null : index);
+    if (protocoloExpandido === index) {
+      setProtocoloExpandido(null);
+    } else {
+      setProtocoloExpandido(index);
+      const prot = protocolos[index];
+      if (prot) {
+        const idProt = prot.id ?? index;
+        const vacas = listarAnimaisPorProtocolo(idProt);
+        setVacasPorProtocolo(v => ({ ...v, [idProt]: vacas }));
+      }
+    }
   };
 
   const formatarEtapas = (lista) => {
@@ -140,7 +152,7 @@ export default function ProtocolosReprodutivos() {
                         onClick={() => toggleExpandirProtocolo(index)}
                         className="botao-acao pequeno"
                       >
-                        {protocoloExpandido === index ? "🔼" : "🔽"}
+                        {protocoloExpandido === index ? "🔼 Ocultar" : "🔽 Ver Vacas"}
                       </button>
                     </div>
                   </td>
@@ -148,8 +160,22 @@ export default function ProtocolosReprodutivos() {
 
                 {protocoloExpandido === index && (
                   <tr>
-                    <td colSpan={5} className="bg-gray-50 p-2 text-sm text-center text-gray-500">
-                      Nenhum animal ativo listado para este protocolo.
+                    <td colSpan={5} className="bg-gray-50 p-2 text-sm">
+                      {(
+                        vacasPorProtocolo[protocolo.id ?? index] || []
+                      ).length === 0 ? (
+                        <div className="text-center text-gray-500">
+                          Nenhum animal ativo listado para este protocolo.
+                        </div>
+                      ) : (
+                        <ul className="list-disc ml-4 space-y-1">
+                          {vacasPorProtocolo[protocolo.id ?? index].map((v) => (
+                            <li key={v.numero}>
+                              #{v.numero} - iniciado em {v.dataInicio || '—'}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </td>
                   </tr>
                 )}
