@@ -41,6 +41,34 @@ export function calcularProximaEtapa(protocolo, inicio) {
   return null;
 }
 
+export function calcularEtapasOcorrencia(ocorrencia) {
+  if (!ocorrencia || !Array.isArray(ocorrencia.etapas)) {
+    return { ultima: null, proxima: null };
+  }
+
+  const [d, m, a] = ocorrencia.data.split('/');
+  const inicio = new Date(`${a}-${m}-${d}`);
+  const hoje = new Date();
+  const etapasOrdenadas = [...ocorrencia.etapas].sort((x, y) => x.dia - y.dia);
+
+  let ultima = { tipo: ocorrencia.tipo, data: ocorrencia.data };
+  let proxima = null;
+
+  for (const et of etapasOrdenadas) {
+    const dataEtapa = addDays(inicio, et.dia);
+    const nome = et.acao || et.hormonio || 'Etapa';
+    if (dataEtapa <= hoje) {
+      ultima = { tipo: nome, data: formatarDataBR(dataEtapa) };
+    } else if (!proxima) {
+      proxima = { tipo: nome, dataPrevista: formatarDataBR(dataEtapa) };
+    }
+  }
+
+  if (!proxima) proxima = { tipo: 'Protocolo concluído', dataPrevista: '—' };
+
+  return { ultima, proxima };
+}
+
 export function listarAnimaisPorProtocolo(protocolId) {
   if (!protocolId) return [];
   const animais = JSON.parse(localStorage.getItem('animais') || '[]');
