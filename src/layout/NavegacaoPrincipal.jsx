@@ -1,13 +1,21 @@
 import { useEffect, useRef, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ConfiguracaoContext } from '../context/ConfiguracaoContext';
+import jwtDecode from 'jwt-decode';
 
 export default function NavegacaoPrincipal() {
   const navigate = useNavigate();
   const location = useLocation();
   const abaAtiva = location.pathname.split('/')[1] || 'inicio';
   const { config } = useContext(ConfiguracaoContext);
-  const usuario = { tipo: 'funcionario' }; // Ajuste depois se quiser controlar o tipo
+  let tipoUsuario = 'funcionario';
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      tipoUsuario = decoded.perfil || 'funcionario';
+    } catch {}
+  }
 
   const abas = [
     { id: 'inicio', label: 'INÍCIO', icone: '/icones/home.png', title: 'Página inicial', visivelPara: ['admin', 'funcionario'] },
@@ -20,7 +28,8 @@ export default function NavegacaoPrincipal() {
     { id: 'financeiro', label: 'FINANCEIRO', icone: '/icones/financeiro.png', title: 'Relatórios financeiros', visivelPara: ['admin', 'funcionario'] },
     { id: 'calendario', label: 'CALENDÁRIO', icone: '/icones/calendario.png', title: 'Agenda de atividades', visivelPara: ['admin', 'funcionario'] },
     { id: 'ajustes', label: 'AJUSTES', icone: '/icones/indicadores.png', title: 'Configurações do sistema', visivelPara: ['admin', 'funcionario'] },
-  ].filter(aba => aba.visivelPara.includes(usuario.tipo));
+    { id: 'admin', label: 'ADMIN', icone: '/icones/indicadores.png', title: 'Painel administrativo', visivelPara: ['admin'] },
+  ].filter(aba => aba.visivelPara.includes(tipoUsuario));
 
   const containerRef = useRef();
 
