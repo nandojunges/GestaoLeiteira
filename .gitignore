@@ -1,0 +1,6 @@
+node_modules
+
+# Backend
+backend/*.sqlite
+backend/*.sqlite3
+

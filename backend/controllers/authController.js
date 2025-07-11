@@ -1,0 +1,228 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const Usuario = require('../models/Usuario');
+const VerificacaoPendente = require('../models/VerificacaoPendente');
+const emailUtils = require('../utils/email');
+const { initDB } = require('../db');
+
+const SECRET = process.env.JWT_SECRET || 'segredo';
+
+// ➤ Cadastro inicial: gera código e envia por e-mail
+async function cadastro(req, res) {
+  const { nome, nomeFazenda, email: endereco, telefone, senha } = req.body;
+  const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+  const agora = new Date().toISOString();
+
+  if (!endereco || typeof endereco !== 'string') {
+    return res.status(400).json({ message: 'Email inválido ou não informado.' });
+  }
+
+  const db = initDB(endereco);
+  VerificacaoPendente.limparExpirados(db);
+
+  try {
+    if (Usuario.getByEmail(db, endereco)) {
+      return res.status(400).json({ message: 'Email já cadastrado' });
+    }
+
+    const hash = bcrypt.hashSync(senha, 10);
+    const pendente = VerificacaoPendente.getByEmail(db, endereco);
+
+    if (pendente) {
+      const criado = new Date(pendente.criado_em);
+      if (Date.now() - criado.getTime() < 3 * 60 * 1000) {
+        return res.status(400).json({ message: 'Código já enviado. Aguarde o prazo para reenviar.' });
+      }
+
+      VerificacaoPendente.updateByEmail(db, endereco, {
+        codigo,
+        nome,
+        nomeFazenda,
+        telefone,
+        senha: hash,
+        criado_em: agora,
+      });
+    } else {
+      VerificacaoPendente.create(db, {
+        email: endereco,
+        codigo,
+        nome,
+        nomeFazenda,
+        telefone,
+        senha: hash,
+        criado_em: agora,
+      });
+    }
+
+    await emailUtils.enviarCodigo(endereco, codigo);
+    res.status(201).json({ message: 'Código enviado. Verifique o e-mail.' });
+  } catch (error) {
+    console.error('Erro no cadastro:', error);
+    res.status(500).json({ error: 'Erro ao cadastrar usuário.' });
+  }
+}
+
+// ➤ Verifica o código enviado por e-mail e cria o usuário
+async function verificarEmail(req, res) {
+  const { email: endereco, codigoDigitado } = req.body;
+
+  if (!endereco || typeof endereco !== 'string') {
+    return res.status(400).json({ erro: 'Email inválido.' });
+  }
+
+  const db = initDB(endereco);
+
+  try {
+    const pendente = VerificacaoPendente.getByEmail(db, endereco);
+    if (!pendente) {
+      return res.status(400).json({ erro: 'Código não encontrado. Faça o cadastro novamente.' });
+    }
+
+    const expirado = Date.now() - new Date(pendente.criado_em).getTime() > 10 * 60 * 1000;
+    if (expirado) {
+      VerificacaoPendente.deleteByEmail(db, endereco);
+      return res.status(400).json({ erro: 'Código expirado. Faça o cadastro novamente.' });
+    }
+
+    if (pendente.codigo !== codigoDigitado) {
+      return res.status(400).json({ erro: 'Código incorreto.' });
+    }
+
+    if (Usuario.getByEmail(db, endereco)) {
+      VerificacaoPendente.deleteByEmail(db, endereco);
+      return res.status(400).json({ erro: 'Email já cadastrado.' });
+    }
+
+    Usuario.create(db, {
+      nome: pendente.nome,
+      nomeFazenda: pendente.nomeFazenda,
+      email: pendente.email,
+      telefone: pendente.telefone,
+      senha: pendente.senha,
+      verificado: 1,
+      codigoVerificacao: null,
+      perfil: 'usuario',
+    });
+
+    VerificacaoPendente.deleteByEmail(db, endereco);
+    res.json({ sucesso: true });
+  } catch (err) {
+    console.error('Erro na verificação:', err);
+    res.status(500).json({ erro: 'Erro interno no servidor.' });
+  }
+}
+
+// ➤ Login e geração do token JWT
+function login(req, res) {
+  const { email, senha } = req.body;
+
+  if (!email || typeof email !== 'string' || !senha) {
+    return res.status(400).json({ message: 'Email ou senha inválidos.' });
+  }
+
+  const db = initDB(email);
+  const usuario = Usuario.getByEmail(db, email);
+
+  if (!usuario) return res.status(400).json({ message: 'Usuário não encontrado' });
+  if (!usuario.verificado) return res.status(400).json({ message: 'Email não verificado' });
+  if (!bcrypt.compareSync(senha, usuario.senha)) {
+    return res.status(400).json({ message: 'Senha incorreta' });
+  }
+
+  const payload = {
+    idProdutor: usuario.id,
+    email: usuario.email,
+    perfil: usuario.perfil,
+  };
+
+  const token = jwt.sign(payload, SECRET, { expiresIn: '7d' });
+  res.json({ token, isAdmin: usuario.perfil === 'admin' });
+}
+
+// ➤ Dados do usuário logado
+function dados(req, res) {
+  const db = initDB(req.user.email);
+  const usuario = Usuario.getById(db, req.user.idProdutor);
+
+  if (!usuario) return res.status(404).json({ message: 'Usuário não encontrado' });
+
+  res.json({
+    usuario: {
+      id: usuario.id,
+      nome: usuario.nome,
+      nomeFazenda: usuario.nomeFazenda,
+      email: usuario.email,
+      telefone: usuario.telefone,
+      isAdmin: req.user.perfil === 'admin',
+    },
+  });
+}
+
+// ➤ Lista todos os usuários do banco (apenas do banco do produtor)
+function listarUsuarios(req, res) {
+  const db = initDB(req.user.email);
+
+  try {
+    const usuarios = Usuario.getAll(db);
+    res.json(usuarios);
+  } catch (err) {
+    console.error('Erro ao listar usuários:', err);
+    res.status(500).json({ error: 'Erro ao listar usuários' });
+  }
+}
+
+// ➤ Envia código para recuperação de senha
+async function solicitarReset(req, res) {
+  const { email } = req.body;
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ message: 'Email inválido.' });
+  }
+  const db = initDB(email);
+  const usuario = Usuario.getByEmail(db, email);
+  if (!usuario) return res.status(400).json({ message: 'Usuário não encontrado' });
+
+  const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+  Usuario.definirCodigo(db, usuario.id, codigo);
+  try {
+    await emailUtils.enviarCodigo(email, codigo);
+    res.json({ message: 'Código enviado ao e-mail.' });
+  } catch (err) {
+    console.error('Erro ao enviar e-mail:', err);
+    res.status(500).json({ message: 'Erro ao enviar código.' });
+  }
+}
+
+// ➤ Verifica código e redefine senha
+function resetarSenha(req, res) {
+  const { email, codigo, senha } = req.body;
+  if (!email || !codigo || !senha) {
+    return res.status(400).json({ message: 'Dados inválidos.' });
+  }
+  const db = initDB(email);
+  const usuario = Usuario.getByEmail(db, email);
+  if (!usuario || usuario.codigoVerificacao !== codigo) {
+    return res.status(400).json({ message: 'Código inválido.' });
+  }
+  const hash = bcrypt.hashSync(senha, 10);
+  Usuario.atualizarSenha(db, usuario.id, hash);
+  res.json({ message: 'Senha atualizada com sucesso.' });
+}
+
+// ➤ Verifica código: usado para cadastro ou reset de senha
+async function verificarCodigo(req, res) {
+  if (req.body.senha) {
+    return resetarSenha(req, res);
+  }
+  return verificarEmail(req, res);
+}
+
+module.exports = {
+  cadastro,
+  verificarEmail,
+  login,
+  dados,
+  listarUsuarios,
+  solicitarReset,
+  resetarSenha,
+  verificarCodigo,
+};
