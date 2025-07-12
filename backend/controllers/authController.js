@@ -129,14 +129,17 @@ function login(req, res) {
     return res.status(400).json({ message: 'Senha incorreta' });
   }
 
+  const listaAdmins = require('../config/admins');
+  const isAdmin = listaAdmins.includes(email);
+
   const payload = {
     idProdutor: usuario.id,
     email: usuario.email,
-    perfil: usuario.perfil,
+    perfil: isAdmin ? 'admin' : usuario.perfil,
   };
 
   const token = jwt.sign(payload, SECRET, { expiresIn: '7d' });
-  res.json({ token, isAdmin: usuario.perfil === 'admin' });
+  res.json({ token, isAdmin });
 }
 
 // ➤ Dados do usuário logado
