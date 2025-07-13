@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { getDb } = require('../db');
+const { initDB } = require('../db');
 
 const SECRET = process.env.JWT_SECRET || 'segredo';
 
@@ -12,15 +12,19 @@ module.exports = async function verificarAdmin(req, res, next) {
       usuarioJwt = jwt.verify(token, SECRET);
     }
 
-    const db = getDb();
-    const usuario = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(usuarioJwt.id);
-    if (!usuario || usuario.perfil !== 'admin') {
-      return res.status(403).json({ error: 'Acesso restrito a administradores' });
-    }
+    const db = initDB(usuarioJwt.email);
+    req.usuario = db
+      .prepare('SELECT * FROM usuarios WHERE id = ?')
+      .get(usuarioJwt.idProdutor);
 
-    req.usuario = usuario;
+    if (!req.usuario || req.usuario.perfil !== 'admin') {
+      return res
+        .status(403)
+        .json({ error: 'Acesso restrito a administradores' });
+    }
     next();
   } catch (err) {
+    console.error('Erro ao verificar admin:', err);
     return res.status(401).json({ error: 'Token inválido ou expirado' });
   }
 };
