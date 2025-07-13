@@ -7,14 +7,15 @@ const Fazenda = require('../models/Fazenda');
 const Animal = require('../models/animaisModel');
 const { getDb } = require('../db');
 
-// Middleware de verificação de admin
+// Aplica verificação de admin a todas as rotas abaixo
 router.use('/admin', verificarAdmin);
 
+// Rota de boas-vindas
 router.get('/admin/dash', (req, res) => {
   res.json({ message: 'Bem-vindo ao painel de administração' });
 });
 
-// Lista produtores com informações de fazenda e total de animais
+// Lista produtores com dados de fazenda e número de animais
 router.get('/admin/produtores', (req, res) => {
   const produtores = Produtor.getAll();
   const lista = produtores.map(p => {
@@ -33,14 +34,14 @@ router.get('/admin/produtores', (req, res) => {
   res.json(lista);
 });
 
-// Atualiza limite de vacas da fazenda
+// Atualiza o limite de animais por fazenda
 router.patch('/admin/limite/:id', (req, res) => {
   const { limite } = req.body;
   const fazenda = Fazenda.updateLimite(req.params.id, limite);
   res.json(fazenda);
 });
 
-// Alterna status do produtor entre ativo e suspenso
+// Altera status do produtor (ativo <-> suspenso)
 router.patch('/admin/status/:id', (req, res) => {
   const produtor = Produtor.getById(req.params.id);
   if (!produtor) return res.status(404).json({ error: 'Produtor não encontrado' });
@@ -49,8 +50,8 @@ router.patch('/admin/status/:id', (req, res) => {
   res.json({ status: novoStatus });
 });
 
-// Lista todos os usuários cadastrados (sem senha)
-router.get('/admin/usuarios', verificarAdmin, async (req, res) => {
+// Lista todos os usuários (sem senha)
+router.get('/admin/usuarios', async (req, res) => {
   const db = getDb();
   const usuarios = db
     .prepare('SELECT id, nome, email, telefone, verificado, perfil FROM usuarios')
@@ -58,8 +59,8 @@ router.get('/admin/usuarios', verificarAdmin, async (req, res) => {
   res.json(usuarios);
 });
 
-// Remove um usuário pelo id
-router.delete('/admin/usuarios/:id', verificarAdmin, async (req, res) => {
+// Remove um usuário pelo ID
+router.delete('/admin/usuarios/:id', async (req, res) => {
   const db = getDb();
   const { id } = req.params;
   db.prepare('DELETE FROM usuarios WHERE id = ?').run(id);
