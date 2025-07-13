@@ -5,7 +5,10 @@ const verificarAdmin = require('../middleware/verificarAdmin');
 const Produtor = require('../models/Produtor');
 const Fazenda = require('../models/Fazenda');
 const Animal = require('../models/animaisModel');
-const { getDb } = require('../db');
+const Usuario = require('../models/Usuario');
+const fs = require('fs');
+const path = require('path');
+const { getDb, initDB } = require('../db');
 
 // Aplica verificação de admin a todas as rotas abaixo
 router.use('/admin', verificarAdmin);
@@ -52,11 +55,55 @@ router.patch('/admin/status/:id', (req, res) => {
 
 // Lista todos os usuários (sem senha)
 router.get('/admin/usuarios', async (req, res) => {
-  const db = getDb();
-  const usuarios = db
-    .prepare('SELECT id, nome, email, telefone, verificado, perfil FROM usuarios')
-    .all();
-  res.json(usuarios);
+  function unsanitizeEmail(name) {
+    const parts = name.split('_');
+    if (parts.length > 1) {
+      return parts[0] + '@' + parts.slice(1).join('.');
+    }
+    return name;
+  }
+
+  const possibles = ['../bancos', '../databases', '../data'];
+  let baseDir = null;
+  for (const p of possibles) {
+    const full = path.join(__dirname, p);
+    if (fs.existsSync(full)) {
+      baseDir = full;
+      break;
+    }
+  }
+
+  if (!baseDir) {
+    return res.json([]);
+  }
+
+  const dirs = fs.readdirSync(baseDir).filter(d => {
+    const stat = fs.statSync(path.join(baseDir, d));
+    return stat.isDirectory();
+  });
+
+  const lista = [];
+
+  for (const dir of dirs) {
+    if (dir === 'backups') continue;
+    const email = unsanitizeEmail(dir);
+
+    const db = initDB(email);
+    const usuarios = Usuario.getAll(db).filter(u => u.perfil !== 'admin');
+
+    usuarios.forEach(u => {
+      lista.push({
+        nome: u.nome,
+        email: u.email,
+        status: u.verificado ? 'ativo' : 'bloqueado',
+        plano: u.perfil,
+        nomeFazenda: u.nomeFazenda || '',
+        banco: `${email}.sqlite`,
+      });
+    });
+  }
+
+  res.json(lista);
 });
 
 // Remove um usuário pelo ID
