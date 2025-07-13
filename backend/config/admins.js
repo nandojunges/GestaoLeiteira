@@ -1,1 +1,1 @@
-module.exports = ["fernando@gestaoleiteira.com"];
+module.exports = ['nandokkk@hotmail.com'];

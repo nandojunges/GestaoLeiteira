@@ -1,75 +1,105 @@
 import { useEffect, useState } from 'react';
 import api from '../../api';
+import { toast } from 'react-toastify';
 
 export default function AdminPainel() {
-  const [produtores, setProdutores] = useState([]);
-  const [erro, setErro] = useState('');
-  const [limites, setLimites] = useState({});
-  const token = localStorage.getItem('token');
+  const [usuarios, setUsuarios] = useState([]);
+  const [planos, setPlanos] = useState({});
+  const [carregando, setCarregando] = useState(false);
 
   useEffect(() => {
-    api.get('/admin/produtores', { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => setProdutores(res.data))
-      .catch(() => setErro('Acesso negado – apenas administradores'));
-  }, [token]);
+    carregarUsuarios();
+  }, []);
 
-  const handleChange = (id, value) => {
-    setLimites({ ...limites, [id]: value });
+  const carregarUsuarios = () => {
+    setCarregando(true);
+    api.get('/admin/usuarios')
+      .then(res => setUsuarios(res.data))
+      .catch(() => toast.error('Erro ao carregar usuários'))
+      .finally(() => setCarregando(false));
   };
 
-  const salvarLimite = id => {
-    const limite = parseInt(limites[id], 10);
-    api.patch(`/admin/limite/${id}`, { limite }, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => {
-        setProdutores(produtores.map(p => p.id === id ? { ...p, limiteAnimais: res.data.limiteAnimais } : p));
-      });
+  const acaoUsuario = async (email, acao, body = {}) => {
+    try {
+      await api.patch(`/admin/${acao}/${email}`, body);
+      toast.success('Ação concluída');
+      carregarUsuarios();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erro na operação');
+    }
   };
 
-  const toggleStatus = id => {
-    api.patch(`/admin/status/${id}`, {}, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => {
-        setProdutores(produtores.map(p => p.id === id ? { ...p, status: res.data.status } : p));
-      });
+  const excluirUsuario = async (email) => {
+    try {
+      await api.delete(`/admin/usuarios/${email}`);
+      toast.success('Usuário excluído');
+      setUsuarios(u => u.filter(us => us.email !== email));
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erro ao excluir');
+    }
   };
-
-  if (erro) return <div className="p-4 text-red-500">{erro}</div>;
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Painel Administrativo</h1>
-      <table className="min-w-full bg-white">
+    <div className="p-4 space-y-4">
+      <h1 className="text-xl font-bold">Painel Administrativo</h1>
+      <table className="min-w-full bg-white rounded shadow text-sm">
         <thead>
-          <tr className="border-b">
+          <tr className="border-b bg-gray-100">
             <th className="p-2 text-left">Nome</th>
-            <th className="p-2 text-left">E-mail</th>
-            <th className="p-2 text-left">Fazenda</th>
-            <th className="p-2 text-center">Vacas</th>
-            <th className="p-2 text-center">Limite</th>
+            <th className="p-2 text-left">Email</th>
             <th className="p-2 text-center">Status</th>
+            <th className="p-2 text-center">Plano Atual</th>
             <th className="p-2 text-center">Ações</th>
           </tr>
         </thead>
         <tbody>
-          {produtores.map(p => (
-            <tr key={p.id} className={p.numeroAnimais > p.limiteAnimais ? 'bg-red-100' : ''}>
-              <td className="p-2">{p.nome}</td>
-              <td className="p-2">{p.email}</td>
-              <td className="p-2">{p.fazenda}</td>
-              <td className="p-2 text-center">{p.numeroAnimais}</td>
+          {usuarios.map(u => (
+            <tr key={u.email} className="border-b">
+              <td className="p-2">{u.nome}</td>
+              <td className="p-2">{u.email}</td>
+              <td className="p-2 text-center">{u.status}</td>
               <td className="p-2 text-center">
-                <input type="number" className="border p-1 w-20" value={limites[p.id] ?? p.limiteAnimais} onChange={e => handleChange(p.id, e.target.value)} />
+                <select
+                  className="border rounded px-1 py-0.5"
+                  value={planos[u.email] ?? u.plano}
+                  onChange={e => setPlanos({ ...planos, [u.email]: e.target.value })}
+                >
+                  <option value="basico">Básico</option>
+                  <option value="pro">Pro</option>
+                  <option value="premium">Premium</option>
+                </select>
               </td>
-              <td className="p-2 text-center">{p.status}</td>
-              <td className="p-2 text-center space-x-2">
-                <button onClick={() => salvarLimite(p.id)} className="bg-blue-500 text-white px-2 py-1 rounded">Salvar</button>
-                <button onClick={() => toggleStatus(p.id)} className="bg-yellow-500 text-white px-2 py-1 rounded">
-                  {p.status === 'ativo' ? 'Suspender' : 'Ativar'}
+              <td className="p-2 text-center space-x-1">
+                <button
+                  className="bg-green-600 text-white px-2 py-1 rounded"
+                  onClick={() => acaoUsuario(u.email, 'liberar')}
+                >
+                  Liberar
+                </button>
+                <button
+                  className="bg-yellow-600 text-white px-2 py-1 rounded"
+                  onClick={() => acaoUsuario(u.email, 'bloquear')}
+                >
+                  Bloquear
+                </button>
+                <button
+                  className="bg-blue-600 text-white px-2 py-1 rounded"
+                  onClick={() => acaoUsuario(u.email, 'plano', { plano: planos[u.email] ?? u.plano })}
+                >
+                  Alterar Plano
+                </button>
+                <button
+                  className="bg-red-600 text-white px-2 py-1 rounded"
+                  onClick={() => excluirUsuario(u.email)}
+                >
+                  Excluir
                 </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      {carregando && <div className="text-center">Carregando...</div>}
     </div>
   );
 }

@@ -93,6 +93,9 @@ async function verificarEmail(req, res) {
       return res.status(400).json({ erro: 'Email já cadastrado.' });
     }
 
+    const listaAdmins = require('../config/admins');
+    const perfil = listaAdmins.includes(pendente.email) ? 'admin' : 'funcionario';
+
     Usuario.create(db, {
       nome: pendente.nome,
       nomeFazenda: pendente.nomeFazenda,
@@ -101,7 +104,7 @@ async function verificarEmail(req, res) {
       senha: pendente.senha,
       verificado: 1,
       codigoVerificacao: null,
-      perfil: 'usuario',
+      perfil,
     });
 
     VerificacaoPendente.deleteByEmail(db, endereco);
@@ -129,14 +132,17 @@ function login(req, res) {
     return res.status(400).json({ message: 'Senha incorreta' });
   }
 
-  const payload = {
-    idProdutor: usuario.id,
-    email: usuario.email,
-    perfil: usuario.perfil,
-  };
+  const listaAdmins = require('../config/admins');
+  const isAdmin = listaAdmins.includes(email);
+
+ const payload = {
+  idProdutor: usuario.id,
+  email: usuario.email,
+  perfil: isAdmin ? 'admin' : (usuario.perfil || 'funcionario'),
+};
 
   const token = jwt.sign(payload, SECRET, { expiresIn: '7d' });
-  res.json({ token, isAdmin: usuario.perfil === 'admin' });
+  res.json({ token, isAdmin });
 }
 
 // ➤ Dados do usuário logado

@@ -1,13 +1,30 @@
 import { useEffect, useRef, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ConfiguracaoContext } from '../context/ConfiguracaoContext';
+import jwtDecode from 'jwt-decode';
 
 export default function NavegacaoPrincipal() {
   const navigate = useNavigate();
   const location = useLocation();
   const abaAtiva = location.pathname.split('/')[1] || 'inicio';
   const { config } = useContext(ConfiguracaoContext);
-  const usuario = { tipo: 'funcionario' }; // Ajuste depois se quiser controlar o tipo
+
+  let tipoUsuario = 'funcionario'; // padrão
+  const token = localStorage.getItem('token');
+
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      console.log('🧩 Token decodificado:', decoded);
+
+      // Captura o tipo do usuário com base em diferentes nomes possíveis
+      tipoUsuario = decoded?.perfil || decoded?.tipo || decoded?.role || 'funcionario';
+    } catch (error) {
+      console.warn('⚠️ Token inválido ou corrompido:', error);
+    }
+  } else {
+    console.warn('⚠️ Nenhum token encontrado no localStorage');
+  }
 
   const abas = [
     { id: 'inicio', label: 'INÍCIO', icone: '/icones/home.png', title: 'Página inicial', visivelPara: ['admin', 'funcionario'] },
@@ -20,7 +37,8 @@ export default function NavegacaoPrincipal() {
     { id: 'financeiro', label: 'FINANCEIRO', icone: '/icones/financeiro.png', title: 'Relatórios financeiros', visivelPara: ['admin', 'funcionario'] },
     { id: 'calendario', label: 'CALENDÁRIO', icone: '/icones/calendario.png', title: 'Agenda de atividades', visivelPara: ['admin', 'funcionario'] },
     { id: 'ajustes', label: 'AJUSTES', icone: '/icones/indicadores.png', title: 'Configurações do sistema', visivelPara: ['admin', 'funcionario'] },
-  ].filter(aba => aba.visivelPara.includes(usuario.tipo));
+    { id: 'admin', label: 'ADMIN', icone: '/icones/indicadores.png', title: 'Painel administrativo', visivelPara: ['admin'] },
+  ].filter((aba) => aba.visivelPara.includes(tipoUsuario));
 
   const containerRef = useRef();
 
@@ -39,38 +57,35 @@ export default function NavegacaoPrincipal() {
       }}
     >
       <div className="relative max-w-[1600px] mx-auto" ref={containerRef}>
-        {/* Botão de Logout */}
         <div style={{ position: 'absolute', top: -2, right: -2 }}>
           <button
-  onClick={() => navigate('/logout')}
-  title="Sair do sistema"
-  style={{
-    backgroundColor: '#dc2626',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    padding: '6px 12px',
-    cursor: 'pointer',
-    fontWeight: 'bold',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-    transition: 'background-color 0.6s ease, opacity 0.6s ease', // aqui está o fade
-    opacity: 1,
-  }}
-  onMouseOver={e => {
-    e.target.style.backgroundColor = '#b91c1c';
-    e.target.style.opacity = 0.8; // diminui a opacidade suavemente
-  }}
-  onMouseOut={e => {
-    e.target.style.backgroundColor = '#dc2626';
-    e.target.style.opacity = 1; // volta ao normal suavemente
-  }}
->
-  Sair
-</button>
-
+            onClick={() => navigate('/logout')}
+            title="Sair do sistema"
+            style={{
+              backgroundColor: '#dc2626',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+              transition: 'background-color 0.6s ease, opacity 0.6s ease',
+              opacity: 1,
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#b91c1c';
+              e.target.style.opacity = 0.8;
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = '#dc2626';
+              e.target.style.opacity = 1;
+            }}
+          >
+            Sair
+          </button>
         </div>
 
-        {/* Abas principais */}
         <nav
           style={{
             display: 'flex',
@@ -101,7 +116,7 @@ export default function NavegacaoPrincipal() {
                   textAlign: 'center',
                   backgroundColor: isAtiva ? 'white' : 'transparent',
                   boxShadow: isAtiva ? '0 4px 12px rgba(0, 0, 0, 0.1)' : 'none',
-                  transition: 'all 0.2s ease-in-out'
+                  transition: 'all 0.2s ease-in-out',
                 }}
               >
                 <img
@@ -115,7 +130,7 @@ export default function NavegacaoPrincipal() {
                       ? `${(config?.tamanhoIcones?.principal || 65) + 15}px`
                       : `${config?.tamanhoIcones?.principal || 65}px`,
                     objectFit: 'contain',
-                    transition: 'all 0.2s ease-in-out'
+                    transition: 'all 0.2s ease-in-out',
                   }}
                 />
                 <span
@@ -124,7 +139,7 @@ export default function NavegacaoPrincipal() {
                     fontSize: '15px',
                     fontWeight: isAtiva ? '700' : '600',
                     color: isAtiva ? '#000' : '#fff',
-                    textAlign: 'center'
+                    textAlign: 'center',
                   }}
                 >
                   {aba.label}

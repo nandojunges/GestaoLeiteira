@@ -1,0 +1,502 @@
+[
+  {
+    "id": "vaca-001",
+    "numero": "001",
+    "brinco": "000001",
+    "nome": "Linda",
+    "nascimento": "08/11/2019",
+    "raça": "Girolando",
+    "origem": "Nascida na propriedade",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "08/08/2024",
+        "touro": "Touro4",
+        "inseminador": "Insem3"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-1",
+    "mae": "Vaca-27",
+    "ultimaIA": "08/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-002",
+    "numero": "002",
+    "brinco": "000002",
+    "nome": "Estrela",
+    "nascimento": "28/10/2018",
+    "raça": "Gir",
+    "origem": "Transferência",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "09/08/2024",
+        "touro": "Touro3",
+        "inseminador": "Insem2"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-5",
+    "mae": "Vaca-43",
+    "ultimaIA": "09/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-003",
+    "numero": "003",
+    "brinco": "000003",
+    "nome": "Linda",
+    "nascimento": "18/11/2022",
+    "raça": "Gir",
+    "origem": "Transferência",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "10/08/2024",
+        "touro": "Touro4",
+        "inseminador": "Insem1"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-10",
+    "mae": "Vaca-12",
+    "ultimaIA": "10/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-004",
+    "numero": "004",
+    "brinco": "000004",
+    "nome": "Brava",
+    "nascimento": "19/11/2019",
+    "raça": "Holandesa",
+    "origem": "Doação",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "11/08/2024",
+        "touro": "Touro2",
+        "inseminador": "Insem2"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-9",
+    "mae": "Vaca-72",
+    "ultimaIA": "11/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-005",
+    "numero": "005",
+    "brinco": "000005",
+    "nome": "Bela",
+    "nascimento": "26/12/2018",
+    "raça": "Gir",
+    "origem": "Transferência",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "12/08/2024",
+        "touro": "Touro4",
+        "inseminador": "Insem3"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-8",
+    "mae": "Vaca-36",
+    "ultimaIA": "12/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-006",
+    "numero": "006",
+    "brinco": "000006",
+    "nome": "Luzia",
+    "nascimento": "10/06/2019",
+    "raça": "Gir",
+    "origem": "Transferência",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "13/08/2024",
+        "touro": "Touro3",
+        "inseminador": "Insem2"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-2",
+    "mae": "Vaca-84",
+    "ultimaIA": "13/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-007",
+    "numero": "007",
+    "brinco": "000007",
+    "nome": "Juma",
+    "nascimento": "17/09/2022",
+    "raça": "Holandesa",
+    "origem": "Transferência",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "14/08/2024",
+        "touro": "Touro2",
+        "inseminador": "Insem3"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-3",
+    "mae": "Vaca-17",
+    "ultimaIA": "14/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-008",
+    "numero": "008",
+    "brinco": "000008",
+    "nome": "Bela",
+    "nascimento": "31/08/2022",
+    "raça": "Girolando",
+    "origem": "Comprada",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "15/08/2024",
+        "touro": "Touro1",
+        "inseminador": "Insem2"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-10",
+    "mae": "Vaca-70",
+    "ultimaIA": "15/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-009",
+    "numero": "009",
+    "brinco": "000009",
+    "nome": "Juma",
+    "nascimento": "19/12/2017",
+    "raça": "Girolando",
+    "origem": "Doação",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "16/08/2024",
+        "touro": "Touro4",
+        "inseminador": "Insem2"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-9",
+    "mae": "Vaca-55",
+    "ultimaIA": "16/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-010",
+    "numero": "010",
+    "brinco": "000010",
+    "nome": "Luzia",
+    "nascimento": "22/03/2020",
+    "raça": "Jersey",
+    "origem": "Doação",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "17/08/2024",
+        "touro": "Touro5",
+        "inseminador": "Insem3"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-1",
+    "mae": "Vaca-12",
+    "ultimaIA": "17/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-011",
+    "numero": "011",
+    "brinco": "000011",
+    "nome": "Rosa",
+    "nascimento": "15/02/2019",
+    "raça": "Pardo Suíço",
+    "origem": "Comprada",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "18/08/2024",
+        "touro": "Touro3",
+        "inseminador": "Insem2"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-7",
+    "mae": "Vaca-47",
+    "ultimaIA": "18/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-012",
+    "numero": "012",
+    "brinco": "000012",
+    "nome": "Nina",
+    "nascimento": "24/06/2019",
+    "raça": "Jersey",
+    "origem": "Doação",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "19/08/2024",
+        "touro": "Touro1",
+        "inseminador": "Insem1"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-9",
+    "mae": "Vaca-91",
+    "ultimaIA": "19/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-013",
+    "numero": "013",
+    "brinco": "000013",
+    "nome": "Rosa",
+    "nascimento": "11/12/2017",
+    "raça": "Pardo Suíço",
+    "origem": "Doação",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "20/08/2024",
+        "touro": "Touro4",
+        "inseminador": "Insem3"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-5",
+    "mae": "Vaca-24",
+    "ultimaIA": "20/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-014",
+    "numero": "014",
+    "brinco": "000014",
+    "nome": "Doce",
+    "nascimento": "25/01/2019",
+    "raça": "Holandesa",
+    "origem": "Comprada",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "21/08/2024",
+        "touro": "Touro1",
+        "inseminador": "Insem2"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-5",
+    "mae": "Vaca-90",
+    "ultimaIA": "21/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-015",
+    "numero": "015",
+    "brinco": "000015",
+    "nome": "Estrela",
+    "nascimento": "05/02/2018",
+    "raça": "Gir",
+    "origem": "Nascida na propriedade",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "22/08/2024",
+        "touro": "Touro1",
+        "inseminador": "Insem1"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-10",
+    "mae": "Vaca-34",
+    "ultimaIA": "22/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-016",
+    "numero": "016",
+    "brinco": "000016",
+    "nome": "Luzia",
+    "nascimento": "18/09/2019",
+    "raça": "Girolando",
+    "origem": "Nascida na propriedade",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "08/08/2024",
+        "touro": "Touro1",
+        "inseminador": "Insem1"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-10",
+    "mae": "Vaca-76",
+    "ultimaIA": "08/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-017",
+    "numero": "017",
+    "brinco": "000017",
+    "nome": "Rosa",
+    "nascimento": "07/07/2021",
+    "raça": "Jersey",
+    "origem": "Doação",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "09/08/2024",
+        "touro": "Touro5",
+        "inseminador": "Insem2"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-7",
+    "mae": "Vaca-20",
+    "ultimaIA": "09/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-018",
+    "numero": "018",
+    "brinco": "000018",
+    "nome": "Estrela",
+    "nascimento": "19/10/2021",
+    "raça": "Gir",
+    "origem": "Comprada",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "10/08/2024",
+        "touro": "Touro5",
+        "inseminador": "Insem2"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-9",
+    "mae": "Vaca-77",
+    "ultimaIA": "10/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-019",
+    "numero": "019",
+    "brinco": "000019",
+    "nome": "Doce",
+    "nascimento": "25/03/2018",
+    "raça": "Holandesa",
+    "origem": "Nascida na propriedade",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "11/08/2024",
+        "touro": "Touro4",
+        "inseminador": "Insem2"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-5",
+    "mae": "Vaca-77",
+    "ultimaIA": "11/08/2024",
+    "ultimoParto": ""
+  },
+  {
+    "id": "vaca-020",
+    "numero": "020",
+    "brinco": "000020",
+    "nome": "Luzia",
+    "nascimento": "19/11/2018",
+    "raça": "Gir",
+    "origem": "Comprada",
+    "categoria": "Vaca",
+    "status": "ativo",
+    "partos": [],
+    "inseminacoes": [
+      {
+        "data": "12/08/2024",
+        "touro": "Touro3",
+        "inseminador": "Insem3"
+      }
+    ],
+    "secagens": [],
+    "grupo": "Pré-parto",
+    "pai": "Touro-10",
+    "mae": "Vaca-97",
+    "ultimaIA": "12/08/2024",
+    "ultimoParto": ""
+  }
+]

@@ -21,6 +21,7 @@ import EsqueciSenha from './pages/Auth/EsqueciSenha';
 import BemVindo from './pages/Auth/BemVindo';
 import Admin from './pages/Admin/Admin';
 import ListaUsuarios from './pages/Admin/ListaUsuarios';
+import RotaAdmin from './utils/RotaAdmin';
 import Fazenda from './pages/Fazenda/Fazenda';
 import Logout from './pages/Auth/Logout';
 import ConfigTelaInicial from './pages/ConfigTelaInicial';
@@ -48,8 +49,8 @@ const routes = createRoutesFromElements(
   <Route path="/login" element={<Login />} />
   <Route path="/esqueci-senha" element={<EsqueciSenha />} />
   <Route path="/bemvindo" element={<BemVindo />} />
-  <Route path="/admin" element={<Admin />} />
-  <Route path="/admin/usuarios" element={<ListaUsuarios />} />
+  <Route path="/admin" element={<RotaAdmin><Admin /></RotaAdmin>} />
+  <Route path="/admin/usuarios" element={<RotaAdmin><ListaUsuarios /></RotaAdmin>} />
   <Route path="/fazenda" element={<Fazenda />} />
   <Route path="/painel" element={<Fazenda />} />
   <Route path="/configuracoes-inicial" element={<ConfigTelaInicial />} />

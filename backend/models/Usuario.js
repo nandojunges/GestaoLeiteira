@@ -1,3 +1,5 @@
+// backend/models/Usuario.js
+
 function getAll(db) {
   return db
     .prepare(`
@@ -36,7 +38,7 @@ function create(db, usuario) {
     usuario.senha,
     usuario.verificado ? 1 : 0,
     usuario.codigoVerificacao,
-    usuario.perfil || 'usuario'
+    usuario.perfil || 'funcionario'  // Corrigido aqui: padrão agora é 'funcionario'
   );
 
   return getById(db, info.lastInsertRowid);
@@ -72,6 +74,47 @@ function atualizarSenha(db, id, senha) {
     .run(senha, id);
 }
 
+// ==== Funções Admin ====
+
+function liberarAcesso(db, email) {
+  const result = db
+    .prepare('UPDATE usuarios SET verificado = 1 WHERE email = ?')
+    .run(email);
+
+  return result.changes > 0;
+}
+
+function bloquearConta(db, email) {
+  const result = db
+    .prepare('UPDATE usuarios SET verificado = 0 WHERE email = ?')
+    .run(email);
+
+  return result.changes > 0;
+}
+
+function atualizarPlano(db, email, plano) {
+  const result = db
+    .prepare('UPDATE usuarios SET perfil = ? WHERE email = ?')
+    .run(plano, email);
+
+  return result.changes > 0;
+}
+
+function excluir(db, email) {
+  const result = db
+    .prepare('DELETE FROM usuarios WHERE email = ?')
+    .run(email);
+
+  return result.changes > 0;
+}
+
+// (Opcional) Corrige perfis antigos com valor 'usuario'
+function corrigirPerfisAntigos(db) {
+  return db
+    .prepare("UPDATE usuarios SET perfil = 'funcionario' WHERE perfil = 'usuario'")
+    .run();
+}
+
 module.exports = {
   getAll,
   create,
@@ -80,4 +123,9 @@ module.exports = {
   marcarVerificado,
   definirCodigo,
   atualizarSenha,
+  liberarAcesso,
+  bloquearConta,
+  atualizarPlano,
+  excluir,
+  corrigirPerfisAntigos, // <-- incluído para correção de base antiga
 };

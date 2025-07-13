@@ -60,8 +60,14 @@ export default function Login() {
       } else {
         localStorage.removeItem('rememberEmail');
       }
-      jwt_decode(token);
-      navigate('/inicio');
+const decoded = jwt_decode(token);
+const isAdmin = decoded?.perfil === 'admin';
+
+if (isAdmin) {
+  navigate('/admin'); // ou outra página específica
+} else {
+  navigate('/inicio');
+}
     } catch (err) {
       alert(err.response?.data?.message || 'Email ou senha incorretos.');
     } finally {
