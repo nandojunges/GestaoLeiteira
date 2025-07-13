@@ -4,36 +4,50 @@ import { toast } from 'react-toastify';
 
 export default function AdminPainel() {
   const [usuarios, setUsuarios] = useState([]);
-  const [planos, setPlanos] = useState({});
+  const [perfis, setPerfis] = useState({});
   const [carregando, setCarregando] = useState(false);
 
   useEffect(() => {
     carregarUsuarios();
   }, []);
 
-  const carregarUsuarios = () => {
+  const carregarUsuarios = async () => {
     setCarregando(true);
-    api.get('/admin/usuarios')
-      .then(res => setUsuarios(res.data))
-      .catch(() => toast.error('Erro ao carregar usuários'))
-      .finally(() => setCarregando(false));
-  };
-
-  const acaoUsuario = async (email, acao, body = {}) => {
     try {
-      await api.patch(`/admin/${acao}/${email}`, body);
-      toast.success('Ação concluída');
-      carregarUsuarios();
+      const res = await api.get('/admin/usuarios');
+      setUsuarios(res.data);
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Erro na operação');
+      toast.error('Erro ao carregar usuários');
+    } finally {
+      setCarregando(false);
     }
   };
 
-  const excluirUsuario = async (email) => {
+  const alterarStatus = async (id) => {
     try {
-      await api.delete(`/admin/usuarios/${email}`);
+      await api.patch(`/admin/status/${id}`);
+      toast.success('Status atualizado');
+      carregarUsuarios();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erro ao alterar status');
+    }
+  };
+
+  const alterarPerfil = async (email, perfil) => {
+    try {
+      await api.patch(`/admin/usuarios/${email}`, { perfil });
+      toast.success('Perfil atualizado');
+      carregarUsuarios();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erro ao alterar perfil');
+    }
+  };
+
+  const excluirUsuario = async (id) => {
+    try {
+      await api.delete(`/admin/usuarios/${id}`);
       toast.success('Usuário excluído');
-      setUsuarios(u => u.filter(us => us.email !== email));
+      carregarUsuarios();
     } catch (err) {
       toast.error(err.response?.data?.error || 'Erro ao excluir');
     }
@@ -53,44 +67,35 @@ export default function AdminPainel() {
           </tr>
         </thead>
         <tbody>
-          {usuarios.map(u => (
+          {usuarios.map((u) => (
             <tr key={u.email} className="border-b">
               <td className="p-2">{u.nome}</td>
               <td className="p-2">{u.email}</td>
-              <td className="p-2 text-center">{u.status}</td>
+              <td className="p-2 text-center">{u.verificado ? 'ativo' : 'suspenso'}</td>
               <td className="p-2 text-center">
                 <select
                   className="border rounded px-1 py-0.5"
-                  value={planos[u.email] ?? u.plano}
-                  onChange={e => setPlanos({ ...planos, [u.email]: e.target.value })}
+                  value={perfis[u.email] ?? u.perfil}
+                  onChange={(e) => {
+                    const valor = e.target.value;
+                    setPerfis({ ...perfis, [u.email]: valor });
+                    alterarPerfil(u.email, valor);
+                  }}
                 >
-                  <option value="basico">Básico</option>
-                  <option value="pro">Pro</option>
-                  <option value="premium">Premium</option>
+                  <option value="usuario">Usuário</option>
+                  <option value="admin">Admin</option>
                 </select>
               </td>
               <td className="p-2 text-center space-x-1">
                 <button
-                  className="bg-green-600 text-white px-2 py-1 rounded"
-                  onClick={() => acaoUsuario(u.email, 'liberar')}
-                >
-                  Liberar
-                </button>
-                <button
                   className="bg-yellow-600 text-white px-2 py-1 rounded"
-                  onClick={() => acaoUsuario(u.email, 'bloquear')}
+                  onClick={() => alterarStatus(u.id)}
                 >
-                  Bloquear
-                </button>
-                <button
-                  className="bg-blue-600 text-white px-2 py-1 rounded"
-                  onClick={() => acaoUsuario(u.email, 'plano', { plano: planos[u.email] ?? u.plano })}
-                >
-                  Alterar Plano
+                  {u.verificado ? 'Suspender' : 'Reativar'}
                 </button>
                 <button
                   className="bg-red-600 text-white px-2 py-1 rounded"
-                  onClick={() => excluirUsuario(u.email)}
+                  onClick={() => excluirUsuario(u.id)}
                 >
                   Excluir
                 </button>
