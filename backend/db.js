@@ -25,7 +25,13 @@ const createUsuarios = `CREATE TABLE IF NOT EXISTS usuarios (
   senha TEXT,
   verificado INTEGER DEFAULT 0,
   codigoVerificacao TEXT,
-  perfil TEXT DEFAULT 'usuario'
+  perfil TEXT DEFAULT 'usuario',
+  plano TEXT DEFAULT 'gratis',
+  planoSolicitado TEXT DEFAULT NULL,
+  formaPagamento TEXT DEFAULT NULL,
+  dataLiberado TEXT DEFAULT NULL,
+  dataFimLiberacao TEXT DEFAULT NULL,
+  status TEXT DEFAULT 'ativo'
 )`;
 
 const createVerificacoesPendentes = `CREATE TABLE IF NOT EXISTS verificacoes_pendentes (
@@ -254,6 +260,25 @@ function applyMigrations(database) {
   let usuarioCols = database.prepare('PRAGMA table_info(usuarios)').all();
   if (!usuarioCols.some(c => c.name === 'perfil')) {
     database.exec("ALTER TABLE usuarios ADD COLUMN perfil TEXT DEFAULT 'usuario'");
+  }
+  usuarioCols = database.prepare('PRAGMA table_info(usuarios)').all();
+  if (!usuarioCols.some(c => c.name === 'plano')) {
+    database.exec("ALTER TABLE usuarios ADD COLUMN plano TEXT DEFAULT 'gratis'");
+  }
+  if (!usuarioCols.some(c => c.name === 'planoSolicitado')) {
+    database.exec('ALTER TABLE usuarios ADD COLUMN planoSolicitado TEXT DEFAULT NULL');
+  }
+  if (!usuarioCols.some(c => c.name === 'formaPagamento')) {
+    database.exec('ALTER TABLE usuarios ADD COLUMN formaPagamento TEXT DEFAULT NULL');
+  }
+  if (!usuarioCols.some(c => c.name === 'dataLiberado')) {
+    database.exec('ALTER TABLE usuarios ADD COLUMN dataLiberado TEXT DEFAULT NULL');
+  }
+  if (!usuarioCols.some(c => c.name === 'dataFimLiberacao')) {
+    database.exec('ALTER TABLE usuarios ADD COLUMN dataFimLiberacao TEXT DEFAULT NULL');
+  }
+  if (!usuarioCols.some(c => c.name === 'status')) {
+    database.exec("ALTER TABLE usuarios ADD COLUMN status TEXT DEFAULT 'ativo'");
   }
 }
 
