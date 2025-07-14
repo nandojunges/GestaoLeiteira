@@ -6,6 +6,7 @@ import '../../styles/botoes.css';
 export default function PainelPlanosAdmin() {
   const [usuarios, setUsuarios] = useState([]);
   const [novoPlano, setNovoPlano] = useState({});
+  const [diasExtras, setDiasExtras] = useState({});
   const [carregando, setCarregando] = useState(false);
 
   useEffect(() => {
@@ -57,11 +58,12 @@ export default function PainelPlanosAdmin() {
   };
 
   const concederExtra = async (id) => {
-    const dias = prompt('Dias de acesso extra?');
+    const dias = diasExtras[id];
     if (!dias) return;
     try {
       await api.patch(`/admin/liberar-temporario/${id}`, { dias });
       toast.success('Período atualizado');
+      setDiasExtras({ ...diasExtras, [id]: '' });
       carregar();
     } catch (e) {
       toast.error(e.response?.data?.error || 'Erro ao conceder');
@@ -78,11 +80,12 @@ export default function PainelPlanosAdmin() {
           <tr className="border-b bg-gray-100">
             <th className="p-2 text-left">Nome</th>
             <th className="p-2 text-left">E-mail</th>
-            <th className="p-2 text-center">Plano Atual</th>
-            <th className="p-2 text-center">Solicitado</th>
-            <th className="p-2 text-center">Pagamento</th>
+            <th className="p-2 text-center">Plano atual</th>
+            <th className="p-2 text-center">Plano solicitado</th>
+            <th className="p-2 text-center">Forma de pagamento</th>
             <th className="p-2 text-center">Status</th>
-            <th className="p-2 text-center">Datas</th>
+            <th className="p-2 text-center">Data de liberação</th>
+            <th className="p-2 text-center">Data de fim</th>
             <th className="p-2 text-center">Ações</th>
           </tr>
         </thead>
@@ -95,12 +98,11 @@ export default function PainelPlanosAdmin() {
               <td className="p-2 text-center">{u.planoSolicitado || '-'}</td>
               <td className="p-2 text-center">{u.formaPagamento || '-'}</td>
               <td className="p-2 text-center">{u.status}</td>
-              <td className="p-2 text-center">
-                {formatarData(u.dataLiberado)} - {formatarData(u.dataFimLiberacao)}
-              </td>
-              <td className="p-2 text-center space-x-1">
-                <button className="botao-editar" onClick={() => aprovar(u.id)}>
-                  Aprovar
+              <td className="p-2 text-center">{formatarData(u.dataLiberado)}</td>
+              <td className="p-2 text-center">{formatarData(u.dataFimLiberacao)}</td>
+              <td className="p-2 text-center flex items-center justify-center gap-1 flex-wrap">
+                <button className="botao-editar text-green-700" onClick={() => aprovar(u.id)}>
+                  ✅
                 </button>
                 <select
                   className="border rounded px-1 py-0.5"
@@ -114,13 +116,23 @@ export default function PainelPlanosAdmin() {
                   <option value="completo">Completo</option>
                 </select>
                 <button className="botao-editar" onClick={() => alterarPlano(u.id)}>
-                  Mudar
+                  🔄
                 </button>
-                <button className="botao-editar" onClick={() => toggleBloqueio(u.id)}>
-                  {u.status === 'bloqueado' ? 'Desbloquear' : 'Bloquear'}
+                <button
+                  className={`botao-editar ${u.status === 'bloqueado' ? 'text-green-700' : 'text-red-700'}`}
+                  onClick={() => toggleBloqueio(u.id)}
+                >
+                  {u.status === 'bloqueado' ? '✅' : '⛔'}
                 </button>
+                <input
+                  type="number"
+                  className="border rounded px-1 py-0.5 w-16"
+                  placeholder="dias"
+                  value={diasExtras[u.id] ?? ''}
+                  onChange={(e) => setDiasExtras({ ...diasExtras, [u.id]: e.target.value })}
+                />
                 <button className="botao-editar" onClick={() => concederExtra(u.id)}>
-                  Extra
+                  ➕
                 </button>
               </td>
             </tr>
