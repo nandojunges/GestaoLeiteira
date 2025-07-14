@@ -101,12 +101,18 @@ export default function PainelPlanosAdmin() {
           </tr>
         </thead>
         <tbody>
-          {usuarios.map((u) => (
+            {usuarios.map((u) => (
             <tr
               key={u.id}
-              className={`border-b ${u.status === 'bloqueado' ? 'bg-red-50' : ''}`}
+              style={{ backgroundColor: u.status === 'bloqueado' ? '#fde2e2' : 'transparent' }}
+              className="border-b"
             >
-              <td className="p-2">{u.nome}</td>
+              <td className="p-2">
+                {u.nome}
+                {u.status === 'bloqueado' && (
+                  <span style={{ color: 'red' }} className="ml-1">🔒</span>
+                )}
+              </td>
               <td className="p-2">{u.email}</td>
               <td className="p-2 text-center">{u.plano || '-'}</td>
               <td className="p-2 text-center">{u.planoSolicitado || '-'}</td>
@@ -130,7 +136,9 @@ export default function PainelPlanosAdmin() {
                 <select
                   className="border rounded px-1 py-0.5"
                   value={novoPlano[u.id] ?? ''}
-                  onChange={(e) => setNovoPlano({ ...novoPlano, [u.id]: e.target.value })}
+                  onChange={(e) =>
+                    setNovoPlano((p) => ({ ...p, [u.id]: e.target.value }))
+                  }
                   disabled={loadingAcao[u.id]}
                 >
                   <option value="">Plano...</option>
