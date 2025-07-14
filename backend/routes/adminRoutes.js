@@ -264,17 +264,35 @@ router.get('/admin/pendentes', (req, res) => {
 
 // Aprovar plano solicitado
 router.post('/admin/aprovar-plano', (req, res) => {
-  const { idUsuario } = req.body;
-  const db = getDb();
-  const usuario = db
-    .prepare('SELECT planoSolicitado FROM usuarios WHERE id = ?')
-    .get(idUsuario);
-  if (!usuario || !usuario.planoSolicitado) {
-    return res.status(400).json({ error: 'Usuário não possui solicitação' });
+  const { idProdutor, plano, dias } = req.body;
+
+  if (!idProdutor || !plano) {
+    return res.status(400).json({ error: 'Dados inválidos' });
   }
+
+  const db = getDb();
+  const usuario = db.prepare('SELECT id FROM usuarios WHERE id = ?').get(idProdutor);
+
+  if (!usuario) {
+    return res.status(404).json({ error: 'Usuário não encontrado' });
+  }
+
+  const inicio = new Date();
+  const fim = new Date();
+  fim.setDate(inicio.getDate() + (parseInt(dias, 10) || 30));
+
   db.prepare(
-    `UPDATE usuarios SET plano = ?, planoSolicitado = NULL, formaPagamento = NULL, status = 'ativo' WHERE id = ?`
-  ).run(usuario.planoSolicitado, idUsuario);
+    `UPDATE usuarios
+       SET plano = ?,
+           planoSolicitado = NULL,
+           formaPagamento = NULL,
+           metodoPagamentoId = NULL,
+           status = 'ativo',
+           dataLiberado = ?,
+           dataFimLiberacao = ?
+       WHERE id = ?`
+  ).run(plano, inicio.toISOString(), fim.toISOString(), idProdutor);
+
   res.json({ message: 'Plano aprovado com sucesso' });
 });
 
