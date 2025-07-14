@@ -53,6 +53,58 @@ router.patch('/admin/status/:id', (req, res) => {
   res.json({ status: novoStatus });
 });
 
+// Lista plano e status de todos os usuarios
+router.get('/admin/planos', async (req, res) => {
+  function unsanitizeEmail(name) {
+    const parts = name.split('_');
+    if (parts.length > 1) {
+      return parts[0] + '@' + parts.slice(1).join('.');
+    }
+    return name;
+  }
+
+  const possibles = ['../bancos', '../databases', '../data'];
+  let baseDir = null;
+  for (const p of possibles) {
+    const full = path.join(__dirname, p);
+    if (fs.existsSync(full)) {
+      baseDir = full;
+      break;
+    }
+  }
+
+  if (!baseDir) {
+    return res.json([]);
+  }
+
+  const dirs = fs.readdirSync(baseDir).filter(d => {
+    const stat = fs.statSync(path.join(baseDir, d));
+    return stat.isDirectory();
+  });
+
+  const lista = [];
+
+  for (const dir of dirs) {
+    if (dir === 'backups') continue;
+    const email = unsanitizeEmail(dir);
+
+    const db = initDB(email);
+    const usuarios = db.prepare(`
+      SELECT id, nome, email, plano, planoSolicitado, formaPagamento, status, dataLiberado, dataFimLiberacao
+      FROM usuarios WHERE perfil != 'admin'
+    `).all();
+
+    usuarios.forEach(u => {
+      lista.push({
+        ...u,
+        banco: `${email}.sqlite`,
+      });
+    });
+  }
+
+  res.json(lista);
+});
+
 // Lista todos os usuários (sem senha)
 router.get('/admin/usuarios', async (req, res) => {
   function unsanitizeEmail(name) {
@@ -130,8 +182,11 @@ router.patch('/admin/liberar/:id', (req, res) => {
 // Bloquear usuário
 router.patch('/admin/bloquear/:id', (req, res) => {
   const db = getDb();
-  db.prepare('UPDATE usuarios SET status = ? WHERE id = ?').run('bloqueado', req.params.id);
-  res.json({ message: 'Usuário bloqueado' });
+  const usuario = db.prepare('SELECT status FROM usuarios WHERE id = ?').get(req.params.id);
+  if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado' });
+  const novoStatus = usuario.status === 'bloqueado' ? 'ativo' : 'bloqueado';
+  db.prepare('UPDATE usuarios SET status = ? WHERE id = ?').run(novoStatus, req.params.id);
+  res.json({ status: novoStatus });
 });
 
 // Solicitação de plano
@@ -165,15 +220,36 @@ router.patch('/admin/alterar-plano/:id', (req, res) => {
   res.json({ message: 'Solicitação registrada' });
 });
 
+// Define plano diretamente
+router.patch('/admin/definir-plano/:id', (req, res) => {
+  const { plano } = req.body;
+  if (!plano) return res.status(400).json({ error: 'Plano inválido' });
+  const db = getDb();
+  db.prepare('UPDATE usuarios SET plano = ?, planoSolicitado = NULL, formaPagamento = NULL WHERE id = ?')
+    .run(plano, req.params.id);
+  res.json({ message: 'Plano atualizado' });
+});
+
 // Aprovar plano
 router.patch('/admin/aprovar-pagamento/:id', (req, res) => {
   const db = getDb();
+  const dias = parseInt(req.body?.dias) || 30;
   const usuario = db.prepare('SELECT planoSolicitado FROM usuarios WHERE id = ?').get(req.params.id);
   if (!usuario || !usuario.planoSolicitado) {
     return res.status(400).json({ error: 'Nenhum plano solicitado' });
   }
-  db.prepare('UPDATE usuarios SET plano = ?, planoSolicitado = NULL, formaPagamento = NULL WHERE id = ?')
-    .run(usuario.planoSolicitado, req.params.id);
+  const inicio = new Date();
+  const fim = new Date();
+  fim.setDate(inicio.getDate() + dias);
+  db.prepare(
+    'UPDATE usuarios SET plano = ?, planoSolicitado = NULL, formaPagamento = NULL, status = ?, dataLiberado = ?, dataFimLiberacao = ? WHERE id = ?'
+  ).run(
+    usuario.planoSolicitado,
+    'ativo',
+    inicio.toISOString(),
+    fim.toISOString(),
+    req.params.id
+  );
   res.json({ message: 'Plano aprovado' });
 });
 

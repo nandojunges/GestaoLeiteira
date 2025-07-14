@@ -21,6 +21,7 @@ import EsqueciSenha from './pages/Auth/EsqueciSenha';
 import BemVindo from './pages/Auth/BemVindo';
 import Admin from './pages/Admin/Admin';
 import ListaUsuarios from './pages/Admin/ListaUsuarios';
+import PainelPlanosAdmin from './pages/Admin/PainelPlanosAdmin';
 import RotaAdmin from './utils/RotaAdmin';
 import Fazenda from './pages/Fazenda/Fazenda';
 import Logout from './pages/Auth/Logout';
@@ -52,6 +53,7 @@ const routes = createRoutesFromElements(
   <Route path="/bemvindo" element={<BemVindo />} />
   <Route path="/admin" element={<RotaAdmin><Admin /></RotaAdmin>} />
   <Route path="/admin/usuarios" element={<RotaAdmin><ListaUsuarios /></RotaAdmin>} />
+  <Route path="/painel-admin-planos" element={<RotaAdmin><PainelPlanosAdmin /></RotaAdmin>} />
   <Route path="/fazenda" element={<Fazenda />} />
   <Route path="/painel" element={<Fazenda />} />
   <Route path="/configuracoes-inicial" element={<ConfigTelaInicial />} />
