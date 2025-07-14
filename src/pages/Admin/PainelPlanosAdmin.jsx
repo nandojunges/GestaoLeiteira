@@ -6,8 +6,8 @@ import '../../styles/botoes.css';
 export default function PainelPlanosAdmin() {
   const [usuarios, setUsuarios] = useState([]);
   const [novoPlano, setNovoPlano] = useState({});
-  const [diasExtras, setDiasExtras] = useState({});
   const [carregando, setCarregando] = useState(false);
+  const [loadingAcao, setLoadingAcao] = useState({});
 
   useEffect(() => {
     carregar();
@@ -26,47 +26,58 @@ export default function PainelPlanosAdmin() {
   };
 
   const aprovar = async (id) => {
+    setLoadingAcao((l) => ({ ...l, [id]: true }));
     try {
       await api.patch(`/admin/aprovar-pagamento/${id}`);
       toast.success('Pagamento aprovado');
       carregar();
     } catch (e) {
       toast.error(e.response?.data?.error || 'Erro ao aprovar');
+    } finally {
+      setLoadingAcao((l) => ({ ...l, [id]: false }));
     }
   };
 
   const alterarPlano = async (id) => {
     const plano = novoPlano[id];
     if (!plano) return;
+    setLoadingAcao((l) => ({ ...l, [id]: true }));
     try {
       await api.patch(`/admin/alterar-plano/${id}`, { plano });
       toast.success('Plano alterado');
       carregar();
     } catch (e) {
       toast.error(e.response?.data?.error || 'Erro ao alterar');
+    } finally {
+      setLoadingAcao((l) => ({ ...l, [id]: false }));
     }
   };
 
   const toggleBloqueio = async (id) => {
+    setLoadingAcao((l) => ({ ...l, [id]: true }));
     try {
       await api.patch(`/admin/bloquear/${id}`);
       toast.success('Status atualizado');
       carregar();
     } catch (e) {
       toast.error(e.response?.data?.error || 'Erro ao atualizar status');
+    } finally {
+      setLoadingAcao((l) => ({ ...l, [id]: false }));
     }
   };
 
   const concederExtra = async (id) => {
-    const dias = diasExtras[id];
+    const dias = prompt('Quantos dias extras deseja conceder?');
     if (!dias) return;
+    setLoadingAcao((l) => ({ ...l, [id]: true }));
     try {
       await api.patch(`/admin/liberar-temporario/${id}`, { dias });
       toast.success('Período atualizado');
-      setDiasExtras({ ...diasExtras, [id]: '' });
       carregar();
     } catch (e) {
       toast.error(e.response?.data?.error || 'Erro ao conceder');
+    } finally {
+      setLoadingAcao((l) => ({ ...l, [id]: false }));
     }
   };
 
@@ -91,48 +102,66 @@ export default function PainelPlanosAdmin() {
         </thead>
         <tbody>
           {usuarios.map((u) => (
-            <tr key={u.id} className="border-b">
+            <tr
+              key={u.id}
+              className={`border-b ${u.status === 'bloqueado' ? 'bg-red-50' : ''}`}
+            >
               <td className="p-2">{u.nome}</td>
               <td className="p-2">{u.email}</td>
               <td className="p-2 text-center">{u.plano || '-'}</td>
               <td className="p-2 text-center">{u.planoSolicitado || '-'}</td>
               <td className="p-2 text-center">{u.formaPagamento || '-'}</td>
-              <td className="p-2 text-center">{u.status}</td>
+              <td className="p-2 text-center">
+                {u.status}
+                {u.status === 'bloqueado' && (
+                  <span className="ml-1 text-red-600 text-xs font-semibold">BLOQUEADO</span>
+                )}
+              </td>
               <td className="p-2 text-center">{formatarData(u.dataLiberado)}</td>
               <td className="p-2 text-center">{formatarData(u.dataFimLiberacao)}</td>
-              <td className="p-2 text-center flex items-center justify-center gap-1 flex-wrap">
-                <button className="botao-editar text-green-700" onClick={() => aprovar(u.id)}>
-                  ✅
+              <td className="p-2 text-center flex items-center justify-center gap-2 flex-wrap">
+                <button
+                  className="botao-editar text-green-700"
+                  onClick={() => aprovar(u.id)}
+                  disabled={loadingAcao[u.id]}
+                >
+                  {loadingAcao[u.id] ? '...' : 'Aprovar'}
                 </button>
                 <select
                   className="border rounded px-1 py-0.5"
                   value={novoPlano[u.id] ?? ''}
                   onChange={(e) => setNovoPlano({ ...novoPlano, [u.id]: e.target.value })}
+                  disabled={loadingAcao[u.id]}
                 >
                   <option value="">Plano...</option>
-                  <option value="gratis">Grátis</option>
                   <option value="basico">Básico</option>
                   <option value="intermediario">Intermediário</option>
                   <option value="completo">Completo</option>
                 </select>
-                <button className="botao-editar" onClick={() => alterarPlano(u.id)}>
-                  🔄
+                <button
+                  className="botao-editar"
+                  onClick={() => alterarPlano(u.id)}
+                  disabled={loadingAcao[u.id]}
+                >
+                  {loadingAcao[u.id] ? '...' : 'Alterar Plano'}
                 </button>
                 <button
-                  className={`botao-editar ${u.status === 'bloqueado' ? 'text-green-700' : 'text-red-700'}`}
+                  className={`botao-editar ${u.status === 'bloqueado' ? 'bg-red-600 text-white' : 'bg-yellow-600 text-white'}`}
                   onClick={() => toggleBloqueio(u.id)}
+                  disabled={loadingAcao[u.id]}
                 >
-                  {u.status === 'bloqueado' ? '✅' : '⛔'}
+                  {loadingAcao[u.id]
+                    ? '...'
+                    : u.status === 'bloqueado'
+                    ? 'Desbloquear'
+                    : 'Bloquear'}
                 </button>
-                <input
-                  type="number"
-                  className="border rounded px-1 py-0.5 w-16"
-                  placeholder="dias"
-                  value={diasExtras[u.id] ?? ''}
-                  onChange={(e) => setDiasExtras({ ...diasExtras, [u.id]: e.target.value })}
-                />
-                <button className="botao-editar" onClick={() => concederExtra(u.id)}>
-                  ➕
+                <button
+                  className="botao-editar"
+                  onClick={() => concederExtra(u.id)}
+                  disabled={loadingAcao[u.id]}
+                >
+                  {loadingAcao[u.id] ? '...' : 'Conceder Dias Extras'}
                 </button>
               </td>
             </tr>
