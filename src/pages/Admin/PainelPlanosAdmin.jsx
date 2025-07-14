@@ -38,7 +38,7 @@ export default function PainelPlanosAdmin() {
     const plano = novoPlano[id];
     if (!plano) return;
     try {
-      await api.patch(`/admin/definir-plano/${id}`, { plano });
+      await api.patch(`/admin/alterar-plano/${id}`, { plano });
       toast.success('Plano alterado');
       carregar();
     } catch (e) {
@@ -60,7 +60,7 @@ export default function PainelPlanosAdmin() {
     const dias = prompt('Dias de acesso extra?');
     if (!dias) return;
     try {
-      await api.patch(`/admin/liberar/${id}`, { dias });
+      await api.patch(`/admin/liberar-temporario/${id}`, { dias });
       toast.success('Período atualizado');
       carregar();
     } catch (e) {
