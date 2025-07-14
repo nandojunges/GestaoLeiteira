@@ -253,4 +253,79 @@ router.patch('/admin/aprovar-pagamento/:id', (req, res) => {
   res.json({ message: 'Plano aprovado' });
 });
 
+// Relatório resumido de planos e usuários
+router.get('/admin/relatorio-planos', (req, res) => {
+  function unsanitizeEmail(name) {
+    const parts = name.split('_');
+    if (parts.length > 1) {
+      return parts[0] + '@' + parts.slice(1).join('.');
+    }
+    return name;
+  }
+
+  const precosPlano = { basico: 50, intermediario: 80, completo: 120 };
+
+  const quantidadePorPlano = { basico: 0, intermediario: 0, completo: 0, teste: 0 };
+  const usuariosPorStatus = { ativo: 0, bloqueado: 0 };
+  let pagamentosEsteMes = 0;
+  let valorTotalArrecadado = 0;
+
+  const possibles = ['../bancos', '../databases', '../data'];
+  let baseDir = null;
+  for (const p of possibles) {
+    const full = path.join(__dirname, p);
+    if (fs.existsSync(full)) {
+      baseDir = full;
+      break;
+    }
+  }
+
+  if (!baseDir) {
+    return res.json({ quantidadePorPlano, usuariosPorStatus, pagamentosEsteMes, valorTotalArrecadado });
+  }
+
+  const dirs = fs.readdirSync(baseDir).filter(d => {
+    const stat = fs.statSync(path.join(baseDir, d));
+    return stat.isDirectory();
+  });
+
+  const agora = new Date();
+
+  function dentroMesAtual(data) {
+    if (!data) return false;
+    const d = new Date(data);
+    return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
+  }
+
+  for (const dir of dirs) {
+    if (dir === 'backups') continue;
+    const email = unsanitizeEmail(dir);
+
+    const db = initDB(email);
+    const usuarios = db.prepare(`
+      SELECT plano, status, dataLiberado, dataFimLiberacao
+      FROM usuarios WHERE perfil != 'admin'
+    `).all();
+
+    usuarios.forEach(u => {
+      const planoKey = u.plano === 'gratis' ? 'teste' : u.plano;
+      if (quantidadePorPlano[planoKey] !== undefined) quantidadePorPlano[planoKey]++;
+
+      if (u.status === 'ativo') usuariosPorStatus.ativo++;
+      else if (u.status === 'bloqueado') usuariosPorStatus.bloqueado++;
+
+      if (
+        u.status === 'ativo' &&
+        dentroMesAtual(u.dataLiberado) &&
+        dentroMesAtual(u.dataFimLiberacao)
+      ) {
+        pagamentosEsteMes++;
+        if (precosPlano[u.plano]) valorTotalArrecadado += precosPlano[u.plano];
+      }
+    });
+  }
+
+  res.json({ quantidadePorPlano, usuariosPorStatus, pagamentosEsteMes, valorTotalArrecadado });
+});
+
 module.exports = router;
