@@ -22,6 +22,7 @@ import BemVindo from './pages/Auth/BemVindo';
 import Admin from './pages/Admin/Admin';
 import ListaUsuarios from './pages/Admin/ListaUsuarios';
 import PainelPlanosAdmin from './pages/Admin/PainelPlanosAdmin';
+import PainelAprovacaoAdmin from './pages/Admin/PainelAprovacaoAdmin';
 import RelatorioAdmin from './pages/Admin/RelatorioAdmin';
 import RotaAdmin from './utils/RotaAdmin';
 import Fazenda from './pages/Fazenda/Fazenda';
@@ -56,6 +57,7 @@ const routes = createRoutesFromElements(
   <Route path="/admin" element={<RotaAdmin><Admin /></RotaAdmin>} />
   <Route path="/admin/usuarios" element={<RotaAdmin><ListaUsuarios /></RotaAdmin>} />
   <Route path="/painel-admin-planos" element={<RotaAdmin><PainelPlanosAdmin /></RotaAdmin>} />
+  <Route path="/painel-aprovacao-admin" element={<RotaAdmin><PainelAprovacaoAdmin /></RotaAdmin>} />
   <Route path="/relatorio-admin" element={<RotaAdmin><RelatorioAdmin /></RotaAdmin>} />
   <Route path="/fazenda" element={<Fazenda />} />
   <Route path="/painel" element={<Fazenda />} />

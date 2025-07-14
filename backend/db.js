@@ -29,6 +29,7 @@ const createUsuarios = `CREATE TABLE IF NOT EXISTS usuarios (
   plano TEXT DEFAULT 'gratis',
   planoSolicitado TEXT DEFAULT NULL,
   formaPagamento TEXT DEFAULT NULL,
+  metodoPagamentoId INTEGER,
   dataLiberado TEXT DEFAULT NULL,
   dataFimLiberacao TEXT DEFAULT NULL,
   status TEXT DEFAULT 'ativo'
@@ -168,12 +169,21 @@ const createEventos = `CREATE TABLE IF NOT EXISTS eventos (
   idProdutor INTEGER
 )`;
 
+const createMetodosPagamento = `CREATE TABLE IF NOT EXISTS metodos_pagamento (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome TEXT NOT NULL,
+  tipo TEXT NOT NULL,
+  identificador TEXT,
+  ativo BOOLEAN DEFAULT 1
+)`;
+
 function applyMigrations(database) {
   database.exec(createAnimais);
   database.exec(createUsuarios);
   database.exec(createVerificacoesPendentes);
   database.exec(createProdutores);
   database.exec(createFazendas);
+  database.exec(createMetodosPagamento);
 
   let produtorCols = database.prepare('PRAGMA table_info(produtores)').all();
   if (!produtorCols.some(c => c.name === 'status')) {
@@ -270,6 +280,9 @@ function applyMigrations(database) {
   }
   if (!usuarioCols.some(c => c.name === 'formaPagamento')) {
     database.exec('ALTER TABLE usuarios ADD COLUMN formaPagamento TEXT DEFAULT NULL');
+  }
+  if (!usuarioCols.some(c => c.name === 'metodoPagamentoId')) {
+    database.exec('ALTER TABLE usuarios ADD COLUMN metodoPagamentoId INTEGER');
   }
   if (!usuarioCols.some(c => c.name === 'dataLiberado')) {
     database.exec('ALTER TABLE usuarios ADD COLUMN dataLiberado TEXT DEFAULT NULL');
