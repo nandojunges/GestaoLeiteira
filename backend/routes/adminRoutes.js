@@ -114,4 +114,58 @@ router.delete('/admin/usuarios/:id', async (req, res) => {
   res.json({ message: 'Usuário removido' });
 });
 
+// Libera acesso temporário por X dias
+router.patch('/admin/liberar/:id', (req, res) => {
+  const { dias } = req.body;
+  const db = getDb();
+  const inicio = new Date();
+  const fim = new Date();
+  fim.setDate(inicio.getDate() + parseInt(dias));
+  db.prepare(`
+    UPDATE usuarios
+    SET status = 'ativo',
+        dataLiberado = ?,
+        dataFimLiberacao = ?
+    WHERE id = ?
+  `).run(inicio.toISOString(), fim.toISOString(), req.params.id);
+  res.json({ message: 'Usuário liberado temporariamente.' });
+});
+
+// Bloqueia usuário manualmente
+router.patch('/admin/bloquear/:id', (req, res) => {
+  const db = getDb();
+  db.prepare(`
+    UPDATE usuarios SET status = 'bloqueado' WHERE id = ?
+  `).run(req.params.id);
+  res.json({ message: 'Usuário bloqueado.' });
+});
+
+// Registrar solicitação de alteração de plano
+router.patch('/admin/alterar-plano/:id', (req, res) => {
+  const { planoSolicitado, formaPagamento } = req.body;
+  const db = getDb();
+  db.prepare(`
+    UPDATE usuarios
+    SET planoSolicitado = ?, formaPagamento = ?
+    WHERE id = ?
+  `).run(planoSolicitado, formaPagamento, req.params.id);
+  res.json({ message: 'Solicitação de alteração registrada.' });
+});
+
+// Aprovar pagamento e aplicar novo plano
+router.patch('/admin/aprovar-pagamento/:id', (req, res) => {
+  const db = getDb();
+  const usuario = db.prepare('SELECT planoSolicitado FROM usuarios WHERE id = ?').get(req.params.id);
+  if (!usuario || !usuario.planoSolicitado) {
+    return res.status(400).json({ error: 'Nenhum plano solicitado' });
+  }
+
+  db.prepare(`
+    UPDATE usuarios
+    SET plano = ?, planoSolicitado = NULL, formaPagamento = NULL
+    WHERE id = ?
+  `).run(usuario.planoSolicitado, req.params.id);
+  res.json({ message: 'Plano aprovado e ativado.' });
+});
+
 module.exports = router;
