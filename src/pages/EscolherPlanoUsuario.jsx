@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { Star, Rocket, Crown } from 'lucide-react';
 import api from '../api';
-import '../styles/botoes.css';
 
 export default function EscolherPlanoUsuario() {
   const [plano, setPlano] = useState('');
@@ -30,13 +29,13 @@ export default function EscolherPlanoUsuario() {
   };
 
   return (
-    <div className="p-4 max-w-3xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
       <h1 className="text-xl font-bold text-center">Escolher Plano</h1>
       <p className="text-center text-sm">
         Escolha o plano desejado e informe a forma de pagamento.
       </p>
 
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
           {
             id: 'basico',
@@ -61,20 +60,23 @@ export default function EscolherPlanoUsuario() {
         ].map((p) => (
           <div
             key={p.id}
-            className={`border rounded-lg shadow-sm p-4 flex flex-col items-center text-center space-y-2 ${
-              plano === p.id ? 'ring-2 ring-blue-500' : 'border-gray-300'
+            onClick={() => setPlano(p.id)}
+            className={`cursor-pointer border rounded-lg shadow-sm p-4 flex flex-col items-center text-center space-y-2 transition ${
+              plano === p.id
+                ? 'border-blue-600 ring-2 ring-blue-500'
+                : 'border-gray-300 hover:shadow-md'
             }`}
           >
             <p.Icon size={36} className="text-blue-600" />
             <h2 className="text-lg font-semibold">{p.nome}</h2>
             <p className="text-sm flex-1">{p.descricao}</p>
-            <button
-              type="button"
-              onClick={() => setPlano(p.id)}
-              className="botao-acao"
+            <span
+              className={`text-sm font-medium ${
+                plano === p.id ? 'text-blue-600' : 'text-gray-600'
+              }`}
             >
               {plano === p.id ? 'Selecionado' : 'Selecionar'}
-            </button>
+            </span>
           </div>
         ))}
       </div>
@@ -98,7 +100,7 @@ export default function EscolherPlanoUsuario() {
       </div>
 
       <button
-        className="botao-acao w-full"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded transition disabled:bg-gray-400 disabled:cursor-not-allowed"
         onClick={solicitar}
         disabled={!plano || enviando}
       >
