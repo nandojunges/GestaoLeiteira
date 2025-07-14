@@ -253,6 +253,49 @@ router.patch('/admin/aprovar-pagamento/:id', (req, res) => {
   res.json({ message: 'Plano aprovado' });
 });
 
+// Lista usuários pendentes de aprovação
+router.get('/admin/pendentes', (req, res) => {
+  const db = getDb();
+  const pendentes = db
+    .prepare('SELECT id, nome, planoSolicitado, formaPagamento FROM usuarios WHERE status = ?')
+    .all('pendente');
+  res.json(pendentes);
+});
+
+// Aprovar plano solicitado
+router.post('/admin/aprovar-plano', (req, res) => {
+  const { idUsuario } = req.body;
+  const db = getDb();
+  const usuario = db
+    .prepare('SELECT planoSolicitado FROM usuarios WHERE id = ?')
+    .get(idUsuario);
+  if (!usuario || !usuario.planoSolicitado) {
+    return res.status(400).json({ error: 'Usuário não possui solicitação' });
+  }
+  db.prepare(
+    `UPDATE usuarios SET plano = ?, planoSolicitado = NULL, formaPagamento = NULL, status = 'ativo' WHERE id = ?`
+  ).run(usuario.planoSolicitado, idUsuario);
+  res.json({ message: 'Plano aprovado com sucesso' });
+});
+
+// Rejeitar solicitação de plano
+router.post('/admin/rejeitar-plano', (req, res) => {
+  const { idUsuario } = req.body;
+  const db = getDb();
+  db.prepare("UPDATE usuarios SET status = 'rejeitado' WHERE id = ?").run(idUsuario);
+  res.json({ message: 'Plano rejeitado' });
+});
+
+// Cadastro de método de pagamento
+router.post('/admin/metodo-pagamento', (req, res) => {
+  const { nome, tipo, identificador } = req.body;
+  const db = getDb();
+  db.prepare(
+    `INSERT INTO metodos_pagamento (nome, tipo, identificador) VALUES (?, ?, ?)`
+  ).run(nome, tipo, identificador);
+  res.json({ message: 'Método de pagamento cadastrado' });
+});
+
 // Relatório resumido de planos e usuários
 router.get('/admin/relatorio-planos', (req, res) => {
   function unsanitizeEmail(name) {
