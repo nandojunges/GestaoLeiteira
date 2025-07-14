@@ -13,6 +13,7 @@ router.use('/eventos', require('./eventosRoutes'));
 router.use('/produtos', require('./produtosRoutes'));
 router.use('/examesSanitarios', require('./examesSanitariosRoutes'));
 router.use('/racas', require('./racasRoutes'));
+router.use('/usuario', require('./usuarioRoutes'));
 router.use('/', require('./mockRoutes'));
 router.use('/', require('./adminRoutes'));
 
