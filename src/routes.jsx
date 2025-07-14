@@ -30,6 +30,7 @@ import Logout from './pages/Auth/Logout';
 import ConfigTelaInicial from './pages/ConfigTelaInicial';
 import EscolherPlano from './pages/EscolherPlano';
 import EscolherPlanoUsuario from './pages/EscolherPlanoUsuario';
+import StatusPlanoUsuario from './pages/StatusPlanoUsuario';
 
 const routes = createRoutesFromElements(
   <>
@@ -64,6 +65,7 @@ const routes = createRoutesFromElements(
   <Route path="/configuracoes-inicial" element={<ConfigTelaInicial />} />
   <Route path="/escolher-plano" element={<RotaProtegida><EscolherPlano /></RotaProtegida>} />
   <Route path="/planos" element={<RotaProtegida><EscolherPlanoUsuario /></RotaProtegida>} />
+  <Route path="/status-plano" element={<RotaProtegida><StatusPlanoUsuario /></RotaProtegida>} />
   <Route path="logout" element={<Logout />} />
   </>
 );

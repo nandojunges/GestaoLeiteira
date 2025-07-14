@@ -31,4 +31,21 @@ router.post('/solicitar-plano', (req, res) => {
   res.json({ message: 'Plano solicitado com sucesso' });
 });
 
+// Retorna informacoes do plano atual do usuario
+router.get('/plano-status', (req, res) => {
+  const db = initDB(req.user.email);
+  const dados = db
+    .prepare(
+      `SELECT plano, planoSolicitado, formaPagamento, status, dataLiberado, dataFimLiberacao
+       FROM usuarios WHERE id = ?`
+    )
+    .get(req.user.idProdutor);
+
+  if (!dados) {
+    return res.status(404).json({ error: 'Usuário não encontrado' });
+  }
+
+  res.json(dados);
+});
+
 module.exports = router;
