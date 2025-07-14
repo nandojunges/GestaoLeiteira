@@ -138,6 +138,28 @@ router.patch('/admin/bloquear/:id', (req, res) => {
 router.patch('/admin/alterar-plano/:id', (req, res) => {
   const { planoSolicitado, formaPagamento } = req.body;
   const db = getDb();
+  const usuario = db
+    .prepare('SELECT dataLiberado FROM usuarios WHERE id = ?')
+    .get(req.params.id);
+
+  if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+  // Teste grátis: aplica automaticamente se nunca utilizado
+  if (planoSolicitado === 'gratis') {
+    if (usuario.dataLiberado) {
+      return res
+        .status(400)
+        .json({ error: 'Teste grátis já utilizado. Selecione outro plano.' });
+    }
+    const inicio = new Date();
+    const fim = new Date();
+    fim.setDate(inicio.getDate() + 7);
+    db.prepare(
+      'UPDATE usuarios SET plano = ?, planoSolicitado = NULL, formaPagamento = NULL, dataLiberado = ?, dataFimLiberacao = ?, status = ? WHERE id = ?'
+    ).run('gratis', inicio.toISOString(), fim.toISOString(), 'ativo', req.params.id);
+    return res.json({ message: 'Teste grátis liberado por 7 dias' });
+  }
+
   db.prepare('UPDATE usuarios SET planoSolicitado = ?, formaPagamento = ? WHERE id = ?')
     .run(planoSolicitado, formaPagamento, req.params.id);
   res.json({ message: 'Solicitação registrada' });

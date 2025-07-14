@@ -25,6 +25,7 @@ import RotaAdmin from './utils/RotaAdmin';
 import Fazenda from './pages/Fazenda/Fazenda';
 import Logout from './pages/Auth/Logout';
 import ConfigTelaInicial from './pages/ConfigTelaInicial';
+import EscolherPlano from './pages/EscolherPlano';
 
 const routes = createRoutesFromElements(
   <>
@@ -54,6 +55,7 @@ const routes = createRoutesFromElements(
   <Route path="/fazenda" element={<Fazenda />} />
   <Route path="/painel" element={<Fazenda />} />
   <Route path="/configuracoes-inicial" element={<ConfigTelaInicial />} />
+  <Route path="/escolher-plano" element={<RotaProtegida><EscolherPlano /></RotaProtegida>} />
   <Route path="logout" element={<Logout />} />
   </>
 );
