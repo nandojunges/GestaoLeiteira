@@ -6,6 +6,8 @@ import {
   calcularStatusSaude,
 } from '../../utils/saudeUtils';
 import { formatarDataDigitada } from '../Animais/utilsAnimais';
+import TabelaExames from './TabelaExames';
+import ModalExame from './ModalExame';
 
 export default function ModalSaudeAnimal({
   animal,
@@ -18,6 +20,10 @@ export default function ModalSaudeAnimal({
   const [aba, setAba] = useState('resumo');
   const [novaOc, setNovaOc] = useState({ data: '', descricao: '', responsavel: '' });
   const [novoTr, setNovoTr] = useState({ data: '', medicamento: '', responsavel: '' });
+  const [exames, setExames] = useState([]);
+  const [filtroTipo, setFiltroTipo] = useState('');
+  const [buscaResp, setBuscaResp] = useState('');
+  const [showExame, setShowExame] = useState(false);
   const ocRef = useRef([]);
   const trRef = useRef([]);
 
@@ -26,6 +32,12 @@ export default function ModalSaudeAnimal({
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
   }, [onFechar]);
+
+  useEffect(() => {
+    const dados = JSON.parse(localStorage.getItem(`exames-${animal.numero}`) || '[]');
+    const ordenados = [...dados].sort((a, b) => parseData(b.data) - parseData(a.data));
+    setExames(ordenados);
+  }, [animal]);
 
   useEffect(() => {
     const enter = e => {
@@ -48,6 +60,7 @@ export default function ModalSaudeAnimal({
     onAdicionarTratamento && onAdicionarTratamento({ ...novoTr, animal: animal.numero });
     setNovoTr({ data: '', medicamento: '', responsavel: '' });
   };
+
 
   const status = calcularStatusSaude(
     animal.numero,
@@ -100,6 +113,7 @@ export default function ModalSaudeAnimal({
             <TabButton id="resumo">📄 Resumo</TabButton>
             <TabButton id="ocorrencias">🐮 Ocorrências</TabButton>
             <TabButton id="tratamentos">💊 Tratamentos</TabButton>
+            <TabButton id="exames">🧪 Exames</TabButton>
           </div>
           {aba === 'resumo' && (
             <div className="p-4 space-y-4 text-sm">
@@ -199,6 +213,62 @@ export default function ModalSaudeAnimal({
                 />
                 <button onClick={salvarTratamento} className="bg-blue-600 text-white rounded px-3 py-1">Salvar</button>
               </div>
+            </div>
+          )}
+          {aba === 'exames' && (
+            <div className="p-4 space-y-3 text-sm">
+              <div className="flex flex-wrap gap-2 items-end">
+                <select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)} className="border rounded px-2 py-1">
+                  <option value="">Todos os tipos</option>
+                  <option>Sangue</option>
+                  <option>Fezes</option>
+                  <option>Leite</option>
+                  <option>Urina</option>
+                  <option>Imagem</option>
+                  <option>Outro</option>
+                </select>
+                <input
+                  value={buscaResp}
+                  onChange={e => setBuscaResp(e.target.value)}
+                  placeholder="Responsável"
+                  className="border rounded px-2 py-1"
+                />
+                <button onClick={() => setShowExame({})} className="bg-blue-600 text-white rounded px-3 py-1 ml-auto">+ Novo Exame</button>
+              </div>
+              <div className="max-h-60 overflow-auto">
+                <TabelaExames
+                  lista={exames.filter(e => (!filtroTipo || e.tipo === filtroTipo) && (!buscaResp || (e.responsavel || '').toLowerCase().includes(buscaResp.toLowerCase())))}
+                  onEditar={(d, i) => { setShowExame({ dados: d, idx: i }); }}
+                  onExcluir={idx => {
+                    const nova = exames.filter((_, i) => i !== idx);
+                    setExames(nova);
+                    localStorage.setItem(`exames-${animal.numero}`, JSON.stringify(nova));
+                  }}
+                  abrirAnexo={anexos => {
+                    if (!anexos || !anexos.length) return;
+                    const a = anexos[0];
+                    const w = window.open();
+                    w.document.write(`<iframe src="${a.dado}" style="width:100%;height:100%"></iframe>`);
+                  }}
+                />
+              </div>
+              {showExame && (
+                <ModalExame
+                  dados={showExame.dados}
+                  onFechar={() => setShowExame(null)}
+                  onSalvar={reg => {
+                    let nova = [];
+                    if (showExame.idx !== undefined) {
+                      nova = exames.map((e, i) => i === showExame.idx ? reg : e);
+                    } else {
+                      nova = [...exames, reg];
+                    }
+                    nova.sort((a, b) => parseData(b.data) - parseData(a.data));
+                    setExames(nova);
+                    localStorage.setItem(`exames-${animal.numero}`, JSON.stringify(nova));
+                  }}
+                />
+              )}
             </div>
           )}
           <div className="p-4 text-right border-t">
