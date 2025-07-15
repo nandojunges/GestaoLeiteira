@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const vacasRoutes = require('./routes/vacasRoutes');
@@ -23,6 +24,8 @@ const authRoutes = require('./routes/authRoutes');
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+fs.mkdirSync(path.join(__dirname, 'dadosExcluidos'), { recursive: true });
 
 // Rotas da API
 app.use('/vacas', vacasRoutes);

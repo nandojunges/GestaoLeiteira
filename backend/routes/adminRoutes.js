@@ -126,34 +126,17 @@ router.patch('/admin/liberar/:id', (req, res) => {
 
 router.patch('/admin/bloquear/:id', (req, res) => {
   const db = getDb();
-  const usuario = db.prepare('SELECT status FROM usuarios WHERE id = ?').get(req.params.id);
+  const usuario = db.prepare('SELECT id FROM usuarios WHERE id = ?').get(req.params.id);
   if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado' });
-  const novoStatus = usuario.status === 'bloqueado' ? 'ativo' : 'bloqueado';
-  db.prepare('UPDATE usuarios SET status = ? WHERE id = ?').run(novoStatus, req.params.id);
-  res.json({ status: novoStatus });
+  db.prepare('UPDATE usuarios SET status = ? WHERE id = ?').run('suspenso', req.params.id);
+  res.json({ status: 'suspenso' });
 });
 
 router.patch('/admin/alterar-plano/:id', (req, res) => {
   const { planoSolicitado, formaPagamento } = req.body;
   const db = getDb();
-  const usuario = db.prepare('SELECT dataLiberado FROM usuarios WHERE id = ?').get(req.params.id);
+  const usuario = db.prepare('SELECT id FROM usuarios WHERE id = ?').get(req.params.id);
   if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado' });
-
-  if (planoSolicitado === 'gratis') {
-    if (usuario.dataLiberado) {
-      return res.status(400).json({ error: 'Teste grátis já utilizado.' });
-    }
-    const inicio = new Date();
-    const fim = new Date(inicio);
-    fim.setDate(inicio.getDate() + 7);
-    db.prepare(`
-      UPDATE usuarios SET plano = ?, planoSolicitado = NULL, formaPagamento = NULL,
-      dataLiberado = ?, dataFimLiberacao = ?, status = ?
-      WHERE id = ?
-    `).run('gratis', inicio.toISOString(), fim.toISOString(), 'ativo', req.params.id);
-    return res.json({ message: 'Teste grátis liberado por 7 dias' });
-  }
-
   db.prepare('UPDATE usuarios SET planoSolicitado = ?, formaPagamento = ? WHERE id = ?')
     .run(planoSolicitado, formaPagamento, req.params.id);
   res.json({ message: 'Solicitação registrada' });
@@ -171,19 +154,36 @@ router.patch('/admin/definir-plano/:id', (req, res) => {
 
 router.patch('/admin/aprovar-pagamento/:id', (req, res) => {
   const db = getDb();
-  const dias = parseInt(req.body?.dias) || 30;
   const usuario = db.prepare('SELECT planoSolicitado FROM usuarios WHERE id = ?').get(req.params.id);
   if (!usuario || !usuario.planoSolicitado) {
     return res.status(400).json({ error: 'Nenhum plano solicitado' });
   }
-  const inicio = new Date();
-  const fim = new Date(inicio);
-  fim.setDate(inicio.getDate() + dias);
-  db.prepare(`
-    UPDATE usuarios SET plano = ?, planoSolicitado = NULL, formaPagamento = NULL,
-    status = ?, dataLiberado = ?, dataFimLiberacao = ? WHERE id = ?
-  `).run(usuario.planoSolicitado, 'ativo', inicio.toISOString(), fim.toISOString(), req.params.id);
+  db.prepare(
+    'UPDATE usuarios SET plano = ?, planoSolicitado = NULL, formaPagamento = NULL, status = ? WHERE id = ?'
+  ).run(usuario.planoSolicitado, 'ativo', req.params.id);
   res.json({ message: 'Plano aprovado' });
+});
+
+router.patch('/admin/excluir/:id', (req, res) => {
+  const { motivo, confirmacao } = req.body;
+  if (!motivo) return res.status(400).json({ error: 'Motivo obrigatório' });
+  if (confirmacao !== 'EXCLUIR') {
+    return res.status(400).json({ error: 'Confirmação incorreta' });
+  }
+
+  const db = getDb();
+  const usuario = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.params.id);
+  if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+  const pasta = path.join(__dirname, '../dadosExcluidos');
+  fs.mkdirSync(pasta, { recursive: true });
+  fs.writeFileSync(
+    path.join(pasta, `${req.params.id}.json`),
+    JSON.stringify({ ...usuario, motivo, removidoEm: new Date().toISOString() }, null, 2)
+  );
+
+  db.prepare('UPDATE usuarios SET status = ? WHERE id = ?').run('inativo', req.params.id);
+  res.json({ message: 'Usuário marcado como inativo' });
 });
 
 router.get('/admin/pendentes', (req, res) => {

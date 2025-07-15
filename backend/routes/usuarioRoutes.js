@@ -5,17 +5,17 @@ const autenticarToken = require('../middleware/autenticarToken');
 
 router.use(autenticarToken);
 
-router.post('/solicitar-plano', (req, res) => {
-  const { plano, formaPagamento } = req.body;
+router.patch('/solicitar-plano', (req, res) => {
+  const { planoSolicitado, formaPagamento } = req.body;
 
-  if (!plano || !formaPagamento) {
+  if (!planoSolicitado || !formaPagamento) {
     return res.status(400).json({ error: 'Dados incompletos' });
   }
 
   const planosValidos = ['basico', 'intermediario', 'completo'];
   const formasValidas = ['pix', 'cartao', 'dinheiro'];
 
-  if (!planosValidos.includes(plano) || !formasValidas.includes(formaPagamento)) {
+  if (!planosValidos.includes(planoSolicitado) || !formasValidas.includes(formaPagamento)) {
     return res.status(400).json({ error: 'Dados inválidos' });
   }
 
@@ -26,7 +26,7 @@ router.post('/solicitar-plano', (req, res) => {
   }
 
   db.prepare('UPDATE usuarios SET planoSolicitado = ?, formaPagamento = ?, status = ? WHERE id = ?')
-    .run(plano, formaPagamento, 'pendente', req.user.idProdutor);
+    .run(planoSolicitado, formaPagamento, 'pendente', req.user.idProdutor);
 
   res.json({ message: 'Plano solicitado com sucesso' });
 });

@@ -32,6 +32,7 @@ const createUsuarios = `CREATE TABLE IF NOT EXISTS usuarios (
   metodoPagamentoId INTEGER,
   dataLiberado TEXT DEFAULT NULL,
   dataFimLiberacao TEXT DEFAULT NULL,
+  dataFimTeste TEXT DEFAULT NULL,
   status TEXT DEFAULT 'ativo'
 )`;
 
@@ -289,6 +290,9 @@ function applyMigrations(database) {
   }
   if (!usuarioCols.some(c => c.name === 'dataFimLiberacao')) {
     database.exec('ALTER TABLE usuarios ADD COLUMN dataFimLiberacao TEXT DEFAULT NULL');
+  }
+  if (!usuarioCols.some(c => c.name === 'dataFimTeste')) {
+    database.exec('ALTER TABLE usuarios ADD COLUMN dataFimTeste TEXT DEFAULT NULL');
   }
   if (!usuarioCols.some(c => c.name === 'status')) {
     database.exec("ALTER TABLE usuarios ADD COLUMN status TEXT DEFAULT 'ativo'");
