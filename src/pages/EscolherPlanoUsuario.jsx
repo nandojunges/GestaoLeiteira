@@ -2,23 +2,43 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { Star, Rocket, Crown } from 'lucide-react';
 import api from '../api';
+import ModalPlanoSelecionado from '../components/ModalPlanoSelecionado';
 
 export default function EscolherPlanoUsuario() {
-  const [plano, setPlano] = useState('');
-  const [formaPagamento, setFormaPagamento] = useState('pix');
+  const planos = [
+    {
+      id: 'basico',
+      nome: 'Básico',
+      descricao: 'Funcionalidades essenciais',
+      Icon: Star,
+    },
+    {
+      id: 'intermediario',
+      nome: 'Intermediário',
+      descricao: 'Inclui controle de bezerras, reprodução e estoque',
+      Icon: Rocket,
+    },
+    {
+      id: 'completo',
+      nome: 'Completo',
+      descricao: 'Tudo do intermediário + relatórios e gráficos avançados',
+      Icon: Crown,
+    },
+  ];
+
+  const [planoSelecionado, setPlanoSelecionado] = useState(null);
   const [enviando, setEnviando] = useState(false);
 
-  const solicitar = async () => {
-    if (!plano) return;
+  const solicitar = async (formaPagamento) => {
+    if (!planoSelecionado) return;
     setEnviando(true);
     try {
-      await api.post('/usuario/solicitar-plano', {
-        plano,
+      await api.patch('/usuario/solicitar-plano', {
+        planoSolicitado: planoSelecionado.id,
         formaPagamento,
       });
-      toast.success('Plano solicitado com sucesso. Aguarde aprovação.');
-      setPlano('');
-      setFormaPagamento('pix');
+      toast.success('Seu pedido foi enviado. Aguarde a aprovação.');
+      setPlanoSelecionado(null);
     } catch (err) {
       toast.error(
         err.response?.data?.error || err.message || 'Erro ao solicitar plano'
@@ -36,76 +56,28 @@ export default function EscolherPlanoUsuario() {
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          {
-            id: 'basico',
-            nome: 'Básico',
-            descricao: 'Funcionalidades essenciais',
-            Icon: Star,
-          },
-          {
-            id: 'intermediario',
-            nome: 'Intermediário',
-            descricao:
-              'Inclui controle de bezerras, reprodução e estoque',
-            Icon: Rocket,
-          },
-          {
-            id: 'completo',
-            nome: 'Completo',
-            descricao:
-              'Tudo do intermediário + relatórios e gráficos avançados',
-            Icon: Crown,
-          },
-        ].map((p) => (
+        {planos.map((p) => (
           <div
             key={p.id}
-            onClick={() => setPlano(p.id)}
-            className={`cursor-pointer border rounded-lg shadow-sm p-4 flex flex-col items-center text-center space-y-2 transition ${
-              plano === p.id
-                ? 'border-blue-600 ring-2 ring-blue-500'
-                : 'border-gray-300 hover:shadow-md'
-            }`}
+            className="border rounded-lg shadow-sm p-4 flex flex-col items-center text-center space-y-2 hover:shadow-md transition cursor-pointer"
+            onClick={() => setPlanoSelecionado(p)}
           >
             <p.Icon size={36} className="text-blue-600" />
             <h2 className="text-lg font-semibold">{p.nome}</h2>
             <p className="text-sm flex-1">{p.descricao}</p>
-            <span
-              className={`text-sm font-medium ${
-                plano === p.id ? 'text-blue-600' : 'text-gray-600'
-              }`}
-            >
-              {plano === p.id ? 'Selecionado' : 'Selecionar'}
-            </span>
+            <span className="text-sm font-medium text-blue-600">Selecionar</span>
           </div>
         ))}
       </div>
 
-      <div className="space-y-2">
-        <label className="font-medium">Forma de pagamento</label>
-        <div className="flex gap-4">
-          {['pix', 'cartao', 'dinheiro'].map((fp) => (
-            <label key={fp} className="flex items-center gap-1">
-              <input
-                type="radio"
-                name="formaPagamento"
-                value={fp}
-                checked={formaPagamento === fp}
-                onChange={(e) => setFormaPagamento(e.target.value)}
-              />
-              {fp.charAt(0).toUpperCase() + fp.slice(1)}
-            </label>
-          ))}
-        </div>
-      </div>
 
-      <button
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-        onClick={solicitar}
-        disabled={!plano || enviando}
-      >
-        {enviando ? 'Enviando...' : 'Solicitar Plano'}
-      </button>
+      {planoSelecionado && (
+        <ModalPlanoSelecionado
+          plano={planoSelecionado}
+          onFechar={() => setPlanoSelecionado(null)}
+          onConfirmar={solicitar}
+        />
+      )}
     </div>
   );
 }
