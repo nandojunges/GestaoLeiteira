@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatarData, agruparEventos, parseData } from '../../utils/saudeUtils';
+import {
+  formatarData,
+  parseData,
+  calcularStatusSaude,
+} from '../../utils/saudeUtils';
 import { formatarDataDigitada } from '../Animais/utilsAnimais';
 
 export default function ModalSaudeAnimal({
@@ -11,7 +15,7 @@ export default function ModalSaudeAnimal({
   onAdicionarOcorrencia,
   onAdicionarTratamento,
 }) {
-  const [aba, setAba] = useState('ocorrencias');
+  const [aba, setAba] = useState('resumo');
   const [novaOc, setNovaOc] = useState({ data: '', descricao: '', responsavel: '' });
   const [novoTr, setNovoTr] = useState({ data: '', medicamento: '', responsavel: '' });
   const ocRef = useRef([]);
@@ -22,6 +26,16 @@ export default function ModalSaudeAnimal({
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
   }, [onFechar]);
+
+  useEffect(() => {
+    const enter = e => {
+      if (e.key !== 'Enter') return;
+      if (aba === 'ocorrencias') salvarOcorrencia();
+      if (aba === 'tratamentos') salvarTratamento();
+    };
+    window.addEventListener('keydown', enter);
+    return () => window.removeEventListener('keydown', enter);
+  }, [aba, novaOc, novoTr]);
 
   const salvarOcorrencia = () => {
     if (!novaOc.data) return;
@@ -35,7 +49,22 @@ export default function ModalSaudeAnimal({
     setNovoTr({ data: '', medicamento: '', responsavel: '' });
   };
 
-  const eventos = agruparEventos(ocorrencias, tratamentos);
+  const status = calcularStatusSaude(
+    animal.numero,
+    ocorrencias,
+    tratamentos
+  );
+  const statusInfo = {
+    normal: { emoji: '✅', cor: 'text-green-600', label: 'Normal' },
+    observacao: { emoji: '🕒', cor: 'text-yellow-600', label: 'Em observação' },
+    tratamento: { emoji: '⚠️', cor: 'text-red-600', label: 'Em tratamento' },
+  };
+  const ultOcorrencias = [...ocorrencias]
+    .sort((a, b) => parseData(b.data) - parseData(a.data))
+    .slice(0, 3);
+  const ultTratamentos = [...tratamentos]
+    .sort((a, b) => parseData(b.data) - parseData(a.data))
+    .slice(0, 3);
 
   const TabButton = ({ id, children }) => (
     <button
@@ -58,12 +87,50 @@ export default function ModalSaudeAnimal({
           className="bg-white rounded shadow-lg w-full max-w-xl max-h-[90vh] overflow-auto"
           onClick={e => e.stopPropagation()}
         >
-          <div className="p-4 font-semibold text-blue-800 border-b">Saúde do Animal {animal.numero} {animal.nome && `- ${animal.nome}`}</div>
+          <div className="p-4 font-semibold text-blue-800 border-b flex justify-between items-center">
+            <span>Saúde do Animal {animal.numero} {animal.nome && `- ${animal.nome}`}</span>
+            <button
+              onClick={onFechar}
+              className="text-xs border border-blue-800 rounded px-2 py-0.5 hover:bg-blue-50"
+            >
+              ESC
+            </button>
+          </div>
           <div className="flex gap-2 border-b px-4 pt-3">
+            <TabButton id="resumo">📄 Resumo</TabButton>
             <TabButton id="ocorrencias">🐮 Ocorrências</TabButton>
             <TabButton id="tratamentos">💊 Tratamentos</TabButton>
-            <TabButton id="historico">📜 Histórico</TabButton>
           </div>
+          {aba === 'resumo' && (
+            <div className="p-4 space-y-4 text-sm">
+              <div className={`text-lg font-semibold ${statusInfo[status].cor}`}>{statusInfo[status].emoji} {statusInfo[status].label}</div>
+              <div>Grupo: {animal.grupo || '—'}</div>
+              <div>
+                <h4 className="font-semibold">Últimas ocorrências</h4>
+                {ultOcorrencias.length ? (
+                  <ul className="list-disc pl-4 space-y-1">
+                    {ultOcorrencias.map((o, i) => (
+                      <li key={i}>{formatarData(o.data)} - {o.descricao || o.diagnostico}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500">Nenhuma ocorrência</p>
+                )}
+              </div>
+              <div>
+                <h4 className="font-semibold">Últimos tratamentos</h4>
+                {ultTratamentos.length ? (
+                  <ul className="list-disc pl-4 space-y-1">
+                    {ultTratamentos.map((t, i) => (
+                      <li key={i}>{formatarData(t.data)} - {t.medicamento || t.principioAtivo}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500">Nenhum tratamento</p>
+                )}
+              </div>
+            </div>
+          )}
           {aba === 'ocorrencias' && (
             <div className="p-4 space-y-4">
               <ul className="space-y-2 text-sm max-h-60 overflow-auto">
@@ -132,19 +199,6 @@ export default function ModalSaudeAnimal({
                 />
                 <button onClick={salvarTratamento} className="bg-blue-600 text-white rounded px-3 py-1">Salvar</button>
               </div>
-            </div>
-          )}
-          {aba === 'historico' && (
-            <div className="p-4 text-sm max-h-80 overflow-auto space-y-2">
-              {eventos.map((e, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <div className="w-20 text-right text-gray-600">{formatarData(e.dataObj)}</div>
-                  <div className="flex-1">
-                    {e.tipo === 'ocorrencia' ? '🐮 ' : '💊 '}
-                    {e.descricao || e.diagnostico || e.medicamento || e.principioAtivo}
-                  </div>
-                </div>
-              ))}
             </div>
           )}
           <div className="p-4 text-right border-t">
