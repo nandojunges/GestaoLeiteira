@@ -16,7 +16,7 @@ function autenticarToken(req, res, next) {
     const db = initDB(decoded.email);
     const usuario = db
       .prepare(
-        'SELECT status, dataLiberado, dataFimLiberacao FROM usuarios WHERE id = ?'
+        'SELECT status, dataLiberado, dataFimLiberacao, dataFimTeste FROM usuarios WHERE id = ?'
       )
       .get(decoded.idProdutor);
 
@@ -33,8 +33,26 @@ function autenticarToken(req, res, next) {
       usuario.status = 'bloqueado';
     }
 
+    if (
+      usuario.status === 'teste' &&
+      usuario.dataFimTeste &&
+      new Date(usuario.dataFimTeste) < new Date()
+    ) {
+      db.prepare('UPDATE usuarios SET status = ? WHERE id = ?').run(
+        'suspenso',
+        decoded.idProdutor
+      );
+      usuario.status = 'suspenso';
+    }
+
     if (usuario.status === 'bloqueado') {
       return res.status(403).json({ message: 'Usuário bloqueado' });
+    }
+
+    if (usuario.status === 'suspenso') {
+      return res.status(403).json({
+        message: 'Sua conta está suspensa. Selecione um plano para continuar.'
+      });
     }
 
     req.user = decoded;

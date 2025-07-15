@@ -96,7 +96,7 @@ async function verificarEmail(req, res) {
     const listaAdmins = require('../config/admins');
     const perfil = listaAdmins.includes(pendente.email) ? 'admin' : 'funcionario';
 
-    Usuario.create(db, {
+    const novo = Usuario.create(db, {
       nome: pendente.nome,
       nomeFazenda: pendente.nomeFazenda,
       email: pendente.email,
@@ -106,6 +106,12 @@ async function verificarEmail(req, res) {
       codigoVerificacao: null,
       perfil,
     });
+
+    const fimTeste = new Date();
+    fimTeste.setDate(fimTeste.getDate() + 14);
+    db.prepare(
+      'UPDATE usuarios SET status = ?, dataFimTeste = ? WHERE id = ?'
+    ).run('teste', fimTeste.toISOString(), novo.id);
 
     VerificacaoPendente.deleteByEmail(db, endereco);
     res.json({ sucesso: true });
@@ -130,6 +136,24 @@ function login(req, res) {
   if (!usuario.verificado) return res.status(400).json({ message: 'Email não verificado' });
   if (!bcrypt.compareSync(senha, usuario.senha)) {
     return res.status(400).json({ message: 'Senha incorreta' });
+  }
+
+  if (
+    usuario.status === 'teste' &&
+    usuario.dataFimTeste &&
+    new Date(usuario.dataFimTeste) < new Date()
+  ) {
+    db.prepare('UPDATE usuarios SET status = ? WHERE id = ?').run(
+      'suspenso',
+      usuario.id
+    );
+    usuario.status = 'suspenso';
+  }
+
+  if (usuario.status === 'suspenso') {
+    return res.status(403).json({
+      message: 'Sua conta está suspensa. Selecione um plano para continuar.'
+    });
   }
 
   const listaAdmins = require('../config/admins');

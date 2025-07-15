@@ -75,8 +75,9 @@ export default function AdminPainel() {
 
   const excluirUsuario = async () => {
     try {
-      await api.delete(`/admin/usuarios/${modalExcluir.id}`, {
-        data: { motivo: modalExcluir.motivo, backup: modalExcluir.backup },
+      await api.patch(`/admin/excluir/${modalExcluir.id}`, {
+        motivo: modalExcluir.motivo,
+        confirmacao: modalExcluir.texto,
       });
       toast.success('Usuário excluído');
       setModalExcluir(null);
@@ -92,6 +93,7 @@ export default function AdminPainel() {
       bloqueado: 'bg-red-100 text-red-700',
       pendente: 'bg-yellow-100 text-yellow-700',
       teste: 'bg-blue-100 text-blue-700',
+      suspenso: 'bg-red-100 text-red-700',
       inativo: 'bg-gray-100 text-gray-700',
     };
     return (
