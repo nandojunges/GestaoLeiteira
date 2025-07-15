@@ -26,7 +26,7 @@ export default function Saude() {
   const infoAnimais = animais.map(a => {
     const oc = ocorrencias.filter(o => String(o.animal) === String(a.numero));
     const tr = tratamentos.filter(t => String(t.animal) === String(a.numero));
-    const status = calcularStatusSaude(oc, tr);
+    const status = calcularStatusSaude(a.numero, ocorrencias, tratamentos);
     const ultimaOc = oc.sort((b, c) => parseData(c.data) - parseData(b.data))[0];
     const ultimoTr = tr.sort((b, c) => parseData(c.data) - parseData(b.data))[0];
     return { ...a, status, ultimaOc: ultimaOc?.data, ultimoTr: ultimoTr?.data, ocorrencias: oc, tratamentos: tr };
