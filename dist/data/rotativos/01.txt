@@ -1,5 +1,0 @@
-titulo: Bem-vindo ao Gestão Leiteira
-mensagem: Controle total do rebanho e reprodução de forma eficiente.
-mostrarImagem: true
-imagem: icones/tela.png, icones/tela.png
-tempo: 7

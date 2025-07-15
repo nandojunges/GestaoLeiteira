@@ -1,5 +1,0 @@
-titulo: Mais produtividade 
-mensagem: Agilize suas tarefas!
-mostrarImagem: false
-imagem:
-tempo: 5
