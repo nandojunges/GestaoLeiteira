@@ -12,9 +12,15 @@ export function formatarData(data) {
   return d.toLocaleDateString('pt-BR');
 }
 
-export function calcularStatusSaude(ocorrencias = [], tratamentos = []) {
+export function calcularStatusSaude(id, ocorrencias = [], tratamentos = []) {
   const hoje = new Date();
-  const datasTrat = tratamentos
+  const ocFiltradas = ocorrencias.filter(o =>
+    id ? String(o.animal) === String(id) : true
+  );
+  const trFiltrados = tratamentos.filter(t =>
+    id ? String(t.animal) === String(id) : true
+  );
+  const datasTrat = trFiltrados
     .map(t => parseData(t.data))
     .filter(Boolean)
     .sort((a, b) => b - a);
@@ -22,7 +28,7 @@ export function calcularStatusSaude(ocorrencias = [], tratamentos = []) {
     const diff = (hoje - datasTrat[0]) / (1000 * 60 * 60 * 24);
     if (diff <= 15) return 'tratamento';
   }
-  const datasOc = ocorrencias
+  const datasOc = ocFiltradas
     .map(o => parseData(o.data))
     .filter(Boolean)
     .sort((a, b) => b - a);
