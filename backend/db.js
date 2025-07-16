@@ -26,6 +26,7 @@ const createUsuarios = `CREATE TABLE IF NOT EXISTS usuarios (
   verificado INTEGER DEFAULT 0,
   codigoVerificacao TEXT,
   perfil TEXT DEFAULT 'usuario',
+  tipoConta TEXT DEFAULT 'usuario',
   plano TEXT DEFAULT 'gratis',
   planoSolicitado TEXT DEFAULT NULL,
   formaPagamento TEXT DEFAULT NULL,
@@ -281,6 +282,10 @@ function applyMigrations(database) {
   let usuarioCols = database.prepare('PRAGMA table_info(usuarios)').all();
   if (!usuarioCols.some(c => c.name === 'perfil')) {
     database.exec("ALTER TABLE usuarios ADD COLUMN perfil TEXT DEFAULT 'usuario'");
+  }
+  usuarioCols = database.prepare('PRAGMA table_info(usuarios)').all();
+  if (!usuarioCols.some(c => c.name === 'tipoConta')) {
+    database.exec("ALTER TABLE usuarios ADD COLUMN tipoConta TEXT DEFAULT 'usuario'");
   }
   usuarioCols = database.prepare('PRAGMA table_info(usuarios)').all();
   if (!usuarioCols.some(c => c.name === 'plano')) {

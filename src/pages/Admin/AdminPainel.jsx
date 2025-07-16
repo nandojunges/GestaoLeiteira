@@ -29,7 +29,7 @@ export default function AdminPainel() {
 
   const liberar = async () => {
     try {
-      await api.patch(`/admin/liberar/${modalLiberar.id}`, { dias: modalLiberar.dias });
+      await api.patch(`/admin/usuario/${modalLiberar.id}/estender`, { dias: modalLiberar.dias });
       toast.success('Usuário liberado');
       setModalLiberar(null);
       carregar();
@@ -40,7 +40,7 @@ export default function AdminPainel() {
 
   const bloquear = async () => {
     try {
-      await api.patch(`/admin/bloquear/${modalBloquear}`);
+      await api.patch(`/admin/usuario/${modalBloquear}/status`, { status: 'suspenso' });
       toast.success('Usuário atualizado');
       setModalBloquear(null);
       carregar();
@@ -51,8 +51,8 @@ export default function AdminPainel() {
 
   const alterarPlano = async () => {
     try {
-      await api.patch(`/admin/alterar-plano/${modalAlterar.id}`, {
-        planoSolicitado: modalAlterar.plano,
+      await api.patch(`/admin/usuario/${modalAlterar.id}/plano`, {
+        plano: modalAlterar.plano,
         formaPagamento: modalAlterar.forma,
       });
       toast.success('Plano alterado');
@@ -65,7 +65,7 @@ export default function AdminPainel() {
 
   const aprovarPlano = async (id) => {
     try {
-      await api.patch(`/admin/aprovar-pagamento/${id}`);
+      await api.patch(`/admin/usuario/${id}/plano`, { aprovar: true });
       toast.success('Plano aprovado');
       carregar();
     } catch (err) {
@@ -75,10 +75,7 @@ export default function AdminPainel() {
 
   const excluirUsuario = async () => {
     try {
-      await api.patch(`/admin/excluir/${modalExcluir.id}`, {
-        motivo: modalExcluir.motivo,
-        confirmacao: modalExcluir.texto,
-      });
+      await api.delete(`/admin/usuario/${modalExcluir.id}`);
       toast.success('Usuário excluído');
       setModalExcluir(null);
       carregar();

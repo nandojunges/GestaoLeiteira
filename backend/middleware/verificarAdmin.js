@@ -17,7 +17,7 @@ module.exports = async function verificarAdmin(req, res, next) {
       .prepare('SELECT * FROM usuarios WHERE id = ?')
       .get(usuarioJwt.idProdutor);
 
-    if (!req.usuario || req.usuario.perfil !== 'admin') {
+    if (!req.usuario || (req.usuario.perfil !== 'admin' && req.usuario.tipoConta !== 'admin')) {
       return res
         .status(403)
         .json({ error: 'Acesso restrito a administradores' });
