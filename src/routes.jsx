@@ -74,8 +74,7 @@ const routes = createRoutesFromElements(
     <Route path="/fazenda" element={<Fazenda />} />
     <Route path="/painel" element={<Fazenda />} />
     <Route path="/configuracoes-inicial" element={<ConfigTelaInicial />} />
-    <Route path="/escolher-plano" element={<RotaProtegida><EscolherPlano /></RotaProtegida>} />
-    <Route path="/planos" element={<RotaProtegida><EscolherPlanoUsuario /></RotaProtegida>} />
+    {/* Seleção de plano agora ocorre no cadastro */}
     <Route path="/status-plano" element={<RotaProtegida><StatusPlanoUsuario /></RotaProtegida>} />
 
     <Route path="/logout" element={<Logout />} />

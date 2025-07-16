@@ -64,7 +64,7 @@ router.get('/admin/planos', async (req, res) => {
     const email = unsanitizeEmail(dir);
     const db = initDB(email);
     const usuarios = db.prepare(`
-      SELECT id, nome, email, plano, planoSolicitado, formaPagamento, status, dataLiberado, dataFimLiberacao
+      SELECT id, nome, email, telefone, plano, planoSolicitado, formaPagamento, status, dataLiberado, dataFimLiberacao
       FROM usuarios WHERE perfil != 'admin'
     `).all();
 
