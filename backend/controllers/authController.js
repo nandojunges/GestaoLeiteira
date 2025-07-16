@@ -9,7 +9,7 @@ const SECRET = process.env.JWT_SECRET || 'segredo';
 
 // ➤ Cadastro inicial: gera código e envia por e-mail
 async function cadastro(req, res) {
-  const { nome, nomeFazenda, email: endereco, telefone, senha } = req.body;
+  const { nome, nomeFazenda, email: endereco, telefone, senha, plano, formaPagamento } = req.body;
   const codigo = Math.floor(100000 + Math.random() * 900000).toString();
   const agora = new Date().toISOString();
 
@@ -40,6 +40,8 @@ async function cadastro(req, res) {
         nomeFazenda,
         telefone,
         senha: hash,
+        planoSolicitado: plano,
+        formaPagamento,
         criado_em: agora,
       });
     } else {
@@ -50,6 +52,8 @@ async function cadastro(req, res) {
         nomeFazenda,
         telefone,
         senha: hash,
+        planoSolicitado: plano,
+        formaPagamento,
         criado_em: agora,
       });
     }
@@ -107,11 +111,9 @@ async function verificarEmail(req, res) {
       perfil,
     });
 
-    const fimTeste = new Date();
-    fimTeste.setDate(fimTeste.getDate() + 14);
     db.prepare(
-      'UPDATE usuarios SET status = ?, dataFimTeste = ? WHERE id = ?'
-    ).run('teste', fimTeste.toISOString(), novo.id);
+      'UPDATE usuarios SET status = ?, planoSolicitado = ?, formaPagamento = ? WHERE id = ?'
+    ).run('pendente', pendente.planoSolicitado, pendente.formaPagamento, novo.id);
 
     VerificacaoPendente.deleteByEmail(db, endereco);
     res.json({ sucesso: true });

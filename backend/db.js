@@ -44,6 +44,8 @@ const createVerificacoesPendentes = `CREATE TABLE IF NOT EXISTS verificacoes_pen
   nomeFazenda TEXT,
   telefone TEXT,
   senha TEXT,
+  planoSolicitado TEXT,
+  formaPagamento TEXT,
   criado_em DATETIME
 )`;
 
@@ -185,6 +187,14 @@ function applyMigrations(database) {
   database.exec(createProdutores);
   database.exec(createFazendas);
   database.exec(createMetodosPagamento);
+
+  let pendCols = database.prepare('PRAGMA table_info(verificacoes_pendentes)').all();
+  if (!pendCols.some(c => c.name === 'planoSolicitado')) {
+    database.exec("ALTER TABLE verificacoes_pendentes ADD COLUMN planoSolicitado TEXT");
+  }
+  if (!pendCols.some(c => c.name === 'formaPagamento')) {
+    database.exec("ALTER TABLE verificacoes_pendentes ADD COLUMN formaPagamento TEXT");
+  }
 
   let produtorCols = database.prepare('PRAGMA table_info(produtores)').all();
   if (!produtorCols.some(c => c.name === 'status')) {

@@ -4,8 +4,9 @@
 function create(db, dados) {
   const stmt = db.prepare(`
     INSERT INTO verificacoes_pendentes (
-      email, codigo, nome, nomeFazenda, telefone, senha, criado_em
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      email, codigo, nome, nomeFazenda, telefone, senha,
+      planoSolicitado, formaPagamento, criado_em
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const info = stmt.run(
@@ -15,6 +16,8 @@ function create(db, dados) {
     dados.nomeFazenda,
     dados.telefone,
     dados.senha,
+    dados.planoSolicitado,
+    dados.formaPagamento,
     dados.criado_em
   );
 
@@ -41,7 +44,8 @@ function getAll(db) {
 function updateByEmail(db, email, dados) {
   db.prepare(`
     UPDATE verificacoes_pendentes
-    SET codigo = ?, nome = ?, nomeFazenda = ?, telefone = ?, senha = ?, criado_em = ?
+    SET codigo = ?, nome = ?, nomeFazenda = ?, telefone = ?, senha = ?,
+        planoSolicitado = ?, formaPagamento = ?, criado_em = ?
     WHERE email = ?
   `).run(
     dados.codigo,
@@ -49,6 +53,8 @@ function updateByEmail(db, email, dados) {
     dados.nomeFazenda,
     dados.telefone,
     dados.senha,
+    dados.planoSolicitado,
+    dados.formaPagamento,
     dados.criado_em,
     email
   );
