@@ -26,8 +26,9 @@ function create(db, usuario) {
       senha,
       verificado,
       codigoVerificacao,
-      perfil
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      perfil,
+      tipoConta
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const info = stmt.run(
@@ -38,7 +39,8 @@ function create(db, usuario) {
     usuario.senha,
     usuario.verificado ? 1 : 0,
     usuario.codigoVerificacao,
-    usuario.perfil || 'funcionario'  // Corrigido aqui: padrão agora é 'funcionario'
+    usuario.perfil || 'funcionario', // padrão
+    usuario.tipoConta || usuario.perfil || 'usuario'
   );
 
   return getById(db, info.lastInsertRowid);

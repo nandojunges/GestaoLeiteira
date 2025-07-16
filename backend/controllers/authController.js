@@ -98,7 +98,8 @@ async function verificarEmail(req, res) {
     }
 
     const listaAdmins = require('../config/admins');
-    const perfil = listaAdmins.includes(pendente.email) ? 'admin' : 'funcionario';
+    const tipoConta = listaAdmins.includes(pendente.email) ? 'admin' : 'usuario';
+    const perfil = tipoConta === 'admin' ? 'admin' : 'funcionario';
 
     const novo = Usuario.create(db, {
       nome: pendente.nome,
@@ -109,6 +110,7 @@ async function verificarEmail(req, res) {
       verificado: 1,
       codigoVerificacao: null,
       perfil,
+      tipoConta,
     });
 
     db.prepare(
@@ -140,26 +142,28 @@ function login(req, res) {
     return res.status(400).json({ message: 'Senha incorreta' });
   }
 
-  if (
-    usuario.status === 'teste' &&
-    usuario.dataFimTeste &&
-    new Date(usuario.dataFimTeste) < new Date()
-  ) {
-    db.prepare('UPDATE usuarios SET status = ? WHERE id = ?').run(
-      'suspenso',
-      usuario.id
-    );
-    usuario.status = 'suspenso';
-  }
-
-  if (usuario.status === 'suspenso') {
-    return res.status(403).json({
-      message: 'Sua conta está suspensa. Selecione um plano para continuar.'
-    });
-  }
-
   const listaAdmins = require('../config/admins');
-  const isAdmin = listaAdmins.includes(email);
+  const isAdmin = usuario.tipoConta === 'admin' || listaAdmins.includes(email);
+
+  if (!isAdmin) {
+    if (
+      usuario.status === 'teste' &&
+      usuario.dataFimTeste &&
+      new Date(usuario.dataFimTeste) < new Date()
+    ) {
+      db.prepare('UPDATE usuarios SET status = ? WHERE id = ?').run(
+        'suspenso',
+        usuario.id
+      );
+      usuario.status = 'suspenso';
+    }
+
+    if (usuario.status === 'suspenso') {
+      return res.status(403).json({
+        message: 'Sua conta está suspensa. Selecione um plano para continuar.'
+      });
+    }
+  }
 
  const payload = {
   idProdutor: usuario.id,

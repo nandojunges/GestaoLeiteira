@@ -38,7 +38,6 @@ export default function NavegacaoPrincipal() {
     { id: 'calendario', label: 'CALENDÁRIO', icone: '/icones/calendario.png', title: 'Agenda de atividades', visivelPara: ['admin', 'funcionario'] },
     { id: 'ajustes', label: 'AJUSTES', icone: '/icones/indicadores.png', title: 'Configurações do sistema', visivelPara: ['admin', 'funcionario'] },
     { id: 'admin', label: 'ADMIN', icone: '/icones/indicadores.png', title: 'Painel administrativo', visivelPara: ['admin'] },
-    { id: 'painel-admin-planos', label: 'PLANOS', icone: '/icones/indicadores.png', title: 'Gestão de planos', visivelPara: ['admin'] },
     { id: 'relatorio-admin', label: 'RELATÓRIOS', icone: '/icones/relatorios.png', title: 'Relatórios administrativos', visivelPara: ['admin'] },
   ].filter((aba) => aba.visivelPara.includes(tipoUsuario));
 

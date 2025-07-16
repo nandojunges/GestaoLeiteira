@@ -25,7 +25,6 @@ import Logout from './pages/Auth/Logout';
 
 import Admin from './pages/Admin/Admin';
 import ListaUsuarios from './pages/Admin/ListaUsuarios';
-import PainelPlanosAdmin from './pages/Admin/PainelPlanosAdmin';
 import PainelAprovacaoAdmin from './pages/Admin/PainelAprovacaoAdmin';
 import RelatorioAdmin from './pages/Admin/RelatorioAdmin';
 import PainelAprovacoesPendentes from './pages/Admin/PainelAprovacoesPendentes'; // ✅ Nova página
@@ -66,7 +65,6 @@ const routes = createRoutesFromElements(
 
     <Route path="/admin" element={<RotaAdmin><Admin /></RotaAdmin>} />
     <Route path="/admin/usuarios" element={<RotaAdmin><ListaUsuarios /></RotaAdmin>} />
-    <Route path="/painel-admin-planos" element={<RotaAdmin><PainelPlanosAdmin /></RotaAdmin>} />
     <Route path="/painel-aprovacao-admin" element={<RotaAdmin><PainelAprovacaoAdmin /></RotaAdmin>} />
     <Route path="/relatorio-admin" element={<RotaAdmin><RelatorioAdmin /></RotaAdmin>} />
     <Route path="/admin/aprovacoes" element={<RotaAdmin><PainelAprovacoesPendentes /></RotaAdmin>} /> {/* ✅ Nova rota */}

@@ -112,6 +112,59 @@ router.delete('/admin/usuarios/:id', async (req, res) => {
   res.json({ message: 'Usuário removido' });
 });
 
+// === Novas rotas simplificadas ===
+router.patch('/admin/usuario/:id/status', (req, res) => {
+  const { status } = req.body;
+  const db = getDb();
+  const usuario = db.prepare('SELECT id FROM usuarios WHERE id = ?').get(req.params.id);
+  if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado' });
+  db.prepare('UPDATE usuarios SET status = ? WHERE id = ?').run(status, req.params.id);
+  res.json({ message: 'Status atualizado' });
+});
+
+router.patch('/admin/usuario/:id/plano', (req, res) => {
+  const { plano, aprovar, formaPagamento } = req.body;
+  const db = getDb();
+  const usuario = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(req.params.id);
+  if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+  if (aprovar) {
+    const inicio = new Date();
+    db.prepare(
+      'UPDATE usuarios SET plano = ?, planoSolicitado = NULL, formaPagamento = NULL, status = ?, dataLiberado = ? WHERE id = ?'
+    ).run(usuario.planoSolicitado, 'ativo', inicio.toISOString(), req.params.id);
+    return res.json({ message: 'Plano aprovado' });
+  }
+
+  if (plano) {
+    db.prepare('UPDATE usuarios SET plano = ?, planoSolicitado = NULL, formaPagamento = ? WHERE id = ?')
+      .run(plano, formaPagamento || null, req.params.id);
+    return res.json({ message: 'Plano atualizado' });
+  }
+
+  res.status(400).json({ error: 'Dados inválidos' });
+});
+
+router.patch('/admin/usuario/:id/estender', (req, res) => {
+  const { dias } = req.body;
+  const db = getDb();
+  const usuario = db.prepare('SELECT id FROM usuarios WHERE id = ?').get(req.params.id);
+  if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado' });
+  const inicio = new Date();
+  const fim = new Date(inicio);
+  fim.setDate(inicio.getDate() + parseInt(dias || 30, 10));
+  db.prepare(
+    'UPDATE usuarios SET status = ?, dataLiberado = ?, dataFimLiberacao = ? WHERE id = ?'
+  ).run('ativo', inicio.toISOString(), fim.toISOString(), req.params.id);
+  res.json({ message: 'Prazo estendido' });
+});
+
+router.delete('/admin/usuario/:id', (req, res) => {
+  const db = getDb();
+  db.prepare('DELETE FROM usuarios WHERE id = ?').run(req.params.id);
+  res.json({ message: 'Usuário removido' });
+});
+
 router.patch('/admin/liberar/:id', (req, res) => {
   const { dias } = req.body;
   const db = getDb();
