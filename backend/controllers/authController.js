@@ -105,8 +105,39 @@ async function verificarEmail(req, res) {
       return res.status(400).json({ erro: 'Email já cadastrado.' });
     }
 
-    const tokenTemp = jwt.sign({ email: pendente.email }, SECRET, { expiresIn: '1h' });
+    if (pendente.planoSolicitado) {
+      const listaAdmins = require('../config/admins');
+      const tipoConta = listaAdmins.includes(pendente.email) ? 'admin' : 'usuario';
+      const perfil = tipoConta === 'admin' ? 'admin' : 'funcionario';
 
+      const novo = Usuario.create(db, {
+        nome: pendente.nome,
+        nomeFazenda: pendente.nomeFazenda,
+        email: pendente.email,
+        telefone: pendente.telefone,
+        senha: pendente.senha,
+        verificado: 1,
+        codigoVerificacao: null,
+        perfil,
+        tipoConta,
+      });
+
+      const agora = new Date().toISOString();
+      db.prepare(
+        'UPDATE usuarios SET status = ?, planoSolicitado = ?, formaPagamento = ?, dataCadastro = ? WHERE id = ?'
+      ).run(
+        'pendente',
+        pendente.planoSolicitado,
+        pendente.planoSolicitado === 'teste_gratis' ? null : pendente.formaPagamento,
+        agora,
+        novo.id
+      );
+
+      VerificacaoPendente.deleteByEmail(db, endereco);
+      return res.json({ sucesso: true });
+    }
+
+    const tokenTemp = jwt.sign({ email: pendente.email }, SECRET, { expiresIn: '1h' });
     res.json({ sucesso: true, token: tokenTemp });
   } catch (err) {
     console.error('Erro na verificação:', err);

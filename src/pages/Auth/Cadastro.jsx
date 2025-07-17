@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../api';
 
 export default function Cadastro() {
@@ -11,11 +11,21 @@ export default function Cadastro() {
     telefone: '',
     senha: '',
     confirmar: '',
+    plano: '',
+    formaPagamento: 'pix',
   });
   const [erro, setErro] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const plano = searchParams.get('plano');
+    if (plano) {
+      setForm((f) => ({ ...f, plano }));
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,6 +58,8 @@ export default function Cadastro() {
         email: form.email,
         telefone: form.telefone,
         senha: form.senha,
+        plano: form.plano,
+        formaPagamento: form.plano === 'teste_gratis' ? null : form.formaPagamento,
       });
       localStorage.setItem('emailCadastro', form.email);
       localStorage.setItem(
@@ -58,6 +70,8 @@ export default function Cadastro() {
           email: form.email,
           telefone: form.telefone,
           senha: form.senha,
+          plano: form.plano,
+          formaPagamento: form.formaPagamento,
         })
       );
       navigate('/verificar-email');
@@ -186,6 +200,29 @@ export default function Cadastro() {
               </button>
             </div>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Plano</label>
+            <input
+              type="text"
+              value={form.plano}
+              readOnly
+              className="input-senha bg-gray-100 cursor-not-allowed"
+            />
+          </div>
+          {form.plano && form.plano !== 'teste_gratis' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Forma de Pagamento</label>
+              <select
+                className="border rounded w-full p-2"
+                value={form.formaPagamento}
+                onChange={(e) => setForm({ ...form, formaPagamento: e.target.value })}
+              >
+                <option value="pix">Pix</option>
+                <option value="boleto">Boleto</option>
+                <option value="cartao">Cartão</option>
+              </select>
+            </div>
+          )}
           <button
             type="submit"
             style={{
