@@ -9,7 +9,15 @@ const SECRET = process.env.JWT_SECRET || 'segredo';
 
 // ➤ Cadastro inicial: gera código e envia por e-mail
 async function cadastro(req, res) {
-  const { nome, nomeFazenda, email: endereco, telefone, senha, plano, formaPagamento } = req.body;
+  const {
+    nome,
+    nomeFazenda,
+    email: endereco,
+    telefone,
+    senha,
+    plano: planoSolicitado,
+    formaPagamento,
+  } = req.body;
   const codigo = Math.floor(100000 + Math.random() * 900000).toString();
   const agora = new Date().toISOString();
 
@@ -40,7 +48,7 @@ async function cadastro(req, res) {
         nomeFazenda,
         telefone,
         senha: hash,
-        planoSolicitado: plano,
+        planoSolicitado,
         formaPagamento,
         criado_em: agora,
       });
@@ -52,7 +60,7 @@ async function cadastro(req, res) {
         nomeFazenda,
         telefone,
         senha: hash,
-        planoSolicitado: plano,
+        planoSolicitado,
         formaPagamento,
         criado_em: agora,
       });
@@ -97,8 +105,41 @@ async function verificarEmail(req, res) {
       return res.status(400).json({ erro: 'Email já cadastrado.' });
     }
 
+    const tokenTemp = jwt.sign({ email: pendente.email }, SECRET, { expiresIn: '1h' });
+
+    res.json({ sucesso: true, token: tokenTemp });
+  } catch (err) {
+    console.error('Erro na verificação:', err);
+    res.status(500).json({ erro: 'Erro interno no servidor.' });
+  }
+}
+
+// ➤ Finaliza cadastro após escolha de plano
+async function finalizarCadastro(req, res) {
+  const { token, plano, formaPagamento } = req.body;
+
+  if (!token || !plano) {
+    return res.status(400).json({ erro: 'Dados inválidos.' });
+  }
+
+  let payload;
+  try {
+    payload = jwt.verify(token, SECRET);
+  } catch (err) {
+    return res.status(400).json({ erro: 'Token inválido.' });
+  }
+
+  const email = payload.email;
+  const db = initDB(email);
+
+  try {
+    const pendente = VerificacaoPendente.getByEmail(db, email);
+    if (!pendente) {
+      return res.status(400).json({ erro: 'Cadastro não encontrado.' });
+    }
+
     const listaAdmins = require('../config/admins');
-    const tipoConta = listaAdmins.includes(pendente.email) ? 'admin' : 'usuario';
+    const tipoConta = listaAdmins.includes(email) ? 'admin' : 'usuario';
     const perfil = tipoConta === 'admin' ? 'admin' : 'funcionario';
 
     const novo = Usuario.create(db, {
@@ -113,14 +154,16 @@ async function verificarEmail(req, res) {
       tipoConta,
     });
 
+    const agora = new Date().toISOString();
     db.prepare(
-      'UPDATE usuarios SET status = ?, planoSolicitado = ?, formaPagamento = ? WHERE id = ?'
-    ).run('pendente', pendente.planoSolicitado, pendente.formaPagamento, novo.id);
+      'UPDATE usuarios SET status = ?, planoSolicitado = ?, formaPagamento = ?, dataCadastro = ? WHERE id = ?'
+    ).run('pendente', plano, plano === 'teste_gratis' ? null : formaPagamento, agora, novo.id);
 
-    VerificacaoPendente.deleteByEmail(db, endereco);
+    VerificacaoPendente.deleteByEmail(db, email);
+
     res.json({ sucesso: true });
   } catch (err) {
-    console.error('Erro na verificação:', err);
+    console.error('Erro ao finalizar cadastro:', err);
     res.status(500).json({ erro: 'Erro interno no servidor.' });
   }
 }
@@ -146,6 +189,9 @@ function login(req, res) {
   const isAdmin = usuario.tipoConta === 'admin' || listaAdmins.includes(email);
 
   if (!isAdmin) {
+    if (usuario.status !== 'ativo' && usuario.status !== 'teste') {
+      return res.status(403).json({ message: 'Aguardando liberação do plano.' });
+    }
     if (
       usuario.status === 'teste' &&
       usuario.dataFimTeste &&
@@ -261,4 +307,5 @@ module.exports = {
   solicitarReset,
   resetarSenha,
   verificarCodigo,
+  finalizarCadastro,
 };

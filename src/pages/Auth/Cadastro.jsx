@@ -11,8 +11,6 @@ export default function Cadastro() {
     telefone: '',
     senha: '',
     confirmar: '',
-    plano: 'basico',
-    formaPagamento: 'pix',
   });
   const [erro, setErro] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
@@ -50,19 +48,18 @@ export default function Cadastro() {
         email: form.email,
         telefone: form.telefone,
         senha: form.senha,
-        plano: form.plano,
-        formaPagamento: form.formaPagamento,
       });
       localStorage.setItem('emailCadastro', form.email);
-      localStorage.setItem('dadosCadastro', JSON.stringify({
-        nome: form.nome,
-        nomeFazenda: form.fazenda,
-        email: form.email,
-        telefone: form.telefone,
-        senha: form.senha,
-        plano: form.plano,
-        formaPagamento: form.formaPagamento,
-      }));
+      localStorage.setItem(
+        'dadosCadastro',
+        JSON.stringify({
+          nome: form.nome,
+          nomeFazenda: form.fazenda,
+          email: form.email,
+          telefone: form.telefone,
+          senha: form.senha,
+        })
+      );
       navigate('/verificar-email');
     } catch (err) {
       setErro(err.response?.data?.message || 'Erro ao cadastrar');
@@ -188,30 +185,6 @@ export default function Cadastro() {
                 {mostrarConfirmar ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Plano</label>
-            <select
-              className="border rounded w-full p-2"
-              value={form.plano}
-              onChange={(e) => setForm({ ...form, plano: e.target.value })}
-            >
-              <option value="basico">Básico</option>
-              <option value="intermediario">Intermediário</option>
-              <option value="completo">Completo</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Forma de Pagamento</label>
-            <select
-              className="border rounded w-full p-2"
-              value={form.formaPagamento}
-              onChange={(e) => setForm({ ...form, formaPagamento: e.target.value })}
-            >
-              <option value="pix">Pix</option>
-              <option value="cartao">Cartão</option>
-              <option value="boleto">Boleto</option>
-            </select>
           </div>
           <button
             type="submit"

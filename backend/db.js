@@ -30,6 +30,7 @@ const createUsuarios = `CREATE TABLE IF NOT EXISTS usuarios (
   plano TEXT DEFAULT 'gratis',
   planoSolicitado TEXT DEFAULT NULL,
   formaPagamento TEXT DEFAULT NULL,
+  dataCadastro TEXT DEFAULT NULL,
   metodoPagamentoId INTEGER,
   dataLiberado TEXT DEFAULT NULL,
   dataFimLiberacao TEXT DEFAULT NULL,
@@ -296,6 +297,9 @@ function applyMigrations(database) {
   }
   if (!usuarioCols.some(c => c.name === 'formaPagamento')) {
     database.exec('ALTER TABLE usuarios ADD COLUMN formaPagamento TEXT DEFAULT NULL');
+  }
+  if (!usuarioCols.some(c => c.name === 'dataCadastro')) {
+    database.exec('ALTER TABLE usuarios ADD COLUMN dataCadastro TEXT DEFAULT NULL');
   }
   if (!usuarioCols.some(c => c.name === 'metodoPagamentoId')) {
     database.exec('ALTER TABLE usuarios ADD COLUMN metodoPagamentoId INTEGER');

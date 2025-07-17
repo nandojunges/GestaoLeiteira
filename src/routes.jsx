@@ -36,6 +36,7 @@ import ConfigTelaInicial from './pages/ConfigTelaInicial';
 
 import EscolherPlano from './pages/EscolherPlano';
 import EscolherPlanoUsuario from './pages/EscolherPlanoUsuario';
+import EscolherPlanoCadastro from './pages/EscolherPlanoCadastro';
 import StatusPlanoUsuario from './pages/StatusPlanoUsuario';
 
 const routes = createRoutesFromElements(
@@ -59,6 +60,7 @@ const routes = createRoutesFromElements(
 
     <Route path="/cadastro" element={<Cadastro />} />
     <Route path="/verificar-email" element={<VerificarEmail />} />
+    <Route path="/escolher-plano" element={<EscolherPlanoCadastro />} />
     <Route path="/login" element={<Login />} />
     <Route path="/esqueci-senha" element={<EsqueciSenha />} />
     <Route path="/bemvindo" element={<BemVindo />} />

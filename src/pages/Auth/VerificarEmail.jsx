@@ -59,9 +59,10 @@ export default function VerificarEmail() {
 
       if (res.data?.sucesso) {
         alert('E-mail verificado com sucesso!');
-        localStorage.removeItem('emailCadastro');
-        localStorage.removeItem('dadosCadastro');
-        navigate('/login');
+        if (res.data.token) {
+          localStorage.setItem('tokenCadastro', res.data.token);
+        }
+        navigate('/escolher-plano');
       } else {
         alert('Código incorreto ou expirado.');
       }
