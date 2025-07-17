@@ -12,6 +12,7 @@ router.post('/register', controller.cadastro); // alias /auth/register
 router.post('/verificar-email', controller.verificarEmail);
 router.post('/verify-code', controller.verificarCodigo); // alias /auth/verify-code
 router.post('/forgot-password', controller.solicitarReset); // envia codigo de reset
+router.post('/finalizar-cadastro', controller.finalizarCadastro);
 
 // ✅ Login (só funciona após verificação do e-mail)
 router.post('/login', controller.login);
