@@ -1,4 +1,11 @@
 // backend/models/Usuario.js
+const fs = require('fs');
+const path = require('path');
+const { getUserDir } = require('../db');
+
+function dirSemCriar(email) {
+  return path.join(__dirname, '..', 'data', email.replace(/[@.]/g, '_'));
+}
 
 function getAll(db) {
   return db
@@ -43,13 +50,37 @@ function create(db, usuario) {
     usuario.tipoConta || usuario.perfil || 'usuario'
   );
 
-  return getById(db, info.lastInsertRowid);
+  const novo = getById(db, info.lastInsertRowid);
+  try {
+    const dir = getUserDir(usuario.email);
+    fs.writeFileSync(
+      path.join(dir, 'usuario.json'),
+      JSON.stringify({ id: novo.id, email: novo.email }, null, 2)
+    );
+  } catch (err) {
+    console.error('Erro ao criar usuario.json:', err.message);
+  }
+
+  return novo;
 }
 
 function getByEmail(db, email) {
-  return db
-    .prepare('SELECT * FROM usuarios WHERE email = ?')
-    .get(email);
+  const dir = dirSemCriar(email);
+  const arquivo = path.join(dir, 'usuario.json');
+  if (!fs.existsSync(dir) || !fs.existsSync(arquivo)) {
+    return undefined;
+  }
+
+  try {
+    const dados = JSON.parse(fs.readFileSync(arquivo, 'utf8'));
+    if (!dados || Object.keys(dados).length === 0) {
+      return undefined;
+    }
+  } catch (_) {
+    return undefined;
+  }
+
+  return db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email);
 }
 
 function getById(db, id) {
