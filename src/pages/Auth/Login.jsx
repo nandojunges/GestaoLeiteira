@@ -253,7 +253,10 @@ if (isAdmin) {
 
               <p className="text-center text-sm text-gray-600 mt-4 font-light">
                 Não tem conta?{' '}
-                <Link to="/cadastro" className="text-blue-600 hover:underline">
+                <Link
+                  to="/escolher-plano"
+                  className="text-blue-600 hover:underline"
+                >
                   Cadastre-se
                 </Link>
               </p>
