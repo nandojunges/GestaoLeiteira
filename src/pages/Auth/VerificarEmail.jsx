@@ -61,8 +61,10 @@ export default function VerificarEmail() {
         alert('E-mail verificado com sucesso!');
         if (res.data.token) {
           localStorage.setItem('tokenCadastro', res.data.token);
+          navigate('/escolher-plano-finalizar');
+        } else {
+          navigate('/login');
         }
-        navigate('/escolher-plano');
       } else {
         alert('Código incorreto ou expirado.');
       }
