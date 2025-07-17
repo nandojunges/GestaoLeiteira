@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../../api';
 
 export default function Cadastro() {
@@ -200,15 +200,14 @@ export default function Cadastro() {
               </button>
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Plano</label>
-            <input
-              type="text"
-              value={form.plano}
-              readOnly
-              className="input-senha bg-gray-100 cursor-not-allowed"
-            />
-          </div>
+          {form.plano && (
+            <div className="text-sm text-center">
+              Plano escolhido: <strong>{form.plano}</strong>{' '}
+              <Link to="/escolher-plano" className="text-blue-600 hover:underline">
+                Alterar plano
+              </Link>
+            </div>
+          )}
           {form.plano && form.plano !== 'teste_gratis' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Forma de Pagamento</label>
