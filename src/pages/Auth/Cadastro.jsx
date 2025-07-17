@@ -22,10 +22,12 @@ export default function Cadastro() {
 
   useEffect(() => {
     const plano = searchParams.get('plano');
-    if (plano) {
+    if (!plano) {
+      navigate('/escolher-plano');
+    } else {
       setForm((f) => ({ ...f, plano }));
     }
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
