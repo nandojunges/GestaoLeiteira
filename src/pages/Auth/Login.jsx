@@ -257,7 +257,7 @@ if (isAdmin) {
                   to="/escolher-plano"
                   className="text-blue-600 hover:underline"
                 >
-                  Cadastre-se
+                  Cadastrar-se
                 </Link>
               </p>
             </div>
