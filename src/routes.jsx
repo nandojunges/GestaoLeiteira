@@ -60,6 +60,7 @@ const routes = createRoutesFromElements(
 
     <Route path="/cadastro" element={<Cadastro />} />
     <Route path="/verificar-email" element={<VerificarEmail />} />
+    <Route path="/verificar-codigo" element={<VerificarEmail />} />
     <Route path="/escolher-plano" element={<EscolherPlanoInicio />} />
     <Route path="/escolher-plano-finalizar" element={<EscolherPlanoCadastro />} />
     <Route path="/login" element={<Login />} />

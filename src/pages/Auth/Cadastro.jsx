@@ -76,7 +76,7 @@ export default function Cadastro() {
           formaPagamento: form.formaPagamento,
         })
       );
-      navigate('/verificar-email');
+      navigate('/verificar-codigo');
     } catch (err) {
       setErro(err.response?.data?.message || 'Erro ao cadastrar');
     }

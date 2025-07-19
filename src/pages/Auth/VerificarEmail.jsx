@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import api from '../../api';
 
 export default function VerificarEmail() {
@@ -8,6 +9,7 @@ export default function VerificarEmail() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [tempo, setTempo] = useState(180);
+  const [podeReenviar, setPodeReenviar] = useState(false);
 
   useEffect(() => {
     const salvo = localStorage.getItem('emailCadastro');
@@ -21,6 +23,11 @@ export default function VerificarEmail() {
       setTempo((t) => (t > 0 ? t - 1 : 0));
     }, 1000);
     return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => setPodeReenviar(true), 30000);
+    return () => clearTimeout(t);
   }, []);
 
   const formatarTempo = (seg) => {
@@ -38,6 +45,8 @@ export default function VerificarEmail() {
     try {
       await api.post('/auth/register', JSON.parse(dados));
       setTempo(180);
+      setPodeReenviar(false);
+      setTimeout(() => setPodeReenviar(true), 30000);
       alert('Código reenviado. Verifique seu e-mail.');
     } catch (err) {
       alert('Erro ao reenviar código.');
@@ -101,10 +110,14 @@ export default function VerificarEmail() {
           width: '100%',
         }}
       >
-        <p className="text-center mb-4">
-          Enviamos um código de verificação para seu e-mail. Digite o código
-          abaixo para confirmar sua conta.
+        <p className="text-center mb-2">
+          Enviamos um código para {email}. Isso pode levar alguns segundos...
         </p>
+        {!podeReenviar && (
+          <div className="flex justify-center mb-2">
+            <Loader2 className="animate-spin" />
+          </div>
+        )}
         {erro && (
           <div className="mb-2 text-red-600 text-sm text-center">{erro}</div>
         )}
@@ -142,7 +155,7 @@ export default function VerificarEmail() {
             Verificar
           </button>
         </form>
-        {tempo === 0 && (
+        {podeReenviar && (
           <button onClick={reenviarCodigo} className="mt-2 text-sm text-blue-600 hover:underline">Reenviar código</button>
         )}
       </div>
