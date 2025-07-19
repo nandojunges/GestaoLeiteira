@@ -72,7 +72,9 @@ async function cadastro(req, res) {
       });
     }
 
-    await emailUtils.enviarCodigo(endereco, codigo);
+    emailUtils
+      .enviarCodigo(endereco, codigo)
+      .catch((err) => console.error('Erro ao enviar e-mail:', err));
     res.status(201).json({ message: 'Código enviado. Verifique o e-mail.' });
   } catch (error) {
     console.error('Erro no cadastro:', error);
