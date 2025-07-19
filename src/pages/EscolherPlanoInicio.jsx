@@ -1,29 +1,34 @@
 import { useNavigate } from 'react-router-dom';
+import './EscolherPlano.css';
 
 export default function EscolherPlanoInicio() {
   const planos = [
     {
       id: 'teste_gratis',
-      nome: 'Teste',
+      nome: 'Teste Grátis',
       preco: 'R$0',
+      cor: '#10b981',
       recursos: ['Acesso por 7 dias'],
     },
     {
       id: 'basico',
       nome: 'Básico',
       preco: 'R$29',
+      cor: '#3b82f6',
       recursos: ['Suporte simples', 'Até 2 usuários'],
     },
     {
       id: 'intermediario',
       nome: 'Intermediário',
       preco: 'R$59',
+      cor: '#f59e0b',
       recursos: ['Suporte completo', '5 usuários', 'Controle de bezerras'],
     },
     {
       id: 'completo',
       nome: 'Completo',
       preco: 'R$89',
+      cor: '#8b5cf6',
       recursos: ['Todos os recursos disponíveis'],
     },
   ];
@@ -35,47 +40,25 @@ export default function EscolherPlanoInicio() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        width: '100%',
-        overflow: 'hidden',
-        margin: 0,
-        padding: 0,
-        backgroundImage: "url('/icones/telafundo.png')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.85)',
-          padding: '40px',
-          borderRadius: '20px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          maxWidth: '800px',
-          width: '100%',
-        }}
-      >
-        <h1 className="text-xl font-bold text-center mb-4">Escolha seu Plano</h1>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="pagina-escolher-plano">
+      <div className="painel-planos">
+        <h1 className="titulo">Escolha seu Plano</h1>
+        <div className="grid-planos">
           {planos.map((p) => (
-            <div
-              key={p.id}
-              className="border rounded-lg shadow-sm p-4 flex flex-col items-center text-center space-y-2"
-            >
-              <h2 className="text-lg font-semibold">{p.nome}</h2>
-              <div className="font-bold">{p.preco}</div>
-              <ul className="text-sm flex-1 list-disc pl-4">
+            <div key={p.id} className="card-plano-modern">
+              <div className="faixa-superior" style={{ backgroundColor: p.cor }} />
+              <h2>{p.nome}</h2>
+              <div className="preco">{p.preco}</div>
+              <ul className="lista-beneficios">
                 {p.recursos.map((r) => (
                   <li key={r}>{r}</li>
                 ))}
               </ul>
-              <button className="botao-acao mt-2" onClick={() => escolher(p.id)}>
+              <button
+                className="btn-escolher-moderno"
+                style={{ backgroundColor: p.cor }}
+                onClick={() => escolher(p.id)}
+              >
                 Selecionar
               </button>
             </div>
