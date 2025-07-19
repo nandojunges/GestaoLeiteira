@@ -379,12 +379,18 @@ function inicializarAdmins(db) {
   ];
 
   admins.forEach((admin) => {
-    const jaExiste = Usuario.getByEmail(db, admin.email);
-    if (!jaExiste) {
-      Usuario.create(db, admin);
-      console.log(`✅ Admin criado: ${admin.email}`);
-    } else {
-      console.log(`ℹ️ Admin já existe: ${admin.email}`);
+    try {
+      // Verifica se o admin já está cadastrado no banco
+      const jaExiste = Usuario.getByEmail(db, admin.email);
+
+      if (!jaExiste) {
+        Usuario.create(db, admin);
+        console.log(`✅ Admin criado: ${admin.email}`);
+      } else {
+        console.log(`ℹ️ Admin já existe no banco: ${admin.email}`);
+      }
+    } catch (err) {
+      console.error(`❌ Erro ao inicializar admin: ${admin.email}`, err.message);
     }
   });
 }
