@@ -5,7 +5,7 @@ import path from 'path';
 import net from 'net';
 import 'dotenv/config';
 
-// 🧹 Limpa a pasta dist com comando do Windows (rd /s /q dist)
+// 🧹 Limpa a pasta dist com comando do Windows
 const distPath = path.join('.', 'dist');
 if (fs.existsSync(distPath)) {
   console.log('🧹 Limpando pasta dist...');
@@ -47,7 +47,7 @@ const build = spawn('npm', ['run', 'build'], { stdio: 'inherit', shell: true });
 build.on('exit', (code) => {
   if (code !== 0) {
     console.error('❌ Erro no build.');
-    return;
+    process.exit(1);
   }
 
   // 🚀 Sobe o backend
@@ -60,13 +60,12 @@ build.on('exit', (code) => {
       clearInterval(esperaBackend);
       client.end();
 
-      // 🌐 Inicia o ngrok direto (sem agente local)
+      // 🌐 Inicia o ngrok
       try {
-       const url = await ngrok.connect(3000);
-console.log(`✅ NGROK rodando em: ${url}`);
-
-       console.log('\n=============================');
+        const url = await ngrok.connect(3000);
+        console.log('\n=============================');
         console.log(`✅ NGROK rodando em: ${url}`);
+        console.log('🌐 Acesse também via: http://localhost:3000');
         console.log('=============================\n');
       } catch (error) {
         console.error('❌ Erro ao iniciar ngrok direto:', error.message || error);
@@ -74,7 +73,7 @@ console.log(`✅ NGROK rodando em: ${url}`);
     });
 
     client.on('error', () => {
-      // Porta ainda não disponível, aguarda...
+      // Porta ainda não disponível, continua tentando...
     });
   }, 1500);
 });
