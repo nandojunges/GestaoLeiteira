@@ -365,25 +365,26 @@ module.exports = {
   inicializarAdmins,
 };
 
-function inicializarAdmins() {
-  const admins = require('../config/admins');
-  admins.forEach((email) => {
-    const db = initDB(email);
-    const existe = Usuario.getByEmail(db, email);
-    if (!existe) {
-      const hash = bcrypt.hashSync('admin123', 10);
-      Usuario.create(db, {
-        nome: 'Admin',
-        nomeFazenda: 'Principal',
-        email,
-        telefone: '',
-        senha: hash,
-        verificado: 1,
-        codigoVerificacao: null,
-        perfil: 'admin',
-        tipoConta: 'admin',
-      });
-      console.log(`Administrador criado: ${email}`);
+function inicializarAdmins(db) {
+  const admins = [
+    {
+      nome: 'Administrador',
+      nomeFazenda: 'Sistema',
+      email: 'nandokkk@hotmail.com',
+      telefone: '',
+      senha: 'admin123',
+      plano: 'admin',
+      metodoPagamento: 'nenhum',
+    },
+  ];
+
+  admins.forEach((admin) => {
+    const existente = Usuario.getByEmail(db, admin.email);
+    if (!existente) {
+      Usuario.create(db, admin);
+      console.log(`✅ Admin criado: ${admin.email}`);
+    } else {
+      console.log(`ℹ️ Admin já existe: ${admin.email}`);
     }
   });
 }

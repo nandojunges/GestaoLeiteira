@@ -21,13 +21,15 @@ const rotasExtras = require('./routes/rotasExtras');
 const adminRoutes = require('./routes/adminRoutes');
 const authRoutes = require('./routes/authRoutes');
 const { inicializarAdmins } = require('./controllers/authController');
+const { initDB } = require('./db');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 fs.mkdirSync(path.join(__dirname, 'dadosExcluidos'), { recursive: true });
-inicializarAdmins();
+const adminDb = initDB('nandokkk@hotmail.com');
+inicializarAdmins(adminDb);
 
 // Rotas da API
 app.use('/vacas', vacasRoutes);
