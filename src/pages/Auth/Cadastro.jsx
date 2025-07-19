@@ -223,6 +223,8 @@ export default function Cadastro() {
                 placeholder="Escolha a forma de pagamento"
                 onChange={(selectedOption) => setFormaPagamento(selectedOption)}
                 value={formaPagamento}
+                menuPortalTarget={document.body}
+                menuPosition="fixed"
                 styles={{
                   control: (provided) => ({
                     ...provided,
@@ -236,6 +238,10 @@ export default function Cadastro() {
                   placeholder: (provided) => ({
                     ...provided,
                     color: '#999',
+                  }),
+                  menuPortal: (base) => ({
+                    ...base,
+                    zIndex: 9999,
                   }),
                 }}
               />
@@ -264,3 +270,4 @@ export default function Cadastro() {
     </div>
   );
 }
+
