@@ -30,6 +30,7 @@ async function cadastro(req, res) {
   VerificacaoPendente.limparExpirados(db);
 
   try {
+    console.log('Verificando se email existe:', endereco);
     const existente = Usuario.existeNoBanco(db, endereco);
     if (existente) {
       if (reset === 'true' || existente.status === 'pendente' || !existente.verificado) {
@@ -361,4 +362,29 @@ module.exports = {
   resetarSenha,
   verificarCodigo,
   finalizarCadastro,
+  inicializarAdmins,
 };
+
+function inicializarAdmins() {
+  const admins = require('../config/admins');
+  admins.forEach((email) => {
+    const db = initDB(email);
+    const existe = Usuario.getByEmail(db, email);
+    if (!existe) {
+      const hash = bcrypt.hashSync('admin123', 10);
+      Usuario.create(db, {
+        nome: 'Admin',
+        nomeFazenda: 'Principal',
+        email,
+        telefone: '',
+        senha: hash,
+        verificado: 1,
+        codigoVerificacao: null,
+        perfil: 'admin',
+        tipoConta: 'admin',
+      });
+      console.log(`Administrador criado: ${email}`);
+    }
+  });
+}
+

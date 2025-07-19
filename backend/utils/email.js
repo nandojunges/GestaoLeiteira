@@ -16,7 +16,11 @@ async function enviarCodigo(destino, codigo) {
     from: process.env.EMAIL_REMETENTE,
     to: destino,
     subject: 'Código de verificação - Gestão Leiteira',
-    text: `Seu código de verificação é: ${codigo}`
+    text: `Seu código de verificação é: ${codigo}`,
+    headers: {
+      'X-Mailer': 'GestaoLeiteira',
+    },
+    replyTo: 'no-reply@gestaoleiteira.com'
   };
 
   try {

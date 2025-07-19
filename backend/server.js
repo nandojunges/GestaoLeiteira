@@ -20,12 +20,14 @@ const mockRoutes = require('./routes/mockRoutes');
 const rotasExtras = require('./routes/rotasExtras');
 const adminRoutes = require('./routes/adminRoutes');
 const authRoutes = require('./routes/authRoutes');
+const { inicializarAdmins } = require('./controllers/authController');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 fs.mkdirSync(path.join(__dirname, 'dadosExcluidos'), { recursive: true });
+inicializarAdmins();
 
 // Rotas da API
 app.use('/vacas', vacasRoutes);

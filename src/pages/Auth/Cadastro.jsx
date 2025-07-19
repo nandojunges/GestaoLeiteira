@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Select from 'react-select';
-import InputMask from 'react-input-mask';
+import InputMask from 'react-input-mask@2.0.4';
 import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../../api';
@@ -61,6 +61,7 @@ export default function Cadastro() {
       return;
     }
     try {
+      navigate('/verificar-codigo');
       await api.post('/auth/register', {
         nome: form.nome,
         nomeFazenda: form.fazenda,
@@ -83,7 +84,6 @@ export default function Cadastro() {
           formaPagamento: formaPagamento ? formaPagamento.value : null,
         })
       );
-      navigate('/verificar-codigo');
     } catch (err) {
       setErro(err.response?.data?.message || 'Erro ao cadastrar');
     }
