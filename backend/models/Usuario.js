@@ -65,22 +65,11 @@ function create(db, usuario) {
 }
 
 function getByEmail(db, email) {
-  const dir = dirSemCriar(email);
-  const arquivo = path.join(dir, 'usuario.json');
-  if (!fs.existsSync(dir) || !fs.existsSync(arquivo)) {
-    return undefined;
-  }
-
-  try {
-    const dados = JSON.parse(fs.readFileSync(arquivo, 'utf8'));
-    if (!dados || Object.keys(dados).length === 0) {
-      return undefined;
-    }
-  } catch (_) {
-    return undefined;
-  }
-
-  return db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email);
+  console.log('🔍 Verificando usuário pelo e-mail:', email);
+  const stmt = db.prepare('SELECT * FROM usuarios WHERE email = ?');
+  const usuario = stmt.get(email);
+  console.log('📦 Retorno do banco:', usuario);
+  return usuario;
 }
 
 function existeNoBanco(db, email) {
