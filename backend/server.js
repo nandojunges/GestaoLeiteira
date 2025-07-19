@@ -50,23 +50,28 @@ app.use('/api', rotasExtras);
 app.use('/api', adminRoutes);
 
 // ✅ Serve o build do frontend (React)
-const distPath = path.join(__dirname, '..', 'dist'); // ajuste se sua pasta build tiver outro nome
+const distPath = path.join(__dirname, '..', 'dist');
 app.use(express.static(distPath));
 
-// ✅ Redireciona todas as rotas que não sejam API para o index.html do React
+// ✅ Redireciona todas as rotas não-API para o index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
-// Inicialização do servidor
+// 🔐 Proteção contra reexecução da porta em importações
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
-}).on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`❌ Porta ${PORT} já está em uso. Finalize o processo antigo ou use outra porta.`);
-    process.exit(1);
-  } else {
-    throw err;
-  }
-});
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`❌ Porta ${PORT} já está em uso. Finalize o processo antigo ou use outra porta.`);
+      process.exit(1);
+    } else {
+      throw err;
+    }
+  });
+}
+
+module.exports = app;
