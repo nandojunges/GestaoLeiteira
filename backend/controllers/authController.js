@@ -366,7 +366,7 @@ module.exports = {
 };
 
 function inicializarAdmins(db) {
-  const admins = [
+  const adminsPadrao = [
     {
       nome: "Administrador",
       nomeFazenda: "Sistema",
@@ -374,23 +374,21 @@ function inicializarAdmins(db) {
       telefone: "",
       senha: "admin123",
       plano: "admin",
-      metodoPagamento: "nenhum"
-    }
+      metodoPagamento: "nenhum",
+    },
   ];
 
-  admins.forEach((admin) => {
-    try {
-      // Verifica se o admin já está cadastrado no banco
-      const jaExiste = Usuario.getByEmail(db, admin.email);
-
-      if (!jaExiste) {
+  adminsPadrao.forEach((admin) => {
+    const existente = Usuario.getByEmail(db, admin.email);
+    if (!existente) {
+      try {
         Usuario.create(db, admin);
         console.log(`✅ Admin criado: ${admin.email}`);
-      } else {
-        console.log(`ℹ️ Admin já existe no banco: ${admin.email}`);
+      } catch (err) {
+        console.error(`❌ Erro ao criar admin ${admin.email}:`, err.message);
       }
-    } catch (err) {
-      console.error(`❌ Erro ao inicializar admin: ${admin.email}`, err.message);
+    } else {
+      console.log(`ℹ️ Admin já existente: ${admin.email}`);
     }
   });
 }

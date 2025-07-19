@@ -19,13 +19,25 @@ if (fs.existsSync(distPath)) {
 // 🔪 Mata processos da porta 3000
 try {
   const result = execSync('netstat -ano | findstr :3000').toString();
-  const pid = result.trim().split(/\s+/).pop();
-  if (pid && pid !== '0') {
-    execSync(`taskkill /PID ${pid} /F`);
-    console.log(`✔️ Finalizado processo na porta 3000 (PID ${pid})`);
-  }
+  const lines = result.trim().split('\n');
+  const pids = new Set();
+
+  lines.forEach((line) => {
+    const parts = line.trim().split(/\s+/);
+    const pid = parts[parts.length - 1];
+    if (pid !== '0') pids.add(pid);
+  });
+
+  pids.forEach((pid) => {
+    try {
+      execSync(`taskkill /PID ${pid} /F`);
+      console.log(`✔️ Processo na porta 3000 (PID ${pid}) finalizado.`);
+    } catch (e) {
+      console.log(`⚠️ Não foi possível finalizar PID ${pid}:`, e.message);
+    }
+  });
 } catch (err) {
-  console.log('ℹ️ Porta 3000 já estava liberada.');
+  console.log('ℹ️ Nenhum processo ocupando a porta 3000.');
 }
 
 // 🎯 Build do frontend
