@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Select from 'react-select';
 import jwtDecode from 'jwt-decode';
 import api from '../api';
 import '../styles/botoes.css';
@@ -36,8 +37,13 @@ export default function EscolherPlano() {
   ];
 
   const [plano, setPlano] = useState(null);
-  const [forma, setForma] = useState('pix');
+  const [forma, setForma] = useState(null);
   const [mostrarModal, setMostrarModal] = useState(false);
+  const opcoesPagamento = [
+    { value: 'pix', label: 'Pix' },
+    { value: 'boleto', label: 'Boleto' },
+    { value: 'cartao', label: 'Cartão' },
+  ];
 
   const selecionarPlano = (p) => {
     setPlano(p);
@@ -50,7 +56,7 @@ export default function EscolherPlano() {
       const { idProdutor } = jwtDecode(token);
       await api.patch(`/admin/alterar-plano/${idProdutor}`, {
         planoSolicitado: plano.id,
-        formaPagamento: forma,
+        formaPagamento: forma?.value,
       });
       alert('Solicita\u00e7\u00e3o enviada');
       setMostrarModal(false);
@@ -81,12 +87,28 @@ export default function EscolherPlano() {
       {mostrarModal && (
         <div style={overlay} onClick={() => setMostrarModal(false)}>
           <div style={modal} onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-2 text-center">Forma de Pagamento</h3>
-            <select value={forma} onChange={(e) => setForma(e.target.value)} className="border rounded w-full p-2 mb-4">
-              <option value="pix">Pix</option>
-              <option value="boleto">Boleto</option>
-              <option value="cartao">Cart\u00e3o</option>
-            </select>
+            <Select
+              options={opcoesPagamento}
+              placeholder="Escolha a forma de pagamento"
+              onChange={(selectedOption) => setForma(selectedOption)}
+              value={forma}
+              styles={{
+                control: (provided) => ({
+                  ...provided,
+                  backgroundColor: 'white',
+                  borderColor: '#ccc',
+                  borderRadius: '10px',
+                  padding: '2px 4px',
+                  fontSize: '14px',
+                  boxShadow: 'none',
+                }),
+                placeholder: (provided) => ({
+                  ...provided,
+                  color: '#999',
+                }),
+              }}
+              className="mb-4"
+            />
             <div className="flex justify-end gap-2">
               <button className="botao-cancelar pequeno" onClick={() => setMostrarModal(false)}>Cancelar</button>
               <button className="botao-acao pequeno" onClick={confirmar}>Confirmar</button>
