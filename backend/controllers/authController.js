@@ -25,12 +25,18 @@ async function cadastro(req, res) {
     return res.status(400).json({ message: 'Email inválido ou não informado.' });
   }
 
+  const { reset } = req.query;
   const db = initDB(endereco);
   VerificacaoPendente.limparExpirados(db);
 
   try {
-    if (Usuario.getByEmail(db, endereco)) {
-      return res.status(400).json({ message: 'Email já cadastrado' });
+    const existente = Usuario.existeNoBanco(db, endereco);
+    if (existente) {
+      if (reset === 'true' || existente.status === 'pendente' || !existente.verificado) {
+        Usuario.excluir(db, endereco);
+      } else {
+        return res.status(400).json({ message: 'Email já cadastrado' });
+      }
     }
 
     const hash = bcrypt.hashSync(senha, 10);
@@ -100,9 +106,14 @@ async function verificarEmail(req, res) {
       return res.status(400).json({ erro: 'Código incorreto.' });
     }
 
-    if (Usuario.getByEmail(db, endereco)) {
-      VerificacaoPendente.deleteByEmail(db, endereco);
-      return res.status(400).json({ erro: 'Email já cadastrado.' });
+    const existente = Usuario.existeNoBanco(db, endereco);
+    if (existente) {
+      if (req.query.reset === 'true' || existente.status === 'pendente' || !existente.verificado) {
+        Usuario.excluir(db, endereco);
+      } else {
+        VerificacaoPendente.deleteByEmail(db, endereco);
+        return res.status(400).json({ erro: 'Email já cadastrado.' });
+      }
     }
 
     if (pendente.planoSolicitado) {
@@ -167,6 +178,15 @@ async function finalizarCadastro(req, res) {
     const pendente = VerificacaoPendente.getByEmail(db, email);
     if (!pendente) {
       return res.status(400).json({ erro: 'Cadastro não encontrado.' });
+    }
+
+    const existente = Usuario.existeNoBanco(db, email);
+    if (existente) {
+      if (req.query.reset === 'true' || existente.status === 'pendente' || !existente.verificado) {
+        Usuario.excluir(db, email);
+      } else {
+        return res.status(400).json({ erro: 'Email já cadastrado.' });
+      }
     }
 
     const listaAdmins = require('../config/admins');
