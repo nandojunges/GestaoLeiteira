@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Select from 'react-select';
+import InputMask from 'react-input-mask';
 import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../../api';
@@ -130,6 +131,7 @@ export default function Cadastro() {
                 value={form.nome}
                 onChange={(e) => setForm({ ...form, nome: e.target.value })}
                 className="input-senha"
+                style={{ textTransform: 'capitalize' }}
               />
             </div>
           </div>
@@ -142,6 +144,7 @@ export default function Cadastro() {
                 value={form.fazenda}
                 onChange={(e) => setForm({ ...form, fazenda: e.target.value })}
                 className="input-senha"
+                style={{ textTransform: 'capitalize' }}
               />
             </div>
           </div>
@@ -160,14 +163,21 @@ export default function Cadastro() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
             <div className="input-senha-container">
-              <input
-                type="tel"
-                placeholder="(99) 99999-9999"
+              <InputMask
+                mask="(99) 99999-9999"
                 value={form.telefone}
                 onChange={(e) => setForm({ ...form, telefone: e.target.value })}
-                required
-                className="input-senha"
-              />
+              >
+                {(inputProps) => (
+                  <input
+                    {...inputProps}
+                    type="text"
+                    placeholder="(99) 99999-9999"
+                    required
+                    className="input-senha"
+                  />
+                )}
+              </InputMask>
             </div>
           </div>
           <div>
