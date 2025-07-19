@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Select from 'react-select';
 import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../../api';
@@ -12,8 +13,13 @@ export default function Cadastro() {
     senha: '',
     confirmar: '',
     plano: '',
-    formaPagamento: 'pix',
   });
+  const [formaPagamento, setFormaPagamento] = useState(null);
+  const opcoesPagamento = [
+    { value: 'pix', label: 'Pix' },
+    { value: 'boleto', label: 'Boleto' },
+    { value: 'cartao', label: 'Cartão' },
+  ];
   const [erro, setErro] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
@@ -61,7 +67,7 @@ export default function Cadastro() {
         telefone: form.telefone,
         senha: form.senha,
         plano: form.plano,
-        formaPagamento: form.plano === 'teste_gratis' ? null : form.formaPagamento,
+        formaPagamento: form.plano === 'teste_gratis' ? null : formaPagamento?.value,
       });
       localStorage.setItem('emailCadastro', form.email);
       localStorage.setItem(
@@ -73,7 +79,7 @@ export default function Cadastro() {
           telefone: form.telefone,
           senha: form.senha,
           plano: form.plano,
-          formaPagamento: form.formaPagamento,
+          formaPagamento: formaPagamento ? formaPagamento.value : null,
         })
       );
       navigate('/verificar-codigo');
@@ -212,16 +218,27 @@ export default function Cadastro() {
           )}
           {form.plano && form.plano !== 'teste_gratis' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Forma de Pagamento</label>
-              <select
-                className="border rounded w-full p-2"
-                value={form.formaPagamento}
-                onChange={(e) => setForm({ ...form, formaPagamento: e.target.value })}
-              >
-                <option value="pix">Pix</option>
-                <option value="boleto">Boleto</option>
-                <option value="cartao">Cartão</option>
-              </select>
+              <Select
+                options={opcoesPagamento}
+                placeholder="Escolha a forma de pagamento"
+                onChange={(selectedOption) => setFormaPagamento(selectedOption)}
+                value={formaPagamento}
+                styles={{
+                  control: (provided) => ({
+                    ...provided,
+                    backgroundColor: 'white',
+                    borderColor: '#ccc',
+                    borderRadius: '10px',
+                    padding: '2px 4px',
+                    fontSize: '14px',
+                    boxShadow: 'none',
+                  }),
+                  placeholder: (provided) => ({
+                    ...provided,
+                    color: '#999',
+                  }),
+                }}
+              />
             </div>
           )}
           <button
