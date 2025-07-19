@@ -368,19 +368,19 @@ module.exports = {
 function inicializarAdmins(db) {
   const admins = [
     {
-      nome: 'Administrador',
-      nomeFazenda: 'Sistema',
-      email: 'nandokkk@hotmail.com',
-      telefone: '',
-      senha: 'admin123',
-      plano: 'admin',
-      metodoPagamento: 'nenhum',
-    },
+      nome: "Administrador",
+      nomeFazenda: "Sistema",
+      email: "nandokkk@hotmail.com",
+      telefone: "",
+      senha: "admin123",
+      plano: "admin",
+      metodoPagamento: "nenhum"
+    }
   ];
 
   admins.forEach((admin) => {
-    const existente = Usuario.getByEmail(db, admin.email);
-    if (!existente) {
+    const jaExiste = Usuario.getByEmail(db, admin.email);
+    if (!jaExiste) {
       Usuario.create(db, admin);
       console.log(`✅ Admin criado: ${admin.email}`);
     } else {
