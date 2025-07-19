@@ -83,6 +83,10 @@ function getByEmail(db, email) {
   return db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email);
 }
 
+function existeNoBanco(db, email) {
+  return db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email);
+}
+
 function getById(db, id) {
   return db
     .prepare('SELECT * FROM usuarios WHERE id = ?')
@@ -160,5 +164,6 @@ module.exports = {
   bloquearConta,
   atualizarPlano,
   excluir,
+  existeNoBanco,
   corrigirPerfisAntigos, // <-- incluído para correção de base antiga
 };
