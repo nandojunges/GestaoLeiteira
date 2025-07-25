@@ -27,7 +27,11 @@ export default function EsqueciSenha() {
     e.preventDefault();
     setErro('');
     try {
-      await api.post('/auth/verify-code', { email, codigo, senha: novaSenha });
+      await api.post('/auth/verify-code', {
+        email: email.trim().toLowerCase(),
+        codigo: codigo.trim(),
+        senha: novaSenha,
+      });
       navigate('/login');
     } catch (err) {
       setErro('Código inválido');

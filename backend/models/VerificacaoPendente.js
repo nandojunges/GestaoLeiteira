@@ -65,10 +65,18 @@ function deleteByEmail(db, email) {
   db.prepare('DELETE FROM verificacoes_pendentes WHERE email = ?').run(email);
 }
 
+// Alias mais intuitivo
+function deletar(db, email) {
+  deleteByEmail(db, email);
+}
+
 // ➤ Limpa registros que passaram de 3 minutos (expirados)
 function limparExpirados(db) {
-  const limite = new Date(Date.now() - 3 * 60 * 1000).toISOString();
-  db.prepare('DELETE FROM verificacoes_pendentes WHERE criado_em <= ?').run(limite);
+  db
+    .prepare(
+      "DELETE FROM verificacoes_pendentes WHERE criado_em < datetime('now', '-10 minutes')"
+    )
+    .run();
 }
 
 // ➤ Busca por ID
@@ -82,6 +90,7 @@ module.exports = {
   getAll,
   updateByEmail,
   deleteByEmail,
+  deletar,
   limparExpirados,
   getById,
 };
