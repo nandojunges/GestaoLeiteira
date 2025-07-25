@@ -20,28 +20,35 @@ router.post('/verify-code', (req, res) => {
     return controller.resetarSenha(req, res);
   }
 
-  if (!email || !codigo) {
-    return res.status(400).json({ message: 'Email e código são obrigatórios.' });
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const codigoEnviado = String(codigo || '').trim();
+
+  if (!normalizedEmail || !codigoEnviado) {
+    return res.status(400).json({ message: 'Código incorreto ou expirado' });
   }
 
-  const db = initDB(email);
-  const dados = VerificacaoPendente.getByEmail(db, email);
+  const db = initDB(normalizedEmail);
+  VerificacaoPendente.limparExpirados(db);
 
-  if (!dados) {
-    return res.status(400).json({ message: 'Código não encontrado.' });
+  const dados = VerificacaoPendente.getByEmail(db, normalizedEmail);
+  if (!dados || !dados.codigo) {
+    return res.status(400).json({ message: 'Código incorreto ou expirado' });
   }
 
+  const expirado =
+    Date.now() - new Date(dados.criado_em).getTime() > 10 * 60 * 1000;
   const codigoSalvo = String(dados.codigo).trim();
-  const codigoEnviado = String(codigo).trim();
 
-  if (codigoSalvo !== codigoEnviado) {
-    return res.status(400).json({ message: 'Código incorreto.' });
+  if (expirado || codigoSalvo !== codigoEnviado) {
+    return res.status(400).json({ message: 'Código incorreto ou expirado' });
   }
 
-  Usuario.marcarComoVerificado(db, email);
-  VerificacaoPendente.deletar(db, email);
+  Usuario.marcarComoVerificado(db, normalizedEmail);
+  VerificacaoPendente.deletar(db, normalizedEmail);
 
-  return res.status(200).json({ message: 'Verificação concluída com sucesso.' });
+  return res
+    .status(200)
+    .json({ message: 'Verificação concluída com sucesso.' });
 }); // alias /auth/verify-code
 router.post('/forgot-password', controller.solicitarReset); // envia codigo de reset
 router.post('/finalizar-cadastro', controller.finalizarCadastro);

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import api from '../../api';
 
 export default function EsqueciSenha() {
@@ -8,33 +9,40 @@ export default function EsqueciSenha() {
   const [codigo, setCodigo] = useState('');
   const [novaSenha, setNovaSenha] = useState('');
   const [emailEnviado, setEmailEnviado] = useState(false);
-  const [erro, setErro] = useState('');
   const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [enviandoConfirmacao, setEnviandoConfirmacao] = useState(false);
   const navigate = useNavigate();
 
   const enviarCodigo = async (e) => {
     e.preventDefault();
-    setErro('');
+    setEnviando(true);
     try {
       await api.post('/auth/forgot-password', { email });
       setEmailEnviado(true);
+      toast.success('Código enviado ao e-mail.');
     } catch (err) {
-      setErro('Erro ao enviar e-mail');
+      toast.error('Erro ao enviar e-mail');
+    } finally {
+      setEnviando(false);
     }
   };
 
   const confirmarCodigo = async (e) => {
     e.preventDefault();
-    setErro('');
+    setEnviandoConfirmacao(true);
     try {
       await api.post('/auth/verify-code', {
         email: email.trim().toLowerCase(),
-        codigo: codigo.trim(),
+        codigo: String(codigo).trim(),
         senha: novaSenha,
       });
+      toast.success('Senha redefinida com sucesso!');
       navigate('/login');
     } catch (err) {
-      setErro('Código inválido');
+      toast.error('Código incorreto ou expirado');
+    } finally {
+      setEnviandoConfirmacao(false);
     }
   };
 
@@ -66,7 +74,6 @@ export default function EsqueciSenha() {
         }}
       >
         <h2 className="text-xl font-bold text-center mb-4">Recuperar Senha</h2>
-        {erro && <div className="mb-2 text-red-600 text-sm text-center">{erro}</div>}
           {!emailEnviado ? (
             <form onSubmit={enviarCodigo} className="flex flex-col gap-4">
               <div>
@@ -95,9 +102,10 @@ export default function EsqueciSenha() {
                   marginLeft: 'auto',
                   marginRight: 'auto',
                 }}
-                className="hover:bg-[#0d47a1]"
+                disabled={enviando}
+                className="hover:bg-[#0d47a1] disabled:opacity-60"
               >
-                Recuperar Senha
+                {enviando ? 'Enviando...' : 'Recuperar Senha'}
               </button>
             </form>
           ) : (
@@ -142,9 +150,10 @@ export default function EsqueciSenha() {
                   marginLeft: 'auto',
                   marginRight: 'auto',
                 }}
-                className="hover:bg-[#0d47a1]"
+                disabled={enviandoConfirmacao}
+                className="hover:bg-[#0d47a1] disabled:opacity-60"
               >
-                Resetar Senha
+                {enviandoConfirmacao ? 'Enviando...' : 'Resetar Senha'}
               </button>
             </form>
           )}
