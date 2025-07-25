@@ -62,8 +62,8 @@ export default function VerificarEmail() {
 
     try {
       const res = await api.post('/auth/verify-code', {
-        email,
-        codigoDigitado: codigo,
+        email: email.trim().toLowerCase(),
+        codigo: codigo.trim(),
       });
 
       if (res.data?.sucesso) {

@@ -234,7 +234,11 @@ function login(req, res) {
   const usuario = Usuario.getByEmail(db, email);
 
   if (!usuario) return res.status(400).json({ message: 'Usuário não encontrado' });
-  if (!usuario.verificado) return res.status(400).json({ message: 'Email não verificado' });
+  if (!usuario.verificado) {
+    return res
+      .status(401)
+      .json({ message: 'Conta ainda não verificada. Verifique seu email.' });
+  }
   if (!bcrypt.compareSync(senha, usuario.senha)) {
     return res.status(400).json({ message: 'Senha incorreta' });
   }

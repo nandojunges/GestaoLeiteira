@@ -88,6 +88,13 @@ function marcarVerificado(db, id) {
     .run(id);
 }
 
+// Marca usuário como verificado usando o e-mail
+function marcarComoVerificado(db, email) {
+  db
+    .prepare('UPDATE usuarios SET verificado = 1, codigoVerificacao = NULL WHERE email = ?')
+    .run(email);
+}
+
 function definirCodigo(db, id, codigo) {
   db
     .prepare('UPDATE usuarios SET codigoVerificacao = ? WHERE id = ?')
@@ -155,4 +162,5 @@ module.exports = {
   excluir,
   existeNoBanco,
   corrigirPerfisAntigos, // <-- incluído para correção de base antiga
+  marcarComoVerificado,
 };
