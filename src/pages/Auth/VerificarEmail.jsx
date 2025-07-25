@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
 import api from '../../api';
 
 export default function VerificarEmail() {
   const [codigo, setCodigo] = useState('');
-  const [erro, setErro] = useState('');
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [tempo, setTempo] = useState(180);
   const [podeReenviar, setPodeReenviar] = useState(false);
+  const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
     const salvo = localStorage.getItem('emailCadastro');
@@ -30,6 +31,12 @@ export default function VerificarEmail() {
     return () => clearTimeout(t);
   }, []);
 
+  useEffect(() => {
+    if (tempo === 0) {
+      toast.warn('Código expirado. Clique em reenviar.');
+    }
+  }, [tempo]);
+
   const formatarTempo = (seg) => {
     const m = String(Math.floor(seg / 60)).padStart(2, '0');
     const s = String(seg % 60).padStart(2, '0');
@@ -39,7 +46,7 @@ export default function VerificarEmail() {
   const reenviarCodigo = async () => {
     const dados = localStorage.getItem('dadosCadastro');
     if (!dados) {
-      alert('Dados para reenviar não encontrados.');
+      toast.error('Dados para reenviar não encontrados.');
       return;
     }
     try {
@@ -47,39 +54,32 @@ export default function VerificarEmail() {
       setTempo(180);
       setPodeReenviar(false);
       setTimeout(() => setPodeReenviar(true), 30000);
-      alert('Código reenviado. Verifique seu e-mail.');
+      toast.success('Código reenviado. Verifique seu e-mail.');
     } catch (err) {
-      alert('Erro ao reenviar código.');
+      toast.error('Erro ao reenviar código.');
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email) {
-      alert('Email não encontrado. Faça o cadastro novamente.');
+      toast.error('Email não encontrado. Faça o cadastro novamente.');
       return;
     }
 
+    setEnviando(true);
     try {
-      const res = await api.post('/auth/verify-code', {
+      await api.post('/auth/verify-code', {
         email: email.trim().toLowerCase(),
-        codigo: codigo.trim(),
+        codigo: String(codigo).trim(),
       });
-
-      if (res.data?.sucesso) {
-        alert('E-mail verificado com sucesso!');
-        if (res.data.token) {
-          localStorage.setItem('tokenCadastro', res.data.token);
-          navigate('/escolher-plano-finalizar');
-        } else {
-          navigate('/login');
-        }
-      } else {
-        alert('Código incorreto ou expirado.');
-      }
+      toast.success('E-mail verificado com sucesso!');
+      navigate('/login');
     } catch (err) {
-      console.error('Erro ao verificar:', err);
-      alert('Erro na verificação.');
+      const msg = err.response?.data?.message || 'Código incorreto ou expirado';
+      toast.error(msg);
+    } finally {
+      setEnviando(false);
     }
   };
 
@@ -118,10 +118,14 @@ export default function VerificarEmail() {
             <Loader2 className="animate-spin" />
           </div>
         )}
-        {erro && (
-          <div className="mb-2 text-red-600 text-sm text-center">{erro}</div>
+        <div className="text-center mb-2">
+          Tempo restante: {formatarTempo(tempo)}
+        </div>
+        {tempo === 0 && (
+          <div className="text-center text-red-600 mb-2">
+            Código expirado. Clique em reenviar.
+          </div>
         )}
-        <div className="text-center mb-2">Tempo restante: {formatarTempo(tempo)}</div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             placeholder="Código"
@@ -150,9 +154,10 @@ export default function VerificarEmail() {
               marginLeft: 'auto',
               marginRight: 'auto',
             }}
-            className="hover:bg-[#0d47a1]"
+            disabled={enviando}
+            className="hover:bg-[#0d47a1] disabled:opacity-60"
           >
-            Verificar
+            {enviando ? 'Verificando...' : 'Verificar'}
           </button>
         </form>
         {podeReenviar && (
