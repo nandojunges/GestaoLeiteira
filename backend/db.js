@@ -8,12 +8,16 @@ function sanitizeEmail(email) {
   return email.replace(/[@.]/g, '_');
 }
 
-function getUserDir(email) {
+function getUserDir(email, forceCreate = true) {
   const dir = path.join(__dirname, 'data', sanitizeEmail(email));
-  if (!fs.existsSync(dir)) {
+  if (forceCreate) {
     fs.mkdirSync(dir, { recursive: true });
   }
   return dir;
+}
+
+function getDBPath(email) {
+  return path.join(__dirname, 'data', sanitizeEmail(email), 'banco.sqlite');
 }
 
 const createUsuarios = `CREATE TABLE IF NOT EXISTS usuarios (
@@ -330,16 +334,23 @@ function backupDatabase(dir, dbPath) {
   }
 }
 
-function initDB(email) {
-  const dir = getUserDir(email);
+function initDB(email, forceCreate = true) {
+  const dir = getUserDir(email, forceCreate);
   const dbPath = path.join(dir, 'banco.sqlite');
+
+  if (!forceCreate && !fs.existsSync(dbPath)) {
+    return null;
+  }
 
   // Fecha conexão anterior, se houver, para evitar vazamento de descritores
   if (db && typeof db.close === 'function') {
     try { db.close(); } catch (_) {}
   }
 
-  fs.mkdirSync(dir, { recursive: true });
+  if (forceCreate && !fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
   db = new Database(dbPath);
 
   // Cria tabelas e aplica migrations sempre que um banco é carregado
@@ -354,4 +365,5 @@ function getDb() {
   return db;
 }
 
-module.exports = { initDB, getDb, getUserDir };
+module.exports = { initDB, getDb, getUserDir, getDBPath };
+

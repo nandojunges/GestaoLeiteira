@@ -1,9 +1,11 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 const Usuario = require('../models/Usuario');
-const VerificacaoPendente = require('../models/VerificacaoPendente');
 const emailUtils = require('../utils/email');
-const { initDB } = require('../db');
+const { initDB, getDBPath } = require('../db');
+
+const pendentes = new Map();
 
 const SECRET = process.env.JWT_SECRET || 'segredo';
 
@@ -26,8 +28,20 @@ async function cadastro(req, res) {
   }
 
   const { reset } = req.query;
-  const db = initDB(endereco);
-  VerificacaoPendente.limparExpirados(db);
+  const dbPath = getDBPath(endereco);
+
+  let existente = null;
+  if (fs.existsSync(dbPath)) {
+    const db = initDB(endereco);
+    existente = Usuario.existeNoBanco(db, endereco);
+    if (existente) {
+      if (reset === 'true' || existente.status === 'pendente' || !existente.verificado) {
+        Usuario.excluir(db, endereco);
+      } else {
+        return res.status(400).json({ message: 'Email já cadastrado' });
+      }
+    }
+  }
 
   try {
     console.log('Verificando se email existe:', endereco);
@@ -41,37 +55,22 @@ async function cadastro(req, res) {
     }
 
     const hash = bcrypt.hashSync(senha, 10);
-    const pendente = VerificacaoPendente.getByEmail(db, endereco);
+    const pendente = pendentes.get(endereco);
 
-    if (pendente) {
-      const criado = new Date(pendente.criado_em);
-      if (Date.now() - criado.getTime() < 3 * 60 * 1000) {
-        return res.status(400).json({ message: 'Código já enviado. Aguarde o prazo para reenviar.' });
-      }
-
-      VerificacaoPendente.updateByEmail(db, endereco, {
-        codigo,
-        nome,
-        nomeFazenda,
-        telefone,
-        senha: hash,
-        planoSolicitado,
-        formaPagamento,
-        criado_em: agora,
-      });
-    } else {
-      VerificacaoPendente.create(db, {
-        email: endereco,
-        codigo,
-        nome,
-        nomeFazenda,
-        telefone,
-        senha: hash,
-        planoSolicitado,
-        formaPagamento,
-        criado_em: agora,
-      });
+    if (pendente && Date.now() - pendente.criado_em.getTime() < 3 * 60 * 1000) {
+      return res.status(400).json({ message: 'Código já enviado. Aguarde o prazo para reenviar.' });
     }
+
+    pendentes.set(endereco, {
+      codigo,
+      nome,
+      nomeFazenda,
+      telefone,
+      senha: hash,
+      planoSolicitado,
+      formaPagamento,
+      criado_em: new Date(),
+    });
 
     emailUtils
       .enviarCodigo(endereco, codigo)
@@ -91,17 +90,16 @@ async function verificarEmail(req, res) {
     return res.status(400).json({ erro: 'Email inválido.' });
   }
 
-  const db = initDB(endereco);
-
+  let db;
   try {
-    const pendente = VerificacaoPendente.getByEmail(db, endereco);
+    const pendente = pendentes.get(endereco);
     if (!pendente) {
       return res.status(400).json({ erro: 'Código não encontrado. Faça o cadastro novamente.' });
     }
 
     const expirado = Date.now() - new Date(pendente.criado_em).getTime() > 10 * 60 * 1000;
     if (expirado) {
-      VerificacaoPendente.deleteByEmail(db, endereco);
+      pendentes.delete(endereco);
       return res.status(400).json({ erro: 'Código expirado. Faça o cadastro novamente.' });
     }
 
@@ -109,12 +107,18 @@ async function verificarEmail(req, res) {
       return res.status(400).json({ erro: 'Código incorreto.' });
     }
 
-    const existente = Usuario.existeNoBanco(db, endereco);
+    const dbPath = getDBPath(endereco);
+    let existente = null;
+    let dbExist = null;
+    if (fs.existsSync(dbPath)) {
+      dbExist = initDB(endereco);
+      existente = Usuario.existeNoBanco(dbExist, endereco);
+    }
     if (existente) {
       if (req.query.reset === 'true' || existente.status === 'pendente' || !existente.verificado) {
-        Usuario.excluir(db, endereco);
+        Usuario.excluir(dbExist, endereco);
       } else {
-        VerificacaoPendente.deleteByEmail(db, endereco);
+        pendentes.delete(endereco);
         return res.status(400).json({ erro: 'Email já cadastrado.' });
       }
     }
@@ -124,6 +128,7 @@ async function verificarEmail(req, res) {
       const tipoConta = listaAdmins.includes(pendente.email) ? 'admin' : 'usuario';
       const perfil = tipoConta === 'admin' ? 'admin' : 'funcionario';
 
+      db = initDB(endereco, true);
       const novo = Usuario.create(db, {
         nome: pendente.nome,
         nomeFazenda: pendente.nomeFazenda,
@@ -147,7 +152,10 @@ async function verificarEmail(req, res) {
         novo.id
       );
 
-      VerificacaoPendente.deleteByEmail(db, endereco);
+      pendentes.delete(endereco);
+      console.log(`🔐 Código verificado com sucesso para email: ${endereco}`);
+      console.log(`📁 Banco de dados inicializado: ${getDBPath(endereco).replace(/\\/g,'/')}`);
+      console.log('✅ Usuário cadastrado e pronto para login.');
       return res.json({ sucesso: true });
     }
 
@@ -175,18 +183,22 @@ async function finalizarCadastro(req, res) {
   }
 
   const email = payload.email;
-  const db = initDB(email);
-
   try {
-    const pendente = VerificacaoPendente.getByEmail(db, email);
+    const pendente = pendentes.get(email);
     if (!pendente) {
       return res.status(400).json({ erro: 'Cadastro não encontrado.' });
     }
 
-    const existente = Usuario.existeNoBanco(db, email);
+    const dbPath = getDBPath(email);
+    let existente = null;
+    let dbCheck = null;
+    if (fs.existsSync(dbPath)) {
+      dbCheck = initDB(email);
+      existente = Usuario.existeNoBanco(dbCheck, email);
+    }
     if (existente) {
       if (req.query.reset === 'true' || existente.status === 'pendente' || !existente.verificado) {
-        Usuario.excluir(db, email);
+        Usuario.excluir(dbCheck, email);
       } else {
         return res.status(400).json({ erro: 'Email já cadastrado.' });
       }
@@ -196,6 +208,7 @@ async function finalizarCadastro(req, res) {
     const tipoConta = listaAdmins.includes(email) ? 'admin' : 'usuario';
     const perfil = tipoConta === 'admin' ? 'admin' : 'funcionario';
 
+    const db = initDB(email, true);
     const novo = Usuario.create(db, {
       nome: pendente.nome,
       nomeFazenda: pendente.nomeFazenda,
@@ -213,7 +226,10 @@ async function finalizarCadastro(req, res) {
       'UPDATE usuarios SET status = ?, planoSolicitado = ?, formaPagamento = ?, dataCadastro = ? WHERE id = ?'
     ).run('pendente', plano, plano === 'teste_gratis' ? null : formaPagamento, agora, novo.id);
 
-    VerificacaoPendente.deleteByEmail(db, email);
+    pendentes.delete(email);
+    console.log(`🔐 Código verificado com sucesso para email: ${email}`);
+    console.log(`📁 Banco de dados inicializado: ${getDBPath(email).replace(/\\/g,'/')}`);
+    console.log('✅ Usuário cadastrado e pronto para login.');
 
     res.json({ sucesso: true });
   } catch (err) {
@@ -230,14 +246,16 @@ function login(req, res) {
     return res.status(400).json({ message: 'Email ou senha inválidos.' });
   }
 
+  const dbPath = getDBPath(email);
+  if (!fs.existsSync(dbPath)) {
+    return res.status(404).json({ message: 'Usuário não encontrado.' });
+  }
   const db = initDB(email);
   const usuario = Usuario.getByEmail(db, email);
 
-  if (!usuario) return res.status(400).json({ message: 'Usuário não encontrado' });
+  if (!usuario) return res.status(404).json({ message: 'Usuário não encontrado.' });
   if (!usuario.verificado) {
-    return res
-      .status(401)
-      .json({ message: 'Conta ainda não verificada. Verifique seu email.' });
+    return res.status(403).json({ message: 'Verifique seu e-mail antes de fazer login.' });
   }
   if (!bcrypt.compareSync(senha, usuario.senha)) {
     return res.status(400).json({ message: 'Senha incorreta' });
@@ -317,9 +335,13 @@ async function solicitarReset(req, res) {
   if (!email || typeof email !== 'string') {
     return res.status(400).json({ message: 'Email inválido.' });
   }
+  const dbPath = getDBPath(email);
+  if (!fs.existsSync(dbPath)) {
+    return res.status(404).json({ message: 'Usuário não encontrado.' });
+  }
   const db = initDB(email);
   const usuario = Usuario.getByEmail(db, email);
-  if (!usuario) return res.status(400).json({ message: 'Usuário não encontrado' });
+  if (!usuario) return res.status(404).json({ message: 'Usuário não encontrado.' });
 
   const codigo = Math.floor(100000 + Math.random() * 900000).toString();
   Usuario.definirCodigo(db, usuario.id, codigo);
@@ -337,6 +359,10 @@ function resetarSenha(req, res) {
   const { email, codigo, senha } = req.body;
   if (!email || !codigo || !senha) {
     return res.status(400).json({ message: 'Dados inválidos.' });
+  }
+  const dbPath = getDBPath(email);
+  if (!fs.existsSync(dbPath)) {
+    return res.status(404).json({ message: 'Usuário não encontrado.' });
   }
   const db = initDB(email);
   const usuario = Usuario.getByEmail(db, email);
