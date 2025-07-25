@@ -27,11 +27,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// 📁 Pasta para backups de dados excluídos
 fs.mkdirSync(path.join(__dirname, 'dadosExcluidos'), { recursive: true });
+
+// 👤 Inicializa o admin padrão
 const adminDb = initDB('nandokkk@hotmail.com');
 inicializarAdmins(adminDb);
 
-// Rotas da API
+// 🌐 Rotas da API
 app.use('/vacas', vacasRoutes);
 app.use('/animais', animaisRoutes);
 app.use('/tarefas', tarefasRoutes);
@@ -49,29 +52,33 @@ app.use('/api/auth', authRoutes);
 app.use('/api', rotasExtras);
 app.use('/api', adminRoutes);
 
-// ✅ Serve o build do frontend (React)
+// 🧾 Servir frontend estático (build do React)
 const distPath = path.join(__dirname, '..', 'dist');
 app.use(express.static(distPath));
 
-// ✅ Redireciona todas as rotas não-API para o index.html
+// 🎯 Redirecionamento de SPA (React Router)
 app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
-// 🔐 Proteção contra reexecução da porta em importações
+// 🚀 Inicialização do servidor (somente se executado diretamente)
 const PORT = process.env.PORT || 3000;
 
 if (require.main === module) {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
-  }).on('error', (err) => {
+  });
+
+  server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.error(`❌ Porta ${PORT} já está em uso. Finalize o processo antigo ou use outra porta.`);
+      console.error(`❌ Porta ${PORT} já está em uso. Finalize o processo antigo ou aguarde a liberação da porta.`);
       process.exit(1);
     } else {
-      throw err;
+      console.error('❌ Erro ao iniciar servidor:', err);
+      process.exit(1);
     }
   });
 }
 
+// Exporta para testes ou uso externo
 module.exports = app;
