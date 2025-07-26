@@ -11,7 +11,7 @@ router.post('/register', controller.cadastro); // alias /auth/register
 
 // ✅ Verifica o código enviado por e-mail e cria o usuário
 router.post('/verificar-email', controller.verificarEmail);
-router.post('/verify-code', controller.verificarCodigo); // alias /auth/verify-code
+router.post('/verify-code', controller.verifyCode); // alias /auth/verify-code
 router.post('/forgot-password', controller.solicitarReset); // envia codigo de reset
 router.post('/finalizar-cadastro', controller.finalizarCadastro);
 
