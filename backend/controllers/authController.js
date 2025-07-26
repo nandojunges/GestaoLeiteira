@@ -366,6 +366,45 @@ function resetarSenha(req, res) {
   res.json({ message: 'Senha atualizada com sucesso.' });
 }
 
+// ➤ Nova verificação de código simples (cadastro)
+async function verifyCode(req, res) {
+  const { email, codigo } = req.body;
+
+  if (!email || !codigo) {
+    return res.status(400).json({ message: 'Email ou código ausente.' });
+  }
+
+  const registro = pendentes.get(email);
+  if (!registro) {
+    return res
+      .status(400)
+      .json({ message: 'Nenhuma verificação pendente para este e-mail.' });
+  }
+
+  if (registro.codigo !== codigo) {
+    return res.status(400).json({ message: 'Código incorreto.' });
+  }
+
+  const db = initDB(email);
+  const senhaHasheada = await bcrypt.hash(registro.senha, 10);
+  const agora = new Date().toISOString();
+
+  Usuario.create(db, {
+    nome: registro.nome,
+    nomeFazenda: registro.nomeFazenda,
+    email,
+    telefone: registro.telefone,
+    senha: senhaHasheada,
+    criadoEm: agora,
+  });
+
+  pendentes.delete(email);
+
+  return res
+    .status(200)
+    .json({ message: 'Usuário verificado e criado com sucesso.' });
+}
+
 // ➤ Verifica código: usado para cadastro ou reset de senha
 async function verificarCodigo(req, res) {
   if (req.body.senha) {
@@ -377,6 +416,7 @@ async function verificarCodigo(req, res) {
 module.exports = {
   cadastro,
   verificarEmail,
+  verifyCode,
   login,
   dados,
   listarUsuarios,
