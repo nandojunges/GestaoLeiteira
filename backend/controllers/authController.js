@@ -385,18 +385,26 @@ async function verifyCode(req, res) {
     return res.status(400).json({ message: 'Código incorreto.' });
   }
 
+  // ✅ Cria banco e registra usuário já como verificado
   const db = initDB(email);
   const senhaHasheada = await bcrypt.hash(registro.senha, 10);
   const agora = new Date().toISOString();
 
-  Usuario.create(db, {
+  const novo = Usuario.create(db, {
     nome: registro.nome,
     nomeFazenda: registro.nomeFazenda,
     email,
     telefone: registro.telefone,
     senha: senhaHasheada,
-    criadoEm: agora,
+    verificado: 1,
+    codigoVerificacao: null,
+    perfil: 'funcionario',
+    tipoConta: 'usuario',
   });
+
+  db.prepare(
+    'UPDATE usuarios SET status = ?, plano = ?, dataCadastro = ? WHERE id = ?'
+  ).run('ativo', 'gratis', agora, novo.id);
 
   pendentes.delete(email);
 
