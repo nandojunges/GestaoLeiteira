@@ -51,7 +51,7 @@ async function cadastro(req, res) {
       return res.status(400).json({ message: 'Código já enviado. Aguarde o prazo para reenviar.' });
     }
 
-    const hash = bcrypt.hashSync(senha, 10);
+    const hash = await bcrypt.hash(senha, 10);
 
     pendentes.set(endereco, {
       codigo,
@@ -231,62 +231,29 @@ async function finalizarCadastro(req, res) {
 }
 
 // ➤ Login e geração do token JWT
-function login(req, res) {
+async function login(req, res) {
   const { email, senha } = req.body;
 
-  if (!email || typeof email !== 'string' || !senha) {
-    return res.status(400).json({ message: 'Email ou senha inválidos.' });
-  }
-
-  const dbPath = getDBPath(email);
-  if (!fs.existsSync(dbPath)) {
-    return res.status(404).json({ message: 'Usuário não encontrado.' });
-  }
   const db = initDB(email);
   const usuario = Usuario.getByEmail(db, email);
 
-  if (!usuario) return res.status(404).json({ message: 'Usuário não encontrado.' });
-  if (!usuario.verificado) {
+  if (!usuario) {
+    return res.status(400).json({ message: 'Usuário não encontrado.' });
+  }
+
+  if (usuario.verificado !== 1) {
     return res.status(403).json({ message: 'Verifique seu e-mail antes de fazer login.' });
   }
-  if (!bcrypt.compareSync(senha, usuario.senha)) {
-    return res.status(400).json({ message: 'Senha incorreta' });
+
+  const match = await bcrypt.compare(senha, usuario.senha);
+
+  if (!match) {
+    return res.status(400).json({ message: 'Senha incorreta.' });
   }
 
-  const listaAdmins = require('../config/admins');
-  const isAdmin = usuario.tipoConta === 'admin' || listaAdmins.includes(email);
+  const token = jwt.sign({ email }, SECRET, { expiresIn: '2h' });
 
-  if (!isAdmin) {
-    if (usuario.status !== 'ativo' && usuario.status !== 'teste') {
-      return res.status(403).json({ message: 'Aguardando liberação do plano.' });
-    }
-    if (
-      usuario.status === 'teste' &&
-      usuario.dataFimTeste &&
-      new Date(usuario.dataFimTeste) < new Date()
-    ) {
-      db.prepare('UPDATE usuarios SET status = ? WHERE id = ?').run(
-        'suspenso',
-        usuario.id
-      );
-      usuario.status = 'suspenso';
-    }
-
-    if (usuario.status === 'suspenso') {
-      return res.status(403).json({
-        message: 'Sua conta está suspensa. Selecione um plano para continuar.'
-      });
-    }
-  }
-
- const payload = {
-  idProdutor: usuario.id,
-  email: usuario.email,
-  perfil: isAdmin ? 'admin' : (usuario.perfil || 'funcionario'),
-};
-
-  const token = jwt.sign(payload, SECRET, { expiresIn: '7d' });
-  res.json({ token, isAdmin });
+  return res.status(200).json({ token });
 }
 
 // ➤ Dados do usuário logado
@@ -347,7 +314,7 @@ async function solicitarReset(req, res) {
 }
 
 // ➤ Verifica código e redefine senha
-function resetarSenha(req, res) {
+async function resetarSenha(req, res) {
   const { email, codigo, senha } = req.body;
   if (!email || !codigo || !senha) {
     return res.status(400).json({ message: 'Dados inválidos.' });
@@ -361,7 +328,7 @@ function resetarSenha(req, res) {
   if (!usuario || usuario.codigoVerificacao !== codigo) {
     return res.status(400).json({ message: 'Código inválido.' });
   }
-  const hash = bcrypt.hashSync(senha, 10);
+  const hash = await bcrypt.hash(senha, 10);
   Usuario.atualizarSenha(db, usuario.id, hash);
   res.json({ message: 'Senha atualizada com sucesso.' });
 }
@@ -387,7 +354,7 @@ async function verifyCode(req, res) {
 
   // ✅ Cria banco e registra usuário já como verificado
   const db = initDB(email);
-  const senhaHasheada = await bcrypt.hash(registro.senha, 10);
+  const senhaHasheada = registro.senha;
   const agora = new Date().toISOString();
 
   const novo = Usuario.create(db, {
