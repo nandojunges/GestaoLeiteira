@@ -21,45 +21,37 @@ async function cadastro(req, res) {
     formaPagamento,
   } = req.body;
   const codigo = Math.floor(100000 + Math.random() * 900000).toString();
-  const agora = new Date().toISOString();
 
   if (!endereco || typeof endereco !== 'string') {
     return res.status(400).json({ message: 'Email inválido ou não informado.' });
   }
 
-  const { reset } = req.query;
   const dbPath = getDBPath(endereco);
 
-  let existente = null;
-  if (fs.existsSync(dbPath)) {
-    const db = initDB(endereco);
-    existente = Usuario.existeNoBanco(db, endereco);
-    if (existente) {
-      if (reset === 'true' || existente.status === 'pendente' || !existente.verificado) {
-        Usuario.excluir(db, endereco);
-      } else {
-        return res.status(400).json({ message: 'Email já cadastrado' });
-      }
+  // Limpa verificações expiradas (10 minutos)
+  for (const [email, pend] of pendentes) {
+    if (Date.now() - pend.criado_em.getTime() > 10 * 60 * 1000) {
+      pendentes.delete(email);
     }
   }
 
+  if (pendentes.has(endereco)) {
+    return res
+      .status(400)
+      .json({ message: 'Já existe uma verificação pendente para este e-mail.' });
+  }
+
+  if (fs.existsSync(dbPath)) {
+    return res.status(400).json({ message: 'Email já cadastrado' });
+  }
+
   try {
-    console.log('Verificando se email existe:', endereco);
-    const existente = Usuario.existeNoBanco(db, endereco);
-    if (existente) {
-      if (reset === 'true' || existente.status === 'pendente' || !existente.verificado) {
-        Usuario.excluir(db, endereco);
-      } else {
-        return res.status(400).json({ message: 'Email já cadastrado' });
-      }
-    }
-
-    const hash = bcrypt.hashSync(senha, 10);
     const pendente = pendentes.get(endereco);
-
     if (pendente && Date.now() - pendente.criado_em.getTime() < 3 * 60 * 1000) {
       return res.status(400).json({ message: 'Código já enviado. Aguarde o prazo para reenviar.' });
     }
+
+    const hash = bcrypt.hashSync(senha, 10);
 
     pendentes.set(endereco, {
       codigo,
