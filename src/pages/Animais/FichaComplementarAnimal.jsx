@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import Select from "react-select";
 import ImportarFichaTouro from "./ImportarFichaTouro";
 import AbrirFichaTouro from "./AbrirFichaTouro";
-import { salvarFichaAnimalSQLite } from '../../utils/apiFuncoes.js';
+// importa também buscarTodosTourosSQLite, usado para carregar a lista de touros já cadastrados
+import { salvarFichaAnimalSQLite, buscarTodosTourosSQLite } from '../../utils/apiFuncoes.js';
 
 export default function FichaComplementarAnimal({ numeroAnimal, onFechar, onSalvar }) {
   const [nomeTouro, setNomeTouro] = useState("");

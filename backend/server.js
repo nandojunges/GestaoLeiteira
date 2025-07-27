@@ -26,7 +26,8 @@ const { initDB } = require('./db');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+// aumenta o limite de tamanho do JSON para aceitar PDFs codificados em Base64 (até 10 mb)
+app.use(express.json({ limit: '10mb' }));
 
 // 📁 Pasta para backups de dados excluídos
 fs.mkdirSync(path.join(__dirname, 'dadosExcluidos'), { recursive: true });
