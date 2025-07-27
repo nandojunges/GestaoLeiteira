@@ -51,6 +51,7 @@ app.use('/examesSanitarios', examesRoutes);
 app.use('/api/racas', racasRoutes);
 // nova rota para fichas de touros (pai dos animais)
 app.use('/touros', tourosRoutes);
+app.use('/api/touros', tourosRoutes);
 app.use('/', mockRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api', rotasExtras);
