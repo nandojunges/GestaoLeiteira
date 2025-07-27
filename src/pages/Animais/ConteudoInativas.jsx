@@ -64,9 +64,11 @@ export default function ConteudoInativas({ animais = [], onAtualizar }) {
     carregar();
   };
 
+  // Adiciona coluna 'Tipo de Saída' antes de 'Motivo'
   const titulos = [
     'Número',
     'Categoria',
+    'Tipo de Saída',
     'Motivo',
     'Data',
     'Valor',
@@ -120,9 +122,15 @@ export default function ConteudoInativas({ animais = [], onAtualizar }) {
             const dados = [
               animal.numero || animal.brinco || '—',
               animal.categoria || animal.tipo || '—',
+              // Exibe o tipo de saída (venda, morte, doação etc.)
+              animal.tipoSaida || animal.saida?.tipo || '—',
               animal.motivoSaida || animal.saida?.motivo || '—',
               formatarData(animal.dataSaida || animal.saida?.data),
-              formatarValor(animal.valorVenda || animal.valorSaida || animal.saida?.valor),
+              formatarValor(
+                animal.valorVenda ||
+                  animal.valorSaida ||
+                  animal.saida?.valor
+              ),
               animal.observacoesSaida || animal.saida?.observacao || '—',
             ];
 
