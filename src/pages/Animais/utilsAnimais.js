@@ -124,6 +124,7 @@ export function migrarAnimal(a = {}) {
     dataSaida: null,
     valorVenda: null,
     observacoesSaida: null,
+    tipoSaida: null,
   };
 
   const historicoPadrao = {

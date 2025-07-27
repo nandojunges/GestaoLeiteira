@@ -115,6 +115,8 @@ export default function ConteudoSaidaAnimal({ onAtualizar }) {
       dataSaida: novaSaida.data,
       valorVenda: novaSaida.valor,
       observacoesSaida: novaSaida.observacao,
+      // envia também o tipo de saída selecionado
+      tipoSaida: novaSaida.tipo,
     };
 
     await atualizarItem("animais", { ...dadosAtualizados, id: animal.id });

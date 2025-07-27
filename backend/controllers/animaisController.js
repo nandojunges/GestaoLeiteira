@@ -47,7 +47,11 @@ async function cadastrarAnimal(req, res) {
 async function editarAnimal(req, res) {
   const db = initDB(req.user.email);
   const id = req.params.id;
-  const dadosAtualizados = req.body;
+  const dadosAtualizados = {
+    ...req.body,
+    // garante que o tipo de saída seja enviado à camada de modelo
+    tipoSaida: req.body.tipoSaida ?? null,
+  };
 
   try {
     const animalAtualizado = animaisModel.update(db, id, dadosAtualizados, req.user.idProdutor);
