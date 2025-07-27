@@ -95,6 +95,7 @@ const createAnimais = `CREATE TABLE IF NOT EXISTS animais (
   dataSaida TEXT,
   valorVenda REAL,
   observacoesSaida TEXT,
+  tipoSaida TEXT,
   idProdutor INTEGER
 )`;
 
@@ -188,6 +189,17 @@ const createMetodosPagamento = `CREATE TABLE IF NOT EXISTS metodos_pagamento (
 
 function applyMigrations(database) {
   database.exec(createAnimais);
+  // cria tabela de touros para armazenar fichas de reprodutores
+  const createTouros = `
+CREATE TABLE IF NOT EXISTS touros (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome TEXT,
+  texto TEXT,
+  arquivoBase64 TEXT,
+  dataUpload TEXT,
+  idProdutor INTEGER
+)`;
+  database.exec(createTouros);
   database.exec(createUsuarios);
   database.exec(createVerificacoesPendentes);
   database.exec(createProdutores);
@@ -214,6 +226,9 @@ function applyMigrations(database) {
 
   let info = database.prepare('PRAGMA table_info(animais)').all();
   const existentes = info.map(c => c.name);
+  if (!existentes.includes('tipoSaida')) {
+    database.exec('ALTER TABLE animais ADD COLUMN tipoSaida TEXT');
+  }
   const novasColunas = {
     numero: 'INTEGER',
     brinco: 'TEXT',
@@ -236,6 +251,7 @@ function applyMigrations(database) {
     dataSaida: 'TEXT',
     valorVenda: 'REAL',
     observacoesSaida: 'TEXT',
+    tipoSaida: 'TEXT',
     idProdutor: 'INTEGER'
   };
   for (const [col, type] of Object.entries(novasColunas)) {

@@ -10,6 +10,7 @@ const tarefasRoutes = require('./routes/tarefasRoutes');
 const estoqueRoutes = require('./routes/estoqueRoutes');
 const protocolosRoutes = require('./routes/protocolosRoutes');
 const reproducaoRoutes = require('./routes/reproducaoRoutes');
+const tourosRoutes = require('./routes/tourosRoutes');
 const financeiroRoutes = require('./routes/financeiroRoutes');
 const eventosRoutes = require('./routes/eventosRoutes');
 const bezerrasRoutes = require('./routes/bezerrasRoutes');
@@ -47,6 +48,8 @@ app.use('/eventos', eventosRoutes);
 app.use('/produtos', produtosRoutes);
 app.use('/examesSanitarios', examesRoutes);
 app.use('/api/racas', racasRoutes);
+// nova rota para fichas de touros (pai dos animais)
+app.use('/touros', tourosRoutes);
 app.use('/', mockRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api', rotasExtras);

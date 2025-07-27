@@ -17,14 +17,14 @@ function create(db, animal, idProdutor) {
       categoria, idade, raca,
       checklistVermifugado, checklistGrupoDefinido, fichaComplementarOK,
       pai, mae, ultimaIA, ultimoParto, nLactacoes,
-      status, motivoSaida, dataSaida, valorVenda, observacoesSaida,
+      status, motivoSaida, dataSaida, valorVenda, observacoesSaida, tipoSaida,
       idProdutor
     ) VALUES (
       @numero, @brinco, @nascimento, @sexo, @origem,
       @categoria, @idade, @raca,
       @checklistVermifugado, @checklistGrupoDefinido, @fichaComplementarOK,
       @pai, @mae, @ultimaIA, @ultimoParto, @nLactacoes,
-      @status, @motivoSaida, @dataSaida, @valorVenda, @observacoesSaida,
+      @status, @motivoSaida, @dataSaida, @valorVenda, @observacoesSaida, @tipoSaida,
       @idProdutor
     )
   `);
@@ -51,6 +51,7 @@ function create(db, animal, idProdutor) {
     dataSaida: animal.dataSaida || null,
     valorVenda: animal.valorVenda || null,
     observacoesSaida: animal.observacoesSaida || '',
+    tipoSaida: animal.tipoSaida || null,
     idProdutor,
   };
 
@@ -65,7 +66,7 @@ function update(db, id, animal, idProdutor) {
       categoria = ?, idade = ?, raca = ?,
       checklistVermifugado = ?, checklistGrupoDefinido = ?, fichaComplementarOK = ?,
       pai = ?, mae = ?, ultimaIA = ?, ultimoParto = ?, nLactacoes = ?,
-      status = ?, motivoSaida = ?, dataSaida = ?, valorVenda = ?, observacoesSaida = ?
+      status = ?, motivoSaida = ?, dataSaida = ?, valorVenda = ?, observacoesSaida = ?, tipoSaida = ?
     WHERE id = ? AND idProdutor = ?
   `);
   stmt.run(
@@ -90,6 +91,7 @@ function update(db, id, animal, idProdutor) {
     animal.dataSaida || null,
     animal.valorVenda || null,
     animal.observacoesSaida || null,
+    animal.tipoSaida || null,
     id,
     idProdutor
   );
