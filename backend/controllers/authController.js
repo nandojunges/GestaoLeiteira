@@ -251,7 +251,18 @@ async function login(req, res) {
     return res.status(400).json({ message: 'Senha incorreta.' });
   }
 
-  const token = jwt.sign({ email }, SECRET, { expiresIn: '2h' });
+  // Inclui dados adicionais do usuário no token para que o middleware
+  // autenticarToken possa identificar o produtor e o perfil corretamente
+  const token = jwt.sign(
+    {
+      email,
+      idProdutor: usuario.id,
+      perfil: usuario.perfil,
+      tipoConta: usuario.tipoConta,
+    },
+    SECRET,
+    { expiresIn: '2h' }
+  );
 
   return res.status(200).json({ token });
 }
