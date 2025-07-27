@@ -49,6 +49,12 @@ async function editarAnimal(req, res) {
   const id = req.params.id;
   const dadosAtualizados = {
     ...req.body,
+    // Se nenhum status for enviado, mantém o animal ativo (1)
+    status: req.body.status ?? 1,
+    motivoSaida: req.body.motivoSaida ?? null,
+    dataSaida: req.body.dataSaida ?? null,
+    valorVenda: req.body.valorVenda ?? null,
+    observacoesSaida: req.body.observacoesSaida ?? null,
     // garante que o tipo de saída seja enviado à camada de modelo
     tipoSaida: req.body.tipoSaida ?? null,
   };
