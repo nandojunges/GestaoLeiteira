@@ -40,3 +40,13 @@ export async function excluirProdutoEstoqueFirestore(id) {
   window.dispatchEvent(new Event('estoqueAtualizado'));
 }
 
+export async function reduzirQuantidadeProduto(nome, qtd = 1) {
+  const itens = await buscarTodos('estoque');
+  const prod = (itens || []).find(i => String(i.item).toLowerCase() === String(nome).toLowerCase());
+  if (!prod) return;
+  const atual = parseFloat(prod.quantidade || 0) || 0;
+  const nova = atual - parseFloat(qtd || 1);
+  await atualizarItem('estoque', { id: prod.id, ...prod, quantidade: nova });
+  window.dispatchEvent(new Event('estoqueAtualizado'));
+}
+

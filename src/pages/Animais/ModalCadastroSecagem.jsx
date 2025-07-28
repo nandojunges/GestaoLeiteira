@@ -1,4 +1,18 @@
 import React, { useState } from 'react';
+import { Calendar } from 'lucide-react';
+
+function toInputDate(br) {
+  if (!br || br.length !== 10) return '';
+  const [d, m, y] = br.split('/');
+  return `${y}-${m}-${d}`;
+}
+
+function fromInputDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  if (!y || !m || !d) return '';
+  return `${d}/${m}/${y}`;
+}
 
 export default function ModalCadastroSecagem({ vaca, onFechar, onSalvar }) {
   const [data, setData] = useState('');
@@ -42,20 +56,24 @@ export default function ModalCadastroSecagem({ vaca, onFechar, onSalvar }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-gray-700">Data da Secagem</label>
-              <input type="date" value={data} onChange={e => setData(e.target.value)} className="input" />
+              <div className="relative">
+                <input
+                  type="date"
+                  value={toInputDate(data)}
+                  onChange={e => setData(fromInputDate(e.target.value))}
+                  className="input pr-10"
+                />
+                <Calendar size={18} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm text-gray-700">Plano de Tratamento</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={plano}
-                  onChange={e => setPlano(e.target.value)}
-                  className="input flex-1"
-                />
-                <button className="px-2 text-blue-600 text-xl hover:scale-125 transition">➕</button>
-              </div>
+              <select value={plano} onChange={e => setPlano(e.target.value)} className="input">
+                <option value="">Selecione</option>
+                <option value="Antibiótico intramamário">Antibiótico intramamário</option>
+                <option value="Antibiótico + Antiinflamatório">Antibiótico + Antiinflamatório</option>
+              </select>
             </div>
 
             <div>

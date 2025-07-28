@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Calendar } from 'lucide-react';
 import CadastrarMedicamento from "./CadastrarMedicamento";
 import RelatorioMedicamentos from "./RelatorioMedicamentos";
-import { formatarDataDigitada } from "./utilsAnimais";
 import "../../styles/botoes.css";
 import {
   inserirResponsavelSecagemSQLite,
@@ -10,6 +10,20 @@ import {
 } from "../../utils/apiFuncoes.js";
 import { buscarTodosAnimais, salvarAnimais, excluirAnimal } from "../../sqlite/animais";
 import { adicionarOcorrenciaFirestore } from "../../utils/registroReproducao";
+import { reduzirQuantidadeProduto } from "../../utils/estoque";
+
+function toInputDate(br) {
+  if (!br || br.length !== 10) return "";
+  const [d, m, y] = br.split("/");
+  return `${y}-${m}-${d}`;
+}
+
+function fromInputDate(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return "";
+  return `${d}/${m}/${y}`;
+}
 
 export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
   const [dataSecagem, setDataSecagem] = useState("");
@@ -100,6 +114,7 @@ export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
       await salvarAnimais(atualizados);
       window.dispatchEvent(new Event("animaisAtualizados"));
       window.dispatchEvent(new Event("dadosAnimalAtualizados"));
+      await reduzirQuantidadeProduto(nomeComercial, 1);
     } catch (err) {
       console.error("Erro ao registrar secagem:", err);
       alert("Erro ao registrar secagem");
@@ -116,15 +131,23 @@ export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
           <div style={grid}>
             <div>
               <label>Data da Secagem *</label>
-              <input
-                value={dataSecagem}
-                onChange={e => setDataSecagem(formatarDataDigitada(e.target.value))}
-                style={input}
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="date"
+                  value={toInputDate(dataSecagem)}
+                  onChange={e => setDataSecagem(fromInputDate(e.target.value))}
+                  style={{ ...input, paddingRight: '2.5rem' }}
+                />
+                <Calendar size={18} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#555' }} />
+              </div>
             </div>
             <div>
               <label>Plano de Tratamento *</label>
-              <input value={plano} onChange={e => setPlano(e.target.value)} style={input} />
+              <select value={plano} onChange={e => setPlano(e.target.value)} style={input}>
+                <option value="">Selecione</option>
+                <option value="Antibiótico intramamário">Antibiótico intramamário</option>
+                <option value="Antibiótico + Antiinflamatório">Antibiótico + Antiinflamatório</option>
+              </select>
             </div>
 
             <div style={{ gridColumn: "1 / -1", position: "relative" }}>

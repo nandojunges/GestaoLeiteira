@@ -47,7 +47,7 @@ export default function RelatorioMedicamentos({ onFechar }) {
   };
 
   const handleInput = (e, campo) => {
-    const valor = campo === "leite" || campo === "carne"
+    const valor = ["leite", "carne", "quantidade"].includes(campo)
       ? e.target.value.replace(/\D/g, "")
       : e.target.value;
     setEdicao({ ...edicao, [campo]: valor });
@@ -65,6 +65,7 @@ export default function RelatorioMedicamentos({ onFechar }) {
                 <th style={th}>Princípio Ativo</th>
                 <th style={th}>Leite (dias)</th>
                 <th style={th}>Carne (dias)</th>
+                <th style={th}>Qtd.</th>
                 <th style={th}>Ações</th>
               </tr>
             </thead>
@@ -86,6 +87,11 @@ export default function RelatorioMedicamentos({ onFechar }) {
                     {editando === nome
                       ? <input value={edicao.carne || ""} onChange={e => handleInput(e, "carne")} style={inputMini} />
                       : dados.carne}
+                  </td>
+                  <td style={td}>
+                    {editando === nome
+                      ? <input value={edicao.quantidade || ''} onChange={e => handleInput(e, 'quantidade')} style={inputMini} />
+                      : dados.quantidade}
                   </td>
                   <td style={td}>
                     {editando === nome ? (
