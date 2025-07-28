@@ -56,7 +56,19 @@ export async function buscarReproducao(numero) {
 }
 
 export async function buscarMedicamentosSecagemSQLite() {
-  return fetchJson(`${BASE_URL}/medicamentos-secagem`);
+  const lista = await fetchJson(`${BASE_URL}/produtos`);
+  if (!Array.isArray(lista)) return {};
+  const obj = {};
+  lista.forEach((p) => {
+    obj[p.nome] = {
+      id: p.id,
+      principio: p.principioAtivo,
+      leite: p.carenciaLeite,
+      carne: p.carenciaCarne,
+      quantidade: p.quantidade,
+    };
+  });
+  return obj;
 }
 
 export async function buscarPrincipiosSQLite() {
@@ -133,11 +145,31 @@ export async function atualizarProtocolo(id, dados) {
 }
 
 export async function salvarMedicamentosSecagemSQLite(dados) {
-  return await adicionarItem("medicamentos-secagem", dados);
+  if (!dados || typeof dados !== 'object') return;
+  for (const [nome, info] of Object.entries(dados)) {
+    const item = {
+      nome,
+      principioAtivo: info.principio,
+      carenciaLeite: info.leite,
+      carenciaCarne: info.carne,
+      quantidade: info.quantidade,
+    };
+    if (info.id) {
+      await atualizarItem('produtos', info.id, item);
+    } else {
+      await adicionarItem('produtos', item);
+    }
+  }
 }
 
 export async function inserirMedicamentoSecagemSQLite(dados) {
-  return await adicionarItem("medicamentos-secagem", dados);
+  return await adicionarItem('produtos', {
+    nome: dados.nome,
+    principioAtivo: dados.principio,
+    carenciaLeite: dados.leite,
+    carenciaCarne: dados.carne,
+    quantidade: dados.quantidade,
+  });
 }
 
 export async function inserirPrincipioSQLite(dado) {
@@ -209,7 +241,7 @@ export async function excluirProtocolo(id) {
 }
 
 export async function removerMedicamentoSecagemSQLite(id) {
-  return await deletarItem("medicamentos-secagem", id);
+  return await deletarItem('produtos', id);
 }
 
 export async function removerTouroSQLite(id) {

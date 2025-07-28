@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Produtos = require('../models/produtosModel');
+const Estoque = require('../models/estoqueModel');
 const { initDB } = require('../db');
 const autenticarToken = require('../middleware/autenticarToken');
 
@@ -21,6 +22,18 @@ router.get('/:id', (req, res) => {
 router.post('/', (req, res) => {
   const db = initDB(req.user.email);
   const item = Produtos.create(db, req.body, req.user.idProdutor);
+  if (req.body && req.body.nome && req.body.quantidade) {
+    const unidade = req.body.unidade || 'dose';
+    try {
+      Estoque.create(
+        db,
+        { item: req.body.nome, quantidade: req.body.quantidade, unidade },
+        req.user.idProdutor
+      );
+    } catch (err) {
+      console.error('Erro ao inserir no estoque:', err.message);
+    }
+  }
   res.status(201).json(item);
 });
 
