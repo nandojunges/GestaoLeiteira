@@ -11,7 +11,7 @@ import {
   buscarResponsaveisSecagemSQLite,
   buscarMedicamentosSecagemSQLite,
 } from "../../utils/apiFuncoes.js";
-import { buscarTodosAnimais, salvarAnimais, excluirAnimal } from "../../sqlite/animais";
+import { buscarTodosAnimais, salvarAnimais } from "../../sqlite/animais";
 import { adicionarOcorrenciaFirestore } from "../../utils/registroReproducao";
 import { reduzirQuantidadeProduto } from "../../utils/estoque";
 
@@ -91,10 +91,10 @@ export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
   const [dataSecagem, setDataSecagem] = useState("");
   const [plano, setPlano] = useState("");
   const [principioAtivo, setPrincipioAtivo] = useState("");
-  const [nomeComercial, setNomeComercial] = useState("");
   const [carenciaLeite, setCarenciaLeite] = useState("");
   const [carenciaCarne, setCarenciaCarne] = useState("");
-  const [responsavel, setResponsavel] = useState("");
+  const [medicamentoSelecionado, setMedicamentoSelecionado] = useState(null);
+  const [responsavelSelecionado, setResponsavelSelecionado] = useState(null);
   const [observacoes, setObservacoes] = useState("");
 
   const [responsaveisSalvos, setResponsaveisSalvos] = useState([]);
@@ -105,11 +105,22 @@ export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
   const [mostrarCadastroMedicamento, setMostrarCadastroMedicamento] = useState(false);
   const [mostrarRelatorioMedicamentos, setMostrarRelatorioMedicamentos] = useState(false);
 
-  const [mostrarTabelaMedicamentos, setMostrarTabelaMedicamentos] = useState(false);
-  const [mostrarTabelaResponsaveis, setMostrarTabelaResponsaveis] = useState(false);
   const [erroFormulario, setErroFormulario] = useState(false);
 
   const refs = useRef([]);
+
+  const nomeComercial = medicamentoSelecionado?.label || "";
+  const responsavel = responsavelSelecionado?.label || "";
+
+  const opcoesMedicamentos = Object.entries(medicamentosSalvos).map(([nome, med]) => ({
+    value: med.id,
+    label: nome,
+    principioAtivo: med.principio,
+    carenciaLeite: med.leite,
+    carenciaCarne: med.carne,
+  }));
+
+  const opcoesResponsaveis = responsaveisSalvos.map(r => ({ value: r, label: r }));
 
   useEffect(() => {
     refs.current[0]?.focus();
@@ -134,22 +145,12 @@ export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
       const atualizados = [...responsaveisSalvos, novoResponsavel];
       setResponsaveisSalvos(atualizados);
       await inserirResponsavelSecagemSQLite(novoResponsavel);
-      setResponsavel(novoResponsavel);
+      setResponsavelSelecionado({ value: novoResponsavel, label: novoResponsavel });
     }
     setNovoResponsavel("");
     setMostrarCadastroResponsavel(false);
   };
 
-  const selecionarMedicamento = (nome) => {
-    setNomeComercial(nome);
-    const med = medicamentosSalvos[nome];
-    if (med) {
-      setPrincipioAtivo(med.principio);
-      setCarenciaLeite(med.leite);
-      setCarenciaCarne(med.carne);
-    }
-    setMostrarTabelaMedicamentos(false);
-  };
 
   const aplicar = async () => {
     if (!dataSecagem || !plano || !principioAtivo || !nomeComercial || !carenciaLeite || !carenciaCarne || !responsavel) {
@@ -191,7 +192,7 @@ export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
       <div style={modal}>
         <div style={header}>🐄 Aplicar Secagem — {vaca.numero} / {vaca.brinco}</div>
         <div style={{ padding: "1.5rem", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-          <div style={grid}>
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label>Data da Secagem *</label>
               <DateInput value={dataSecagem} onChange={setDataSecagem} />
@@ -204,58 +205,58 @@ export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
                 onChange={(op) => setPlano(op?.value || '')}
                 styles={{ container: (base) => ({ ...base, marginTop: '0.5rem' }) }}
                 placeholder="Selecione"
+                classNamePrefix="react-select"
               />
             </div>
+          </div>
 
-            <div style={{ gridColumn: "1 / -1", position: "relative" }}>
+          <div style={grid}>
+            <div style={{ gridColumn: "1 / -1" }}>
               <label>Nome Comercial *</label>
-              <div style={linha}>
-                <input
-                  value={nomeComercial}
-                  onChange={e => setNomeComercial(e.target.value)}
-                  onFocus={() => setMostrarTabelaMedicamentos(true)}
-                  onBlur={() => setTimeout(() => setMostrarTabelaMedicamentos(false), 200)}
-                  style={{ ...input, flex: 1 }}
-                />
-                <button onClick={() => setMostrarCadastroMedicamento(true)} className="botao-acao">＋</button>
-                <button onClick={() => setMostrarRelatorioMedicamentos(true)} className="botao-acao">🧾</button>
-              </div>
-              {mostrarTabelaMedicamentos && (
-                <div style={tabelaSuspensa}>
-                  {Object.keys(medicamentosSalvos)
-                    .filter(nome => nome.toLowerCase().includes(nomeComercial.toLowerCase()))
-                    .map((nome, i) => (
-                      <div key={i} onMouseDown={() => selecionarMedicamento(nome)} style={linhaTabela}>{nome}</div>
-                    ))}
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Select
+                    options={opcoesMedicamentos}
+                    value={medicamentoSelecionado}
+                    onChange={(opcao) => {
+                      setMedicamentoSelecionado(opcao);
+                      if (opcao) {
+                        setPrincipioAtivo(opcao.principioAtivo);
+                        setCarenciaLeite(opcao.carenciaLeite);
+                        setCarenciaCarne(opcao.carenciaCarne);
+                      } else {
+                        setPrincipioAtivo('');
+                        setCarenciaLeite('');
+                        setCarenciaCarne('');
+                      }
+                    }}
+                    placeholder="Selecione o medicamento"
+                    classNamePrefix="react-select"
+                  />
                 </div>
-              )}
+                <button type="button" onClick={() => setMostrarCadastroMedicamento(true)} className="botao-acao">＋</button>
+                <button type="button" onClick={() => setMostrarRelatorioMedicamentos(true)} className="botao-acao">🧾</button>
+              </div>
             </div>
 
             <div><label>Princípio Ativo *</label><input value={principioAtivo} onChange={e => setPrincipioAtivo(e.target.value)} style={input} /></div>
             <div><label>Carência Leite *</label><input value={carenciaLeite} onChange={e => setCarenciaLeite(e.target.value)} style={input} /></div>
             <div><label>Carência Carne *</label><input value={carenciaCarne} onChange={e => setCarenciaCarne(e.target.value)} style={input} /></div>
 
-            <div style={{ gridColumn: "1 / -1", position: "relative" }}>
+            <div style={{ gridColumn: "1 / -1" }}>
               <label>Responsável *</label>
-              <div style={linha}>
-                <input
-                  value={responsavel}
-                  onChange={e => setResponsavel(e.target.value)}
-                  onFocus={() => setMostrarTabelaResponsaveis(true)}
-                  onBlur={() => setTimeout(() => setMostrarTabelaResponsaveis(false), 200)}
-                  style={{ ...input, flex: 1 }}
-                />
-                <button onClick={() => setMostrarCadastroResponsavel(true)} className="botao-acao">＋</button>
-              </div>
-              {mostrarTabelaResponsaveis && (
-                <div style={tabelaSuspensa}>
-                  {responsaveisSalvos
-                    .filter(r => r.toLowerCase().includes(responsavel.toLowerCase()))
-                    .map((r, i) => (
-                      <div key={i} onMouseDown={() => setResponsavel(r)} style={linhaTabela}>{r}</div>
-                    ))}
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Select
+                    options={opcoesResponsaveis}
+                    value={responsavelSelecionado}
+                    onChange={(opcao) => setResponsavelSelecionado(opcao)}
+                    placeholder="Selecione o responsável"
+                    classNamePrefix="react-select"
+                  />
                 </div>
-              )}
+                <button type="button" onClick={() => setMostrarCadastroResponsavel(true)} className="botao-acao">＋</button>
+              </div>
               {mostrarCadastroResponsavel && (
                 <div style={{ ...linha, marginTop: "0.5rem" }}>
                   <input value={novoResponsavel} onChange={e => setNovoResponsavel(e.target.value)} style={{ ...input, flex: 1 }} placeholder="Novo responsável" />
@@ -298,5 +299,3 @@ const header = { background: "#1e40af", color: "white", padding: "1rem 1.5rem", 
 const grid = { display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: "2.5rem", rowGap: "1.5rem" };
 const linha = { display: "flex", gap: "0.5rem", alignItems: "center" };
 const input = { width: "100%", padding: "0.75rem", fontSize: "0.95rem", borderRadius: "0.6rem", border: "1px solid #ccc", marginTop: "0.5rem", marginBottom: "0.5rem" };
-const tabelaSuspensa = { position: "absolute", background: "#fff", border: "1px solid #ccc", borderRadius: "0.5rem", marginTop: "0.25rem", maxHeight: "180px", overflowY: "auto", boxShadow: "0 4px 8px rgba(0,0,0,0.1)", zIndex: 10, fontSize: "0.9rem", width: "100%" };
-const linhaTabela = { padding: "0.5rem 1rem", borderBottom: "1px solid #eee", cursor: "pointer", backgroundColor: "#fff" };
