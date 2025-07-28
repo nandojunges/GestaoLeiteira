@@ -118,6 +118,58 @@ function countByProdutor(db, idProdutor) {
   return row ? row.total : 0;
 }
 
+// Atualiza o status de um animal (1=lactante, 2=seca, 0=inativo)
+function updateStatus(db, id, status, idProdutor) {
+  db.prepare(`UPDATE animais SET status = ? WHERE id = ? AND idProdutor = ?`).run(status, id, idProdutor);
+}
+
+// Incrementa o número de lactações de um animal
+function incrementarLactacoes(db, id, idProdutor) {
+  db.prepare(
+    `UPDATE animais SET nLactacoes = COALESCE(nLactacoes, 0) + 1 WHERE id = ? AND idProdutor = ?`
+  ).run(id, idProdutor);
+}
+
+// Cria uma nova bezerra com o próximo número sequencial
+function createBezerra(db, dados, idProdutor) {
+  const max = db.prepare('SELECT MAX(numero) as m FROM animais WHERE idProdutor = ?')
+    .get(idProdutor)?.m || 0;
+  const numeroNovo = max + 1;
+  const stmt = db.prepare(`
+    INSERT INTO animais (
+      numero, brinco, nascimento, sexo, origem,
+      categoria, idade, raca,
+      checklistVermifugado, checklistGrupoDefinido, fichaComplementarOK,
+      pai, mae, ultimaIA, ultimoParto, nLactacoes,
+      status, motivoSaida, dataSaida, valorVenda, observacoesSaida, tipoSaida,
+      previsaoParto, idProdutor
+    ) VALUES (
+      ?, ?, ?, ?, ?,
+      ?, ?, ?,
+      ?, ?, ?,
+      ?, ?, ?, ?, ?,
+      1, null, null, null, null, null,
+      null, ?
+    )
+  `);
+  const info = stmt.run(
+    numeroNovo,
+    dados.brinco || '',
+    dados.nascimento || '',
+    dados.sexo || 'fêmea',
+    dados.origem || 'nascido na propriedade',
+    'Bezerra',
+    dados.idade || '',
+    dados.raca || '',
+    0, 0, 0,
+    dados.pai || '',
+    dados.mae || '',
+    null, null, 0,
+    idProdutor
+  );
+  return { id: info.lastInsertRowid, numero: numeroNovo, idProdutor };
+}
+
 module.exports = {
   getAll,
   getById,
@@ -127,4 +179,7 @@ module.exports = {
   updateByNumero,
   remove,
   countByProdutor,
+  updateStatus,
+  incrementarLactacoes,
+  createBezerra,
 };

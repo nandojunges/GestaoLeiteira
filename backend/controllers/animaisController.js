@@ -1,12 +1,13 @@
 const { initDB } = require('../db');
-const animaisModel = require('../models/animaisModel');
+const Animais = require('../models/animaisModel');
+const Eventos = require('../models/eventosModel');
 
 // Listar todos os animais do usuário logado
 async function listarAnimais(req, res) {
   const db = initDB(req.user.email);
 
   try {
-    const animais = animaisModel.getAll(db, req.user.idProdutor);
+    const animais = Animais.getAll(db, req.user.idProdutor);
     res.json(animais);
   } catch (error) {
     console.error(error);
@@ -20,7 +21,7 @@ async function buscarAnimalPorId(req, res) {
   const id = req.params.id;
 
   try {
-    const animal = animaisModel.getById(db, parseInt(id), req.user.idProdutor);
+    const animal = Animais.getById(db, parseInt(id), req.user.idProdutor);
     if (!animal) return res.status(404).json({ message: 'Animal não encontrado' });
     res.json(animal);
   } catch (error) {
@@ -35,7 +36,7 @@ async function cadastrarAnimal(req, res) {
   const novoAnimal = { ...req.body, idProdutor: req.user.idProdutor };
 
   try {
-    const animalCriado = animaisModel.create(db, novoAnimal, req.user.idProdutor);
+    const animalCriado = Animais.create(db, novoAnimal, req.user.idProdutor);
     res.status(201).json(animalCriado);
   } catch (error) {
     console.error('Erro ao cadastrar animal:', error);
@@ -60,7 +61,7 @@ async function editarAnimal(req, res) {
   };
 
   try {
-    const animalAtualizado = animaisModel.update(db, id, dadosAtualizados, req.user.idProdutor);
+    const animalAtualizado = Animais.update(db, id, dadosAtualizados, req.user.idProdutor);
     res.json(animalAtualizado);
   } catch (error) {
     console.error(error);
@@ -74,11 +75,69 @@ async function excluirAnimal(req, res) {
   const id = req.params.id;
 
   try {
-    animaisModel.remove(db, id, req.user.idProdutor);
+    Animais.remove(db, id, req.user.idProdutor);
     res.json({ message: 'Animal removido com sucesso' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erro ao excluir animal' });
+  }
+}
+
+// Aplica secagem ao animal e registra evento
+async function aplicarSecagem(req, res) {
+  const db = initDB(req.user.email);
+  const { id } = req.params;
+  const { dataSecagem, plano } = req.body;
+  try {
+    Eventos.create(
+      db,
+      {
+        idAnimal: id,
+        dataEvento: dataSecagem,
+        tipoEvento: 'Secagem',
+        descricao: plano || '',
+      },
+      req.user.idProdutor
+    );
+    Animais.updateStatus(db, id, 2, req.user.idProdutor);
+    res.status(200).json({ message: 'Secagem aplicada' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro ao aplicar secagem' });
+  }
+}
+
+// Registra parto, cria bezerra e atualiza dados
+async function registrarParto(req, res) {
+  const db = initDB(req.user.email);
+  const { id } = req.params;
+  const { dataParto, sexoBezerro } = req.body;
+  try {
+    Animais.incrementarLactacoes(db, id, req.user.idProdutor);
+    Animais.updateStatus(db, id, 1, req.user.idProdutor);
+    const novaBezerra = Animais.createBezerra(
+      db,
+      {
+        nascimento: dataParto,
+        sexo: sexoBezerro,
+        mae: id,
+      },
+      req.user.idProdutor
+    );
+    Eventos.create(
+      db,
+      {
+        idAnimal: id,
+        dataEvento: dataParto,
+        tipoEvento: 'Parto',
+        descricao: `Bezerra ${novaBezerra.numero}`,
+      },
+      req.user.idProdutor
+    );
+    res.status(201).json({ message: 'Parto registrado', bezerra: novaBezerra });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro ao registrar parto' });
   }
 }
 
@@ -89,4 +148,6 @@ module.exports = {
   adicionarAnimal: cadastrarAnimal,
   editarAnimal,
   excluirAnimal,
+  aplicarSecagem,
+  registrarParto,
 };

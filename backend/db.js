@@ -96,6 +96,7 @@ const createAnimais = `CREATE TABLE IF NOT EXISTS animais (
   valorVenda REAL,
   observacoesSaida TEXT,
   tipoSaida TEXT,
+  previsaoParto TEXT,
   idProdutor INTEGER
 )`;
 
@@ -229,6 +230,19 @@ CREATE TABLE IF NOT EXISTS touros (
   if (!existentes.includes('tipoSaida')) {
     database.exec('ALTER TABLE animais ADD COLUMN tipoSaida TEXT');
   }
+  if (!existentes.includes('previsaoParto')) {
+    database.exec('ALTER TABLE animais ADD COLUMN previsaoParto TEXT');
+  }
+  const createEventos = `
+  CREATE TABLE IF NOT EXISTS eventos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    idAnimal INTEGER,
+    dataEvento TEXT,
+    tipoEvento TEXT,
+    descricao TEXT,
+    idProdutor INTEGER
+  )`;
+  database.exec(createEventos);
   const novasColunas = {
     numero: 'INTEGER',
     brinco: 'TEXT',
