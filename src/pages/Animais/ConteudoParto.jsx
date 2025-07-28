@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import AcaoParto from './AcaoParto';
 import '../../styles/botoes.css';
 import '../../styles/tabelaModerna.css';
+import parseBRDate from '@/utils/parseBRDate';
 
 export default function ConteudoParto({ vacas = [] }) {
   const [colunasVisiveis, setColunasVisiveis] = useState({
@@ -27,12 +28,11 @@ export default function ConteudoParto({ vacas = [] }) {
       return false;
     }
 
-    const [dia, mes, ano] = v.dataPrevistaParto.split('/').map(Number);
-    const previsao = new Date(ano, mes - 1, dia);
-    const diasParaParto = (previsao - hoje) / (1000 * 60 * 60 * 24);
+    const previsao = parseBRDate(v.dataPrevistaParto);
+    const diasParaParto = previsao ? (previsao - hoje) / (1000 * 60 * 60 * 24) : 0;
 
     // Exibir se o parto estiver atrasado ou previsto para os próximos 10 dias
-    return diasParaParto <= 10 || previsao <= hoje;
+    return previsao && (diasParaParto <= 10 || previsao <= hoje);
   });
 
   const abrirModalParto = (vaca) => {
