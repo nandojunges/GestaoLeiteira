@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Calendar } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
+import Select from 'react-select';
 import CadastrarMedicamento from "./CadastrarMedicamento";
 import RelatorioMedicamentos from "./RelatorioMedicamentos";
 import "../../styles/botoes.css";
@@ -12,17 +15,76 @@ import { buscarTodosAnimais, salvarAnimais, excluirAnimal } from "../../sqlite/a
 import { adicionarOcorrenciaFirestore } from "../../utils/registroReproducao";
 import { reduzirQuantidadeProduto } from "../../utils/estoque";
 
-function toInputDate(br) {
-  if (!br || br.length !== 10) return "";
-  const [d, m, y] = br.split("/");
-  return `${y}-${m}-${d}`;
+const planosTratamento = [
+  { value: 'antibiotico', label: 'Antibiótico intramamário' },
+  { value: 'antibio_antiinf', label: 'Antibiótico + Antiinflamatório' },
+];
+
+function strToDate(str) {
+  if (!str) return null;
+  const [d, m, y] = str.split('/');
+  if (!d || !m || !y) return null;
+  return new Date(`${y}-${m}-${d}T00:00:00`);
 }
 
-function fromInputDate(iso) {
-  if (!iso) return "";
-  const [y, m, d] = iso.split("-");
-  if (!y || !m || !d) return "";
+function dateToStr(date) {
+  if (!date) return '';
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = date.getFullYear();
   return `${d}/${m}/${y}`;
+}
+
+function DateInput({ value, onChange }) {
+  const [show, setShow] = useState(false);
+  const ref = useRef(null);
+
+  const inputStyle = {
+    width: '100%',
+    padding: '0.75rem',
+    fontSize: '0.95rem',
+    borderRadius: '0.6rem',
+    border: '1px solid #ccc',
+    marginTop: '0.5rem',
+    marginBottom: '0.5rem',
+  };
+
+  useEffect(() => {
+    const handle = (e) => {
+      if (!ref.current?.contains(e.target)) setShow(false);
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, []);
+
+  const dateObj = strToDate(value) || new Date();
+
+  return (
+    <div style={{ position: 'relative' }} ref={ref}>
+      <input
+        readOnly
+        value={value}
+        onClick={() => setShow((s) => !s)}
+        style={{ ...inputStyle, paddingRight: '2.5rem' }}
+      />
+      <CalendarIcon
+        size={18}
+        onClick={() => setShow((s) => !s)}
+        style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#555', cursor: 'pointer' }}
+      />
+      {show && (
+        <div style={{ position: 'absolute', zIndex: 20, top: '105%', right: 0 }}>
+          <Calendar
+            onChange={(d) => {
+              onChange(dateToStr(d));
+              setShow(false);
+            }}
+            value={dateObj}
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
@@ -56,14 +118,15 @@ export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
     return () => window.removeEventListener("keydown", esc);
   }, [onFechar]);
 
+  const carregarDados = async () => {
+    const r = await buscarResponsaveisSecagemSQLite();
+    const m = await buscarMedicamentosSecagemSQLite();
+    setResponsaveisSalvos(r || []);
+    setMedicamentosSalvos(m || {});
+  };
+
   useEffect(() => {
-    const carregar = async () => {
-      const r = await buscarResponsaveisSecagemSQLite();
-      const m = await buscarMedicamentosSecagemSQLite();
-      setResponsaveisSalvos(r || []);
-      setMedicamentosSalvos(m || {});
-    };
-    carregar();
+    carregarDados();
   }, []);
 
   const salvarNovoResponsavel = async () => {
@@ -131,23 +194,17 @@ export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
           <div style={grid}>
             <div>
               <label>Data da Secagem *</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="date"
-                  value={toInputDate(dataSecagem)}
-                  onChange={e => setDataSecagem(fromInputDate(e.target.value))}
-                  style={{ ...input, paddingRight: '2.5rem' }}
-                />
-                <Calendar size={18} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#555' }} />
-              </div>
+              <DateInput value={dataSecagem} onChange={setDataSecagem} />
             </div>
             <div>
               <label>Plano de Tratamento *</label>
-              <select value={plano} onChange={e => setPlano(e.target.value)} style={input}>
-                <option value="">Selecione</option>
-                <option value="Antibiótico intramamário">Antibiótico intramamário</option>
-                <option value="Antibiótico + Antiinflamatório">Antibiótico + Antiinflamatório</option>
-              </select>
+              <Select
+                options={planosTratamento}
+                value={planosTratamento.find(p => p.value === plano) || null}
+                onChange={(op) => setPlano(op?.value || '')}
+                styles={{ container: (base) => ({ ...base, marginTop: '0.5rem' }) }}
+                placeholder="Selecione"
+              />
             </div>
 
             <div style={{ gridColumn: "1 / -1", position: "relative" }}>
@@ -220,7 +277,15 @@ export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
           </div>
         </div>
 
-        {mostrarCadastroMedicamento && <CadastrarMedicamento onFechar={() => setMostrarCadastroMedicamento(false)} />}
+        {mostrarCadastroMedicamento && (
+          <CadastrarMedicamento
+            onFechar={() => setMostrarCadastroMedicamento(false)}
+            onSalvar={() => {
+              carregarDados();
+              setMostrarCadastroMedicamento(false);
+            }}
+          />
+        )}
         {mostrarRelatorioMedicamentos && <RelatorioMedicamentos onFechar={() => setMostrarRelatorioMedicamentos(false)} />}
       </div>
     </div>

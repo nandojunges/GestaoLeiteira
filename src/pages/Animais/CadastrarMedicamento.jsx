@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { inserirMedicamentoSecagemSQLite } from "../../utils/apiFuncoes.js";
+import { adicionarItem } from "../../utils/backendApi";
 
 export default function CadastrarMedicamento({ onFechar, onSalvar }) {
   const [nome, setNome] = useState("");
@@ -39,7 +39,13 @@ export default function CadastrarMedicamento({ onFechar, onSalvar }) {
       setErro(true);
       return;
     }
-    await inserirMedicamentoSecagemSQLite({ nome, principio, leite, carne, quantidade });
+    await adicionarItem('produtos', {
+      nome,
+      principioAtivo: principio,
+      carenciaLeite: leite,
+      carenciaCarne: carne,
+      quantidade
+    });
     if (onSalvar) onSalvar(nome);
     onFechar();
   };
@@ -108,7 +114,7 @@ export default function CadastrarMedicamento({ onFechar, onSalvar }) {
             ref={el => refs.current[4] = el}
             type="number"
             min="1"
-            placeholder="Quantidade de doses"
+            placeholder="Quantidade (doses)"
             value={quantidade}
             onChange={e => setQuantidade(e.target.value.replace(/\D/g, ''))}
             onKeyDown={e => handleEnter(e, 4)}

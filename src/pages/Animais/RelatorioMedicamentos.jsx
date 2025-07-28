@@ -39,10 +39,11 @@ export default function RelatorioMedicamentos({ onFechar }) {
   };
 
   const excluir = async (nome) => {
+    const id = medicamentos[nome]?.id;
     const atualizados = { ...medicamentos };
     delete atualizados[nome];
     setMedicamentos(atualizados);
-    await removerMedicamentoSecagemSQLite(nome);
+    if (id) await removerMedicamentoSecagemSQLite(id);
     setConfirmarExclusao(null);
   };
 
