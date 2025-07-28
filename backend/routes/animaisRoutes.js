@@ -41,5 +41,9 @@ router.put('/:id', animaisController.editarAnimal);
 
 // ❌ Excluir animal
 router.delete('/:id', animaisController.excluirAnimal);
+// aplica secagem ao animal
+router.post('/:id/secagem', animaisController.aplicarSecagem);
+// registra parto do animal
+router.post('/:id/parto', animaisController.registrarParto);
 
 module.exports = router;
