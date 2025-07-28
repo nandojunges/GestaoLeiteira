@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
+import parseBRDate from '@/utils/parseBRDate';
 
 export default function ConteudoPreParto({ vacas }) {
   const [diasAntes, setDiasAntes] = useState(5);
@@ -29,9 +30,8 @@ export default function ConteudoPreParto({ vacas }) {
   const vacasFiltradas = (Array.isArray(vacas) ? vacas : []).filter(v => {
     if ((v.sexo || "").toLowerCase() !== "femea" || !v.dataPrevistaParto) return false;
     if (v.status === "lactacao") return false; // Evita mostrar vacas que já pariram
-    const [dia, mes, ano] = v.dataPrevistaParto.split("/").map(Number);
-    const dataParto = new Date(ano, mes - 1, dia);
-    return dataParto <= dataLimite;
+    const dataParto = parseBRDate(v.dataPrevistaParto);
+    return dataParto && dataParto <= dataLimite;
   });
 
   const alternarColuna = (coluna) => {
