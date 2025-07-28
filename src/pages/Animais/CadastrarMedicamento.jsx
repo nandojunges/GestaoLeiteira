@@ -6,6 +6,7 @@ export default function CadastrarMedicamento({ onFechar, onSalvar }) {
   const [principio, setPrincipio] = useState("");
   const [leite, setLeite] = useState("");
   const [carne, setCarne] = useState("");
+  const [quantidade, setQuantidade] = useState("");
   const [erro, setErro] = useState(false);
   const refs = useRef([]);
 
@@ -24,7 +25,7 @@ export default function CadastrarMedicamento({ onFechar, onSalvar }) {
   const handleEnter = (e, index) => {
     if (e.key === "Enter" || e.key === "ArrowDown") {
       e.preventDefault();
-      if (index === 3) return salvar(); // último campo → aciona salvar
+      if (index === 4) return salvar();
       refs.current[index + 1]?.focus();
     }
     if (e.key === "ArrowUp") {
@@ -34,11 +35,11 @@ export default function CadastrarMedicamento({ onFechar, onSalvar }) {
   };
 
   const salvar = async () => {
-    if (!nome || !principio || !leite || !carne) {
+    if (!nome || !principio || !leite || !carne || !quantidade) {
       setErro(true);
       return;
     }
-    await inserirMedicamentoSecagemSQLite({ nome, principio, leite, carne });
+    await inserirMedicamentoSecagemSQLite({ nome, principio, leite, carne, quantidade });
     if (onSalvar) onSalvar(nome);
     onFechar();
   };
@@ -101,6 +102,16 @@ export default function CadastrarMedicamento({ onFechar, onSalvar }) {
             value={carne}
             onChange={e => setCarne(e.target.value.replace(/\D/g, ''))}
             onKeyDown={e => handleEnter(e, 3)}
+            style={input}
+          />
+          <input
+            ref={el => refs.current[4] = el}
+            type="number"
+            min="1"
+            placeholder="Quantidade de doses"
+            value={quantidade}
+            onChange={e => setQuantidade(e.target.value.replace(/\D/g, ''))}
+            onKeyDown={e => handleEnter(e, 4)}
             style={input}
           />
 
