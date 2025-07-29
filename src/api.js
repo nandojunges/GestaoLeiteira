@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api'
+  // Garante que a base da API termine com barra caso VITE_API_URL não esteja definida.
+  // Assim, chamadas como `api.post('auth/login')` resultam em '/api/auth/login' em vez de 'apiauth/login'.
+  baseURL: import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '/api/',
 });
 
 api.interceptors.request.use((config) => {
