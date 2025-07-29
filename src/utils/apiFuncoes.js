@@ -226,6 +226,27 @@ export async function salvarFichaAnimalSQLite(numeroAnimal, dados) {
   return await atualizarItem("animais/ficha", numeroAnimal, dados);
 }
 
+// Chama o endpoint de secagem do backend
+export async function aplicarSecagem(idAnimal, dataSecagem, plano) {
+  return await fetchJson(`${BASE_URL}/animais/${idAnimal}/secagem`, {
+    method: 'POST',
+    body: JSON.stringify({ dataSecagem, plano }),
+  });
+}
+
+// Chama o endpoint de parto do backend
+export async function registrarParto(idAnimal, dataParto, sexoBezerro) {
+  return await fetchJson(`${BASE_URL}/animais/${idAnimal}/parto`, {
+    method: 'POST',
+    body: JSON.stringify({ dataParto, sexoBezerro }),
+  });
+}
+
+// Busca eventos (linha do tempo) de um animal
+export async function buscarEventosAnimal(idAnimal) {
+  return await fetchJson(`${BASE_URL}/eventos/${idAnimal}`);
+}
+
 // ==== EXCLUSÕES ====
 
 export async function deletarItem(rota, id) {

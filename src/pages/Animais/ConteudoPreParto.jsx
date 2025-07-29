@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
-import parseBRDate from '@/utils/parseBRDate';
+import { parseBRDate, diffDias } from '@/utils/dateUtils';
 
 export default function ConteudoPreParto({ vacas }) {
   const [diasAntes, setDiasAntes] = useState(5);
@@ -23,15 +23,10 @@ export default function ConteudoPreParto({ vacas }) {
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [colunaHover, setColunaHover] = useState(null);
 
-  const hoje = new Date();
-  const dataLimite = new Date();
-  dataLimite.setDate(hoje.getDate() + filtroDias);
-
   const vacasFiltradas = (Array.isArray(vacas) ? vacas : []).filter(v => {
-    if ((v.sexo || "").toLowerCase() !== "femea" || !v.dataPrevistaParto) return false;
-    if (v.status === "lactacao") return false; // Evita mostrar vacas que já pariram
     const dataParto = parseBRDate(v.dataPrevistaParto);
-    return dataParto && dataParto <= dataLimite;
+    const dias = dataParto ? diffDias(dataParto) : null;
+    return v.status === 1 && dias !== null && dias > 0 && dias <= filtroDias;
   });
 
   const alternarColuna = (coluna) => {

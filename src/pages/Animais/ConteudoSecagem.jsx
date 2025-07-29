@@ -49,7 +49,7 @@ export default function ConteudoSecagem({ vacas }) {
   };
 
   const vacasFiltradas = (Array.isArray(vacas) ? vacas : []).filter(
-    (v) => (v.sexo || "").toLowerCase() !== "macho"
+    (v) => v.status === 2
   );
 
   const titulos = [

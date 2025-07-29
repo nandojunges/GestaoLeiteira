@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import AcaoParto from './AcaoParto';
 import '../../styles/botoes.css';
 import '../../styles/tabelaModerna.css';
-import parseBRDate from '@/utils/parseBRDate';
+import { parseBRDate, diffDias } from '@/utils/dateUtils';
 
 export default function ConteudoParto({ vacas = [] }) {
   const [colunasVisiveis, setColunasVisiveis] = useState({
@@ -17,22 +17,10 @@ export default function ConteudoParto({ vacas = [] }) {
   const [mostrarInfo, setMostrarInfo] = useState(false);
 
   // ⏬ Atualiza local ao montar e após evento de parto
-  const hoje = new Date();
-
   const vacasFiltradas = (Array.isArray(vacas) ? vacas : []).filter(v => {
-    if ((v.sexo || '').toLowerCase() !== 'femea') {
-      return false;
-    }
-
-    if (!v.dataPrevistaParto) {
-      return false;
-    }
-
     const previsao = parseBRDate(v.dataPrevistaParto);
-    const diasParaParto = previsao ? (previsao - hoje) / (1000 * 60 * 60 * 24) : 0;
-
-    // Exibir se o parto estiver atrasado ou previsto para os próximos 10 dias
-    return previsao && (diasParaParto <= 10 || previsao <= hoje);
+    const dif = previsao ? diffDias(previsao) : null;
+    return v.status === 1 && dif !== null && dif <= 0;
   });
 
   const abrirModalParto = (vaca) => {
