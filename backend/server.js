@@ -44,23 +44,23 @@ const autenticarToken = require('./middleware/autenticarToken');
 // o acesso a páginas públicas como a tela de login), aplicamos por rota:
 // As rotas que exigem token e acesso ao banco recebem os middlewares na definição abaixo.
 
-// 🌐 Rotas da API
+// 🌐 Rotas da API (prefixadas com /api para corresponder ao front-end)
 // Rotas protegidas: autenticarToken e dbMiddleware são aplicados
-app.use('/vacas', autenticarToken, dbMiddleware, vacasRoutes);
-app.use('/animais', autenticarToken, dbMiddleware, animaisRoutes);
-app.use('/tarefas', autenticarToken, dbMiddleware, tarefasRoutes);
-app.use('/estoque', autenticarToken, dbMiddleware, estoqueRoutes);
-app.use('/bezerras', autenticarToken, dbMiddleware, bezerrasRoutes);
-app.use('/protocolos-reprodutivos', autenticarToken, dbMiddleware, protocolosRoutes);
-app.use('/reproducao', autenticarToken, dbMiddleware, reproducaoRoutes);
-app.use('/financeiro', autenticarToken, dbMiddleware, financeiroRoutes);
-app.use('/eventos', autenticarToken, dbMiddleware, eventosRoutes);
-app.use('/produtos', autenticarToken, dbMiddleware, produtosRoutes);
-app.use('/examesSanitarios', autenticarToken, dbMiddleware, examesRoutes);
+app.use('/api/vacas', autenticarToken, dbMiddleware, vacasRoutes);
+app.use('/api/animais', autenticarToken, dbMiddleware, animaisRoutes);
+app.use('/api/tarefas', autenticarToken, dbMiddleware, tarefasRoutes);
+app.use('/api/estoque', autenticarToken, dbMiddleware, estoqueRoutes);
+app.use('/api/bezerras', autenticarToken, dbMiddleware, bezerrasRoutes);
+app.use('/api/protocolos-reprodutivos', autenticarToken, dbMiddleware, protocolosRoutes);
+app.use('/api/reproducao', autenticarToken, dbMiddleware, reproducaoRoutes);
+app.use('/api/financeiro', autenticarToken, dbMiddleware, financeiroRoutes);
+app.use('/api/eventos', autenticarToken, dbMiddleware, eventosRoutes);
+app.use('/api/produtos', autenticarToken, dbMiddleware, produtosRoutes);
+app.use('/api/examesSanitarios', autenticarToken, dbMiddleware, examesRoutes);
 app.use('/api/racas', autenticarToken, dbMiddleware, racasRoutes);
 // nova rota para fichas de touros (pai dos animais)
-app.use('/touros', autenticarToken, dbMiddleware, tourosRoutes);
 app.use('/api/touros', autenticarToken, dbMiddleware, tourosRoutes);
+// mantendo também a rota sem prefixo para compatibilidade com alguns pontos do front-end
 // Rotas não protegidas (mock e auth) não devem exigir token nem acessar banco
 app.use('/', mockRoutes);
 app.use('/api/auth', authRoutes);
