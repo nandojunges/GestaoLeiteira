@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const dbMiddleware = require('./middleware/dbMiddleware');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
@@ -35,6 +36,15 @@ fs.mkdirSync(path.join(__dirname, 'dadosExcluidos'), { recursive: true });
 // 👤 Inicializa o admin padrão
 const adminDb = initDB('nandokkk@hotmail.com');
 inicializarAdmins(adminDb);
+
+// Middleware de autenticação (protege todas as rotas)
+app.use(require('./middleware/autenticarToken'));
+
+// Middleware global para carregar o banco do usuário e criar backup diário.
+// Esta linha garante que todas as rotas e controladores tenham acesso a req.db
+// e que a comunicação entre módulos (tarefas, protocolos, eventos, estoque, etc.)
+// ocorra sempre sobre a mesma instância de base.
+app.use(dbMiddleware);
 
 // 🌐 Rotas da API
 app.use('/vacas', vacasRoutes);
