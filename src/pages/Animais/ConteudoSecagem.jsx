@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import AcaoSecagem from './AcaoSecagem';
 import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
+import { buscarAnimais } from '../../utils/apiFuncoes';
+import { toast } from 'react-toastify';
 
 function calcularPrevisaoParto(dataIA) {
   if (!dataIA || dataIA.length !== 10) return null;
@@ -12,7 +14,7 @@ function calcularPrevisaoParto(dataIA) {
   return data.toLocaleDateString('pt-BR');
 }
 
-export default function ConteudoSecagem({ vacas }) {
+export default function ConteudoSecagem({ vacas, onAtualizar }) {
   const [colunasVisiveis, setColunasVisiveis] = useState({
     numero: true,
     brinco: true,
@@ -43,9 +45,15 @@ export default function ConteudoSecagem({ vacas }) {
     setMostrarModalSecagem(true);
   };
 
-  const aplicarSecagem = (dados) => {
-    console.log("✅ Secagem aplicada:", dados);
+  const aplicarSecagem = async () => {
     setMostrarModalSecagem(false);
+    try {
+      const lista = await buscarAnimais();
+      onAtualizar && onAtualizar(lista);
+    } catch (err) {
+      console.error('Erro ao atualizar lista de animais:', err);
+      toast.error('Erro ao atualizar lista de animais');
+    }
   };
 
   const vacasFiltradas = (Array.isArray(vacas) ? vacas : []).filter(

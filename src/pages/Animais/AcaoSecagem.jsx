@@ -10,10 +10,9 @@ import {
   inserirResponsavelSecagemSQLite,
   buscarResponsaveisSecagemSQLite,
   buscarMedicamentosSecagemSQLite,
+  aplicarSecagem as aplicarSecagemAPI
 } from "../../utils/apiFuncoes.js";
-import { buscarTodosAnimais, salvarAnimais } from "../../sqlite/animais";
-import { adicionarOcorrenciaFirestore } from "../../utils/registroReproducao";
-import { reduzirQuantidadeProduto } from "../../utils/estoque";
+import { toast } from 'react-toastify';
 
 const planosTratamento = [
   { value: 'antibiotico', label: 'Antibiótico intramamário' },
@@ -153,38 +152,19 @@ export default function AcaoSecagem({ vaca, onFechar, onAplicar }) {
 
 
   const aplicar = async () => {
-    if (!dataSecagem || !plano || !principioAtivo || !nomeComercial || !carenciaLeite || !carenciaCarne || !responsavel) {
+    if (!dataSecagem || !plano) {
       setErroFormulario(true);
       return;
     }
     setErroFormulario(false);
-    const dados = { vaca, dataSecagem, plano, principioAtivo, nomeComercial, carenciaLeite, carenciaCarne, responsavel, observacoes };
     try {
-      await adicionarOcorrenciaFirestore(vaca.numero, {
-        tipo: "Secagem",
-        data: dataSecagem,
-        observacoes,
-      });
-
-      /// Atualizar status da vaca para "seca" no backend
-     const animais = await buscarTodosAnimais();
-      const atualizados = (animais || []).map((a) => {
-        if (a.numero === vaca.numero) {
-          a.status = "seca";
-          a.statusReprodutivo = "seca";
-        }
-        return a;
-      });
-      await salvarAnimais(atualizados);
-      window.dispatchEvent(new Event("animaisAtualizados"));
-      window.dispatchEvent(new Event("dadosAnimalAtualizados"));
-      await reduzirQuantidadeProduto(nomeComercial, 1);
+      await aplicarSecagemAPI(vaca.id, dataSecagem, plano);
+      toast.success('Secagem aplicada com sucesso');
+      onAplicar && onAplicar();
     } catch (err) {
-      console.error("Erro ao registrar secagem:", err);
-      alert("Erro ao registrar secagem");
+      console.error('Erro ao aplicar secagem:', err);
+      toast.error('Erro ao aplicar secagem');
     }
-
-    onAplicar(dados);
   };
 
   return (

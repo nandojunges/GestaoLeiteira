@@ -3,7 +3,7 @@ import FichaAnimalLeite from './FichaAnimalLeite';
 import FichaAnimalPesagens from './FichaAnimalPesagens';
 import FichaAnimalEventos from './FichaAnimalEventos';
 import FichaAnimalReproducao from './FichaAnimalReproducao';
-import { buscarColecaoGenericaSQLite } from '../../utils/apiFuncoes.js';
+import { buscarColecaoGenericaSQLite, buscarEventosAnimal } from '../../utils/apiFuncoes.js';
 import { carregarRegistroFirestore } from '../../utils/registroReproducao';
 
 export default function ModalHistoricoCompleto({ animal, onClose }) {
@@ -17,6 +17,7 @@ export default function ModalHistoricoCompleto({ animal, onClose }) {
   const [diagnosticos, setDiagnosticos] = useState([]);
   const [partos, setPartos] = useState([]);
   const [secagens, setSecagens] = useState([]);
+  const [eventos, setEventos] = useState([]);
   const [abaAtiva, setAbaAtiva] = useState('reproducao');
 
   function calcularDias(dataInicio, dataFim) {
@@ -81,9 +82,18 @@ export default function ModalHistoricoCompleto({ animal, onClose }) {
 
       setProducaoLeite(listaLeite);
       setLactacoes(grupos);
-      setLactacaoSelecionada(0);
-    })();
+    setLactacaoSelecionada(0);
+  })();
   }, [animal]);
+
+  useEffect(() => {
+    async function carregarEventos() {
+      if (!animal?.id) return;
+      const lista = await buscarEventosAnimal(animal.id);
+      setEventos(Array.isArray(lista) ? lista : []);
+    }
+    carregarEventos();
+  }, [animal.id]);
 
   useEffect(() => {
     const escFunction = (e) => {
@@ -148,7 +158,7 @@ export default function ModalHistoricoCompleto({ animal, onClose }) {
             <FichaAnimalPesagens animal={animal} pesagens={pesagens} />
           )}
           {abaAtiva === 'eventos' && (
-            <FichaAnimalEventos animal={animal} ocorrencias={ocorrencias} tratamentos={tratamentos} />
+            <FichaAnimalEventos eventos={eventos} />
           )}
           {abaAtiva === 'reproducao' && (
             <FichaAnimalReproducao
