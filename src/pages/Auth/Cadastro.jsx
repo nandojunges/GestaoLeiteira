@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import Select from 'react-select';
-import InputMask from 'react-input-mask@2.0.4';
+// Importa o componente de máscara de entrada sem especificar a versão.
+// A versão correta é definida em package.json (react-input-mask ^3.0.0),
+// e o Rollup/Vite não consegue resolver imports com “@versão” na string.
+import InputMask from 'react-input-mask';
 import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../../api';
