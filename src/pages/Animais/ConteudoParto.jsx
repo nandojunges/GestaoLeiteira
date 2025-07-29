@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import AcaoParto from './AcaoParto';
+import ModalRegistrarParto from './ModalRegistrarParto';
 import '../../styles/botoes.css';
 import '../../styles/tabelaModerna.css';
 import { parseBRDate, diffDias } from '@/utils/dateUtils';
+import { buscarAnimais } from '../../utils/apiFuncoes';
+import { toast } from 'react-toastify';
 
-export default function ConteudoParto({ vacas = [] }) {
+export default function ConteudoParto({ vacas = [], onAtualizar }) {
   const [colunasVisiveis, setColunasVisiveis] = useState({
     numero: true, brinco: true, lactacoes: true, del: true,
     categoria: true, idade: true, ultimaIA: true, ultimoParto: true,
@@ -132,9 +134,18 @@ export default function ConteudoParto({ vacas = [] }) {
       </table>
 
       {mostrarModalParto && vacaSelecionada && (
-        <AcaoParto
-          vaca={vacaSelecionada}
-          onFechar={() => setMostrarModalParto(false)}
+        <ModalRegistrarParto
+          animal={vacaSelecionada}
+          onClose={() => setMostrarModalParto(false)}
+          onRegistrado={async () => {
+            try {
+              const lista = await buscarAnimais();
+              onAtualizar && onAtualizar(lista);
+            } catch (err) {
+              console.error('Erro ao atualizar lista de animais:', err);
+              toast.error('Erro ao atualizar lista de animais');
+            }
+          }}
         />
       )}
     </div>

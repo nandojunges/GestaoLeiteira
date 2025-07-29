@@ -14,11 +14,11 @@ export default function ConteudoTodosAnimais({ vacas, onAtualizar }) {
       case 'plantel':
         return <ConteudoPlantel vacas={vacas} onAtualizar={onAtualizar} />;
       case 'secagem':
-        return <ConteudoSecagem vacas={vacas} />;
+        return <ConteudoSecagem vacas={vacas} onAtualizar={onAtualizar} />;
       case 'pre-parto':
         return <ConteudoPreParto vacas={vacas} />;
       case 'parto':
-        return <ConteudoParto vacas={vacas} />;
+        return <ConteudoParto vacas={vacas} onAtualizar={onAtualizar} />;
       default:
         return null;
     }
