@@ -37,31 +37,31 @@ fs.mkdirSync(path.join(__dirname, 'dadosExcluidos'), { recursive: true });
 const adminDb = initDB('nandokkk@hotmail.com');
 inicializarAdmins(adminDb);
 
-// Middleware de autenticação (protege todas as rotas)
-app.use(require('./middleware/autenticarToken'));
+// Importa middleware de autenticação para uso seletivo nas rotas protegidas
+const autenticarToken = require('./middleware/autenticarToken');
 
-// Middleware global para carregar o banco do usuário e criar backup diário.
-// Esta linha garante que todas as rotas e controladores tenham acesso a req.db
-// e que a comunicação entre módulos (tarefas, protocolos, eventos, estoque, etc.)
-// ocorra sempre sobre a mesma instância de base.
-app.use(dbMiddleware);
+// Em vez de aplicar autenticação e carregamento de banco globalmente (o que bloqueia
+// o acesso a páginas públicas como a tela de login), aplicamos por rota:
+// As rotas que exigem token e acesso ao banco recebem os middlewares na definição abaixo.
 
 // 🌐 Rotas da API
-app.use('/vacas', vacasRoutes);
-app.use('/animais', animaisRoutes);
-app.use('/tarefas', tarefasRoutes);
-app.use('/estoque', estoqueRoutes);
-app.use('/bezerras', bezerrasRoutes);
-app.use('/protocolos-reprodutivos', protocolosRoutes);
-app.use('/reproducao', reproducaoRoutes);
-app.use('/financeiro', financeiroRoutes);
-app.use('/eventos', eventosRoutes);
-app.use('/produtos', produtosRoutes);
-app.use('/examesSanitarios', examesRoutes);
-app.use('/api/racas', racasRoutes);
+// Rotas protegidas: autenticarToken e dbMiddleware são aplicados
+app.use('/vacas', autenticarToken, dbMiddleware, vacasRoutes);
+app.use('/animais', autenticarToken, dbMiddleware, animaisRoutes);
+app.use('/tarefas', autenticarToken, dbMiddleware, tarefasRoutes);
+app.use('/estoque', autenticarToken, dbMiddleware, estoqueRoutes);
+app.use('/bezerras', autenticarToken, dbMiddleware, bezerrasRoutes);
+app.use('/protocolos-reprodutivos', autenticarToken, dbMiddleware, protocolosRoutes);
+app.use('/reproducao', autenticarToken, dbMiddleware, reproducaoRoutes);
+app.use('/financeiro', autenticarToken, dbMiddleware, financeiroRoutes);
+app.use('/eventos', autenticarToken, dbMiddleware, eventosRoutes);
+app.use('/produtos', autenticarToken, dbMiddleware, produtosRoutes);
+app.use('/examesSanitarios', autenticarToken, dbMiddleware, examesRoutes);
+app.use('/api/racas', autenticarToken, dbMiddleware, racasRoutes);
 // nova rota para fichas de touros (pai dos animais)
-app.use('/touros', tourosRoutes);
-app.use('/api/touros', tourosRoutes);
+app.use('/touros', autenticarToken, dbMiddleware, tourosRoutes);
+app.use('/api/touros', autenticarToken, dbMiddleware, tourosRoutes);
+// Rotas não protegidas (mock e auth) não devem exigir token nem acessar banco
 app.use('/', mockRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api', rotasExtras);
