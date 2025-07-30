@@ -13,10 +13,15 @@ function create(db, dados, idProdutor) {
   );
   return { id: info.lastInsertRowid, ...dados, idProdutor };
 }
+
 function getByAnimal(db, animal_id, idProdutor) {
-  return db.prepare(`
-    SELECT * FROM eventos WHERE animal_id = ? AND idProdutor = ?
-    ORDER BY dataEvento DESC
-  `).all(animal_id, idProdutor);
+  let coluna = 'animal_id';
+  const info = db.prepare("PRAGMA table_info(eventos)").all();
+  if (!info.some(c => c.name === 'animal_id') && info.some(c => c.name === 'idAnimal')) {
+    coluna = 'idAnimal';
+  }
+  return db.prepare(
+    `SELECT * FROM eventos WHERE ${coluna} = ? AND idProdutor = ? ORDER BY dataEvento DESC`
+  ).all(animal_id, idProdutor);
 }
 module.exports = { create, getByAnimal };
