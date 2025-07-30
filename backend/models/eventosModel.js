@@ -1,11 +1,11 @@
 // Modelo para eventos (linha do tempo dos animais)
 function create(db, dados, idProdutor) {
   const stmt = db.prepare(`
-    INSERT INTO eventos (idAnimal, dataEvento, tipoEvento, descricao, idProdutor)
+    INSERT INTO eventos (animal_id, dataEvento, tipoEvento, descricao, idProdutor)
     VALUES (?, ?, ?, ?, ?)
   `);
   const info = stmt.run(
-    dados.idAnimal,
+    dados.animal_id,
     dados.dataEvento,
     dados.tipoEvento,
     dados.descricao || '',
@@ -13,10 +13,10 @@ function create(db, dados, idProdutor) {
   );
   return { id: info.lastInsertRowid, ...dados, idProdutor };
 }
-function getByAnimal(db, idAnimal, idProdutor) {
+function getByAnimal(db, animal_id, idProdutor) {
   return db.prepare(`
-    SELECT * FROM eventos WHERE idAnimal = ? AND idProdutor = ?
+    SELECT * FROM eventos WHERE animal_id = ? AND idProdutor = ?
     ORDER BY dataEvento DESC
-  `).all(idAnimal, idProdutor);
+  `).all(animal_id, idProdutor);
 }
 module.exports = { create, getByAnimal };

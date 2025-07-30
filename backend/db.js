@@ -236,7 +236,7 @@ CREATE TABLE IF NOT EXISTS touros (
   const createEventos = `
   CREATE TABLE IF NOT EXISTS eventos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    idAnimal INTEGER,
+    animal_id INTEGER,
     dataEvento TEXT,
     tipoEvento TEXT,
     descricao TEXT,

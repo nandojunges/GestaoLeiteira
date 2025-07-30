@@ -2,8 +2,8 @@ const { initDB } = require('../db');
 const Animais = require('../models/animaisModel');
 const Eventos = require('../models/eventosModel');
 
-function calcularDELParaAnimal(db, idAnimal, idProdutor) {
-  const eventos = Eventos.getByAnimal(db, idAnimal, idProdutor) || [];
+function calcularDELParaAnimal(db, animal_id, idProdutor) {
+  const eventos = Eventos.getByAnimal(db, animal_id, idProdutor) || [];
   let ultimoParto = null;
   for (const ev of eventos) {
     if (ev.tipoEvento === 'Parto') {
@@ -73,7 +73,7 @@ async function cadastrarAnimal(req, res) {
       Eventos.create(
         db,
         {
-          idAnimal: animalCriado.id,
+          animal_id: animalCriado.id,
           dataEvento: req.body.ultimoParto,
           tipoEvento: 'Parto',
           descricao: 'Ficha complementar',
@@ -86,7 +86,7 @@ async function cadastrarAnimal(req, res) {
       Eventos.create(
         db,
         {
-          idAnimal: animalCriado.id,
+          animal_id: animalCriado.id,
           dataEvento: req.body.ultimaIA,
           tipoEvento: 'IA',
           descricao: 'Ficha complementar',
@@ -123,7 +123,7 @@ async function editarAnimal(req, res) {
       Eventos.create(
         db,
         {
-          idAnimal: id,
+          animal_id: id,
           dataEvento: req.body.ultimoParto,
           tipoEvento: 'Parto',
           descricao: 'Ficha complementar',
@@ -136,7 +136,7 @@ async function editarAnimal(req, res) {
       Eventos.create(
         db,
         {
-          idAnimal: id,
+          animal_id: id,
           dataEvento: req.body.ultimaIA,
           tipoEvento: 'IA',
           descricao: 'Ficha complementar',
@@ -174,7 +174,7 @@ async function aplicarSecagem(req, res) {
     Eventos.create(
       db,
       {
-        idAnimal: id,
+        animal_id: id,
         dataEvento: dataSecagem,
         tipoEvento: 'Secagem',
         descricao: plano || '',
@@ -210,7 +210,7 @@ async function registrarParto(req, res) {
     Eventos.create(
       db,
       {
-        idAnimal: id,
+        animal_id: id,
         dataEvento: dataParto,
         tipoEvento: 'Parto',
         descricao: `Bezerra ${novaBezerra.numero}`,
