@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import ModalMediçãoLeite from "./ModalMediçãoLeite";
+import ModalMedicaoLeite from "./ModalMedicaoLeite";
 import ModalRegistroLeite from "./ModalRegistroLeite";
 import { calcularDEL } from "../Animais/utilsAnimais";
 import { buscarTodosAnimais } from "../../sqlite/animais";
@@ -99,8 +99,7 @@ export default function ControleLeiteiro() {
 
   return (
     <div className="w-full px-8 py-6 font-sans">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="titulo-secao">📊 Controle Leiteiro</h2>
+       <div className="flex justify-end items-center mb-4">
         <button className="botao-acao" onClick={abrirModalMedicao}>➕ Nova Medição</button>
       </div>
 
@@ -224,7 +223,7 @@ export default function ControleLeiteiro() {
       </table>
 
       {modalMedicaoAberto && vacas.length > 0 && (
-        <ModalMediçãoLeite
+         <ModalMedicaoLeite
           vacas={vacas}
           data={dataAtual}
           onFechar={fecharModalMedicao}
