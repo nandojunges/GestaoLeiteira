@@ -243,7 +243,7 @@ CREATE TABLE IF NOT EXISTS touros (
     idProdutor INTEGER
   )`;
   database.exec(createEventos);
-  const novasColunas = {
+const novasColunas = {
     numero: 'INTEGER',
     brinco: 'TEXT',
     nascimento: 'TEXT',
@@ -266,6 +266,7 @@ CREATE TABLE IF NOT EXISTS touros (
     valorVenda: 'REAL',
     observacoesSaida: 'TEXT',
     tipoSaida: 'TEXT',
+    del: 'INTEGER',
     idProdutor: 'INTEGER'
   };
   for (const [col, type] of Object.entries(novasColunas)) {

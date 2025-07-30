@@ -130,6 +130,14 @@ function incrementarLactacoes(db, id, idProdutor) {
   ).run(id, idProdutor);
 }
 
+function setDEL(db, id, del, idProdutor) {
+  db.prepare(`UPDATE animais SET del = ? WHERE id = ? AND idProdutor = ?`).run(
+    del,
+    id,
+    idProdutor,
+  );
+}
+
 // Cria uma nova bezerra com o próximo número sequencial
 function createBezerra(db, dados, idProdutor) {
   const max = db.prepare('SELECT MAX(numero) as m FROM animais WHERE idProdutor = ?')
@@ -181,5 +189,6 @@ module.exports = {
   countByProdutor,
   updateStatus,
   incrementarLactacoes,
+  setDEL,
   createBezerra,
 };

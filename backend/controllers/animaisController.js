@@ -2,12 +2,39 @@ const { initDB } = require('../db');
 const Animais = require('../models/animaisModel');
 const Eventos = require('../models/eventosModel');
 
+function calcularDELParaAnimal(db, idAnimal, idProdutor) {
+  const eventos = Eventos.getByAnimal(db, idAnimal, idProdutor) || [];
+  let ultimoParto = null;
+  for (const ev of eventos) {
+    if (ev.tipoEvento === 'Parto') {
+      if (!ultimoParto || new Date(ev.dataEvento) > new Date(ultimoParto.dataEvento)) {
+        ultimoParto = ev;
+      }
+    }
+  }
+  if (!ultimoParto) return null;
+  const dataParto = new Date(ultimoParto.dataEvento);
+  const secagemPosterior = eventos.find(
+    (e) => e.tipoEvento === 'Secagem' && new Date(e.dataEvento) > dataParto,
+  );
+  if (secagemPosterior) return 0;
+  const diff = Math.floor((Date.now() - dataParto.getTime()) / (1000 * 60 * 60 * 24));
+  return diff >= 0 ? diff : 0;
+}
+
 // Listar todos os animais do usuário logado
 async function listarAnimais(req, res) {
   const db = initDB(req.user.email);
 
   try {
     const animais = Animais.getAll(db, req.user.idProdutor);
+    for (const a of animais) {
+      const del = calcularDELParaAnimal(db, a.id, req.user.idProdutor);
+      if (del !== null) {
+        Animais.setDEL(db, a.id, del, req.user.idProdutor);
+        a.del = del;
+      }
+    }
     res.json(animais);
   } catch (error) {
     console.error(error);
@@ -23,6 +50,11 @@ async function buscarAnimalPorId(req, res) {
   try {
     const animal = Animais.getById(db, parseInt(id), req.user.idProdutor);
     if (!animal) return res.status(404).json({ message: 'Animal não encontrado' });
+    const del = calcularDELParaAnimal(db, animal.id, req.user.idProdutor);
+    if (del !== null) {
+      Animais.setDEL(db, animal.id, del, req.user.idProdutor);
+      animal.del = del;
+    }
     res.json(animal);
   } catch (error) {
     console.error(error);
@@ -37,6 +69,31 @@ async function cadastrarAnimal(req, res) {
 
   try {
     const animalCriado = Animais.create(db, novoAnimal, req.user.idProdutor);
+    if (req.body.ultimoParto) {
+      Eventos.create(
+        db,
+        {
+          idAnimal: animalCriado.id,
+          dataEvento: req.body.ultimoParto,
+          tipoEvento: 'Parto',
+          descricao: 'Ficha complementar',
+        },
+        req.user.idProdutor,
+      );
+      Animais.setDEL(db, animalCriado.id, calcularDELParaAnimal(db, animalCriado.id, req.user.idProdutor), req.user.idProdutor);
+    }
+    if (req.body.ultimaIA) {
+      Eventos.create(
+        db,
+        {
+          idAnimal: animalCriado.id,
+          dataEvento: req.body.ultimaIA,
+          tipoEvento: 'IA',
+          descricao: 'Ficha complementar',
+        },
+        req.user.idProdutor,
+      );
+    }
     res.status(201).json(animalCriado);
   } catch (error) {
     console.error('Erro ao cadastrar animal:', error);
@@ -62,6 +119,31 @@ async function editarAnimal(req, res) {
 
   try {
     const animalAtualizado = Animais.update(db, id, dadosAtualizados, req.user.idProdutor);
+    if (req.body.ultimoParto) {
+      Eventos.create(
+        db,
+        {
+          idAnimal: id,
+          dataEvento: req.body.ultimoParto,
+          tipoEvento: 'Parto',
+          descricao: 'Ficha complementar',
+        },
+        req.user.idProdutor,
+      );
+      Animais.setDEL(db, id, calcularDELParaAnimal(db, id, req.user.idProdutor), req.user.idProdutor);
+    }
+    if (req.body.ultimaIA) {
+      Eventos.create(
+        db,
+        {
+          idAnimal: id,
+          dataEvento: req.body.ultimaIA,
+          tipoEvento: 'IA',
+          descricao: 'Ficha complementar',
+        },
+        req.user.idProdutor,
+      );
+    }
     res.json(animalAtualizado);
   } catch (error) {
     console.error(error);
@@ -99,6 +181,7 @@ async function aplicarSecagem(req, res) {
       },
       req.user.idProdutor
     );
+    Animais.setDEL(db, id, 0, req.user.idProdutor);
     Animais.updateStatus(db, id, 2, req.user.idProdutor);
     res.status(200).json({ message: 'Secagem aplicada' });
   } catch (err) {
@@ -134,6 +217,7 @@ async function registrarParto(req, res) {
       },
       req.user.idProdutor
     );
+    Animais.setDEL(db, id, 0, req.user.idProdutor);
     res.status(201).json({ message: 'Parto registrado', bezerra: novaBezerra });
   } catch (err) {
     console.error(err);
