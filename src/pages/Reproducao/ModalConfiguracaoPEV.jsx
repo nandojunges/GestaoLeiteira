@@ -1,32 +1,41 @@
 import React, { useState, useEffect } from "react";
 import { buscarAnimais } from '../../utils/apiFuncoes.js'; // ✅ CORRETA
-import { buscarTodos } from '../../utils/backendApi';
+import { buscarTodos, adicionarItem } from '../../utils/backendApi';
 
 export default function ModalConfiguracaoPEV({ onClose, onAplicar }) {
-  const [diasPEV, setDiasPEV] = useState(60);
+  const [diasPEV, setDiasPEV] = useState('');
   const [permitirPreSincronizacao, setPermitirPreSincronizacao] = useState(false);
   const [permitirSecagem, setPermitirSecagem] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const lista = await buscarTodos("configPEV");
+      const salvoLocal = localStorage.getItem('criterioDEL');
+      if (salvoLocal) setDiasPEV(salvoLocal);
+      const lista = await buscarTodos('configPEV');
       const config = lista[0] || {};
-      if (config.diasPEV) setDiasPEV(config.diasPEV);
-      if (typeof config.permitirPreSincronizacao === "boolean")
+      if (config.diasPEV) setDiasPEV(String(config.diasPEV));
+      if (typeof config.permitirPreSincronizacao === 'boolean')
         setPermitirPreSincronizacao(config.permitirPreSincronizacao);
-      if (typeof config.permitirSecagem === "boolean")
+      if (typeof config.permitirSecagem === 'boolean')
         setPermitirSecagem(config.permitirSecagem);
     })();
   }, []);
 
   const salvar = async () => {
+    if (!diasPEV || isNaN(diasPEV)) {
+      alert('Digite um número válido para DEL.');
+      return;
+    }
     const config = {
-      diasPEV,
+      diasPEV: Number(diasPEV),
       permitirPreSincronizacao,
-      permitirSecagem
+      permitirSecagem,
     };
-    await adicionarItem("configPEV", { id: "cfg", ...config });
-    window.dispatchEvent(new Event("configPEVAtualizado"));
+    localStorage.setItem('criterioDEL', diasPEV);
+    localStorage.setItem('permitirPreSincronizacao', permitirPreSincronizacao);
+    localStorage.setItem('permitirSecagem', permitirSecagem);
+    await adicionarItem('configPEV', { id: 'cfg', ...config });
+    window.dispatchEvent(new Event('configPEVAtualizado'));
 
     if (onAplicar) onAplicar(config);
     onClose();
@@ -70,7 +79,9 @@ export default function ModalConfiguracaoPEV({ onClose, onAplicar }) {
         <input
           type="number"
           value={diasPEV}
-          onChange={(e) => setDiasPEV(Number(e.target.value))}
+          onChange={(e) =>
+            setDiasPEV(e.target.value.replace(/^0+/, ''))
+          }
           style={input}
         />
 
