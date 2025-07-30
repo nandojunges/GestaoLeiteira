@@ -4,7 +4,7 @@ import {
   adicionarItem,
   atualizarItem,
   excluirItem,
-} from '../../utils/apiFuncoes.js';
+} from '../../utils/backendApi';
 
 // 🔄 Carrega vacas liberadas para protocolo com base em IA anterior
 export const carregarAnimaisReprodutivos = async () => {
@@ -22,11 +22,15 @@ export const carregarAnimaisReprodutivos = async () => {
 
 // 🔧 PEV configurado (dias). Se nenhum registro existir, assume 45 dias
 let configCache = null;
+const carregarConfig = async () => {
+  const lista = await buscarTodos('configPEV');
+  configCache = lista?.[0] || {};
+};
+
 export const obterAjustePEV = () => {
   if (configCache === null) {
-    buscarTodos('configPEV').then((lista) => {
-      configCache = lista?.[0] || {};
-    });
+    carregarConfig();
+    window.addEventListener('configPEVAtualizado', carregarConfig);
   }
   return parseInt(configCache?.diasPEV) || 45;
 };

@@ -14,6 +14,7 @@ import {
   listarVacasAtivasNoProtocolo,
 } from "../../utils/registroReproducao";
 import gerarTarefasAutomaticas from "../../utils/gerarTarefasAutomaticas";
+import ModalCadastroProtocolo from "./ModalCadastroProtocolo";
 
 export default function ProtocolosReprodutivos() {
   const [modalAberto, setModalAberto] = useState(false);
