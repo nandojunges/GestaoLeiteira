@@ -33,11 +33,12 @@ export default function VisaoGeralReproducao() {
 
   const carregarVacas = useCallback(async () => {
     setCarregandoVacas(true);
-    const dados = await buscarAnimaisComCache();
-    const animais = dados.filter((a) => a.status !== 'Inativo');
-    const ativos = await filtrarAnimaisAtivos(animais);
+    try {
+      const dados = await buscarAnimaisComCache();
+      const animais = dados.filter((a) => a.status !== 'Inativo');
+      const ativos = await filtrarAnimaisAtivos(animais);
 
-    const ativosComDados = await Promise.all(
+      const ativosComDados = await Promise.all(
       ativos.map(async (a) => {
         const registro = await carregarRegistro(a.numero);
         const ocorr = registro.ocorrencias || [];
@@ -78,11 +79,16 @@ export default function VisaoGeralReproducao() {
       })
     );
 
-    const unicos = ativosComDados.filter(
-      (v, i, arr) => arr.findIndex((o) => o.numero === v.numero) === i
-    );
-    setVacas(unicos);
-    setCarregandoVacas(false);
+      const unicos = ativosComDados.filter(
+        (v, i, arr) => arr.findIndex((o) => o.numero === v.numero) === i
+      );
+      setVacas(unicos);
+    } catch (err) {
+      console.error('Erro ao carregar vacas:', err);
+      setVacas([]);
+    } finally {
+      setCarregandoVacas(false);
+    }
   }, []);
 
   const carregarConfig = useCallback(async () => {
@@ -245,6 +251,10 @@ export default function VisaoGeralReproducao() {
 
   if (carregandoVacas || carregandoConfig) {
     return <div className="w-full text-center py-8">Carregando...</div>;
+  }
+
+  if (vacas.length === 0) {
+    return <div className="w-full text-center py-8">Nenhum dado encontrado</div>;
   }
 
   return (

@@ -27,18 +27,22 @@ async function listarAnimais(req, res) {
   const db = initDB(req.user.email);
 
   try {
+    console.log('🧩 Buscando animais');
     const animais = Animais.getAll(db, req.user.idProdutor);
     for (const a of animais) {
-      const del = calcularDELParaAnimal(db, a.id, req.user.idProdutor);
-      if (del !== null) {
-        Animais.setDEL(db, a.id, del, req.user.idProdutor);
-        a.del = del;
+      if (a.id) {
+        const del = calcularDELParaAnimal(db, a.id, req.user.idProdutor);
+        if (del !== null) {
+          Animais.setDEL(db, a.id, del, req.user.idProdutor);
+          a.del = del;
+        }
       }
     }
+    console.log('✅ Resultado:', animais);
     res.json(animais);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Erro ao buscar animais' });
+    console.error('Erro ao listar animais:', error.message);
+    res.status(500).json({ erro: error.message });
   }
 }
 
