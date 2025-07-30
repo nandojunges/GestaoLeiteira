@@ -2,9 +2,9 @@ const { initDB } = require('../db');
 const Eventos = require('../models/eventosModel');
 function listarPorAnimal(req, res) {
   const db = initDB(req.user.email);
-  const { idAnimal } = req.params;
+  const { animal_id } = req.params;
   try {
-    const eventos = Eventos.getByAnimal(db, idAnimal, req.user.idProdutor);
+    const eventos = Eventos.getByAnimal(db, animal_id, req.user.idProdutor);
     res.json(eventos);
   } catch (err) {
     console.error(err);
