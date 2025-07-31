@@ -41,7 +41,7 @@ async function listarAnimais(req, res) {
     console.log('✅ Resultado:', animais);
     res.json(animais);
   } catch (error) {
-    console.error('Erro ao listar animais:', error.message);
+    console.error('Erro ao listar animais:', error);
     res.status(500).json({ erro: error.message });
   }
 }

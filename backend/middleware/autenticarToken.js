@@ -5,13 +5,19 @@ const SECRET = process.env.JWT_SECRET || 'segredo';
 function autenticarToken(req, res, next) {
   const authHeader = req.headers['authorization'] || req.headers['Authorization'];
   const token = authHeader && authHeader.split(' ')[1];
+  if (token) {
+    console.log('Token recebido:', token.slice(0, 30) + '...');
+  }
 
   if (!token) {
     return res.status(401).json({ message: 'Token não fornecido' });
   }
 
   jwt.verify(token, SECRET, (err, decoded) => {
-    if (err) return res.status(403).json({ message: 'Token inválido' });
+    if (err) {
+      console.error('Falha ao verificar token:', err.message);
+      return res.status(403).json({ message: 'Token inválido' });
+    }
 
     const db = initDB(decoded.email);
     const usuario = db
@@ -59,6 +65,7 @@ function autenticarToken(req, res, next) {
       });
     }
 
+    console.log('Token decodificado:', decoded);
     req.user = decoded;
 
     next();

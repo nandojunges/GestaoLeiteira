@@ -24,4 +24,12 @@ function getByAnimal(db, animal_id, idProdutor) {
     `SELECT * FROM eventos WHERE ${coluna} = ? AND idProdutor = ? ORDER BY dataEvento DESC`
   ).all(animal_id, idProdutor);
 }
-module.exports = { create, getByAnimal };
+function getAll(db, idProdutor) {
+  return db
+    .prepare(
+      'SELECT * FROM eventos WHERE idProdutor = ? ORDER BY dataEvento DESC'
+    )
+    .all(idProdutor);
+}
+
+module.exports = { create, getByAnimal, getAll };
