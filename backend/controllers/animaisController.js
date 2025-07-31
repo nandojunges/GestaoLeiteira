@@ -37,6 +37,10 @@ async function listarAnimais(req, res) {
           a.del = del;
         }
       }
+      // Garantir valores válidos caso o animal não possua ficha complementar
+      a.ultimaIA = a.ultimaIA || null;
+      a.ultimoParto = a.ultimoParto || null;
+      a.nLactacoes = a.nLactacoes ?? 0;
     }
     console.log('✅ Resultado:', animais);
     res.json(animais);
