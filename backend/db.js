@@ -387,10 +387,10 @@ function initDB(email, forceCreate = true) {
   // Cria tabelas e aplica migrations sempre que um banco é carregado
   applyMigrations(db);
 
-  // Cria uma cópia de segurança do banco uma vez por dia (YYYY-MM-DD).
-  // Se o usuário acessar em um dia diferente, é gerada uma nova versão da base,
-  // preservando as cópias anteriores, conforme já era necessário:contentReference[oaicite:2]{index=2}.
-  backupDatabase(dir, dbPath);
+  // A estratégia de backup automática foi movida para um utilitário que é
+  // acionado apenas antes de operações de escrita. Assim evitamos criar
+  // cópias quando o usuário apenas consulta dados.
+
   console.log(`📁 Banco de dados (${email}):`, dbPath);
   return db;
 }
