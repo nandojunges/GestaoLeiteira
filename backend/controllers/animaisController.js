@@ -1,6 +1,10 @@
 const { initDB } = require('../db');
 const Animais = require('../models/animaisModel');
 const Eventos = require('../models/eventosModel');
+const {
+  padronizarDadosAnimal,
+  padronizarListaAnimais,
+} = require('../utils/padronizarDadosAnimal');
 
 // Novo endpoint simples para listar animais utilizando uma consulta
 // que continua funcionando mesmo que a tabela ficha_complementar nao exista.
@@ -17,7 +21,7 @@ function getAnimais(req, res) {
       ? `\n      SELECT \n        a.id, a.numero, a.nascimento, a.origem, a.categoria,\n        f.numero_partos, f.ultimo_parto, f.ultima_inseminacao,\n        DATE('now') AS hoje,\n        CASE\n          WHEN f.ultimo_parto IS NOT NULL THEN julianday('now') - julianday(f.ultimo_parto)\n          ELSE NULL\n        END AS del\n      FROM animais a\n      LEFT JOIN ficha_complementar f ON a.id = f.animal_id\n    `
       : `\n      SELECT\n        a.id, a.numero, a.nascimento, a.origem, a.categoria,\n        NULL AS numero_partos, NULL AS ultimo_parto, NULL AS ultima_inseminacao,\n        DATE('now') AS hoje, NULL AS del\n      FROM animais a`;
 
-    const animais = db.prepare(query).all();
+    const animais = padronizarListaAnimais(db.prepare(query).all());
     res.json(animais);
   } catch (error) {
     console.error('Erro ao buscar animais:', error.message);
@@ -51,7 +55,9 @@ async function listarAnimais(req, res) {
 
   try {
     console.log('🧩 Buscando animais');
-    const animais = Animais.getAll(db, req.user.idProdutor);
+    const animais = padronizarListaAnimais(
+      Animais.getAll(db, req.user.idProdutor)
+    );
     for (const a of animais) {
       if (a.id) {
         const del = calcularDELParaAnimal(db, a.id, req.user.idProdutor);
@@ -60,10 +66,8 @@ async function listarAnimais(req, res) {
           a.del = del;
         }
       }
-      // Garantir valores válidos caso o animal não possua ficha complementar
-      a.ultimaIA = a.ultimaIA || null;
-      a.ultimoParto = a.ultimoParto || null;
-      a.nLactacoes = a.nLactacoes ?? 0;
+      // Garantir valores válidos mesmo para registros antigos
+      padronizarDadosAnimal(a);
     }
     console.log('✅ Resultado:', animais);
     res.json(animais);
@@ -79,7 +83,9 @@ async function buscarAnimalPorId(req, res) {
   const id = req.params.id;
 
   try {
-    const animal = Animais.getById(db, parseInt(id), req.user.idProdutor);
+    const animal = padronizarDadosAnimal(
+      Animais.getById(db, parseInt(id), req.user.idProdutor)
+    );
     if (!animal) return res.status(404).json({ message: 'Animal não encontrado' });
     const del = calcularDELParaAnimal(db, animal.id, req.user.idProdutor);
     if (del !== null) {
@@ -99,7 +105,9 @@ async function cadastrarAnimal(req, res) {
   const novoAnimal = { ...req.body, idProdutor: req.user.idProdutor };
 
   try {
-    const animalCriado = Animais.create(db, novoAnimal, req.user.idProdutor);
+    const animalCriado = padronizarDadosAnimal(
+      Animais.create(db, novoAnimal, req.user.idProdutor)
+    );
     if (req.body.ultimoParto) {
       Eventos.create(
         db,
@@ -149,7 +157,9 @@ async function editarAnimal(req, res) {
   };
 
   try {
-    const animalAtualizado = Animais.update(db, id, dadosAtualizados, req.user.idProdutor);
+    const animalAtualizado = padronizarDadosAnimal(
+      Animais.update(db, id, dadosAtualizados, req.user.idProdutor)
+    );
     if (req.body.ultimoParto) {
       Eventos.create(
         db,
