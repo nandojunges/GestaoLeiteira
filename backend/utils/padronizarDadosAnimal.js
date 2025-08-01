@@ -1,8 +1,10 @@
-module.exports = function padronizarDadosAnimal(animal) {
+module.exports = function padronizarDadosAnimal(animal = {}) {
   return {
+    id: animal.id || null,
     numero: animal.numero || '',
     brinco: animal.brinco || '',
     nascimento: animal.nascimento || '',
+    sexo: animal.sexo || '',
     idade: animal.idade || '',
     categoria: animal.categoria || '',
     origem: animal.origem || '',
@@ -12,8 +14,12 @@ module.exports = function padronizarDadosAnimal(animal) {
     dataSaida: animal.dataSaida || null,
     motivoSaida: animal.motivoSaida || '',
     observacaoSaida: animal.observacaoSaida || '',
+    valorVenda: animal.valorVenda || null,
+    pai: animal.pai || '',
+    mae: animal.mae || '',
     partos: animal.partos || [],
     numeroPartos: animal.numeroPartos || 0,
+    nLactacoes: animal.nLactacoes || 0,
     ultimaIA: animal.ultimaIA || '',
     ultimoParto: animal.ultimoParto || '',
     lactacoes: animal.lactacoes || [],
@@ -21,6 +27,10 @@ module.exports = function padronizarDadosAnimal(animal) {
     ocorrencias: animal.ocorrencias || [],
     pesagens: animal.pesagens || [],
     producaoLeite: animal.producaoLeite || [],
+    checklistVermifugado: animal.checklistVermifugado || false,
+    checklistGrupoDefinido: animal.checklistGrupoDefinido || false,
+    fichaComplementarOK: animal.fichaComplementarOK || false,
+    del: animal.del || 0,
     descartado: animal.descartado || false,
   };
 };

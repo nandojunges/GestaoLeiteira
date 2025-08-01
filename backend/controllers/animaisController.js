@@ -19,7 +19,16 @@ function getAnimais(req, res) {
       : `\n      SELECT\n        a.id, a.numero, a.nascimento, a.origem, a.categoria,\n        NULL AS numero_partos, NULL AS ultimo_parto, NULL AS ultima_inseminacao,\n        DATE('now') AS hoje, NULL AS del\n      FROM animais a`;
 
     const rows = db.prepare(query).all();
-    const animais = rows.map(padronizarDadosAnimal);
+    const animais = rows
+      .map((r) => {
+        try {
+          return padronizarDadosAnimal(r);
+        } catch (err) {
+          console.error('Erro ao padronizar animal:', err.message);
+          return null;
+        }
+      })
+      .filter(Boolean);
     res.json(animais);
   } catch (error) {
     console.error('Erro ao buscar animais:', error.message);
@@ -90,9 +99,8 @@ async function buscarAnimalPorId(req, res) {
   const id = req.params.id;
 
   try {
-    const animal = padronizarDadosAnimal(
-      Animais.getById(db, parseInt(id), req.user.idProdutor)
-    );
+    const bruto = Animais.getById(db, parseInt(id), req.user.idProdutor);
+    const animal = padronizarDadosAnimal(bruto);
     if (!animal) return res.status(404).json({ message: 'Animal não encontrado' });
     const del = calcularDELParaAnimal(db, animal.id, req.user.idProdutor);
     if (del !== null) {
@@ -112,9 +120,15 @@ async function cadastrarAnimal(req, res) {
   const novoAnimal = { ...req.body, idProdutor: req.user.idProdutor };
 
   try {
-    const animalCriado = padronizarDadosAnimal(
-      Animais.create(db, novoAnimal, req.user.idProdutor)
-    );
+    const criadoBruto = Animais.create(db, novoAnimal, req.user.idProdutor);
+    const animalCriado = (() => {
+      try {
+        return padronizarDadosAnimal(criadoBruto);
+      } catch (e) {
+        console.error('Erro ao padronizar animal:', e.message);
+        return criadoBruto;
+      }
+    })();
     if (req.body.ultimoParto) {
       Eventos.create(
         db,
@@ -164,9 +178,15 @@ async function editarAnimal(req, res) {
   };
 
   try {
-    const animalAtualizado = padronizarDadosAnimal(
-      Animais.update(db, id, dadosAtualizados, req.user.idProdutor)
-    );
+    const atualizadoBruto = Animais.update(db, id, dadosAtualizados, req.user.idProdutor);
+    const animalAtualizado = (() => {
+      try {
+        return padronizarDadosAnimal(atualizadoBruto);
+      } catch (e) {
+        console.error('Erro ao padronizar animal:', e.message);
+        return atualizadoBruto;
+      }
+    })();
     if (req.body.ultimoParto) {
       Eventos.create(
         db,
@@ -192,7 +212,7 @@ async function editarAnimal(req, res) {
         req.user.idProdutor,
       );
     }
-    res.json(animalAtualizado);
+    res.status(200).json(animalAtualizado);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erro ao editar animal' });

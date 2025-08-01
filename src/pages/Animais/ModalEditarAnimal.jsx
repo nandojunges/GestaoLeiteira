@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import Select from "react-select";
 import { formatarDataDigitada } from "./utilsAnimais";
+import api from "../../api";
 
 
 export default function ModalEditarAnimal({ animal, onFechar, onSalvar }) {
   const [dados, setDados] = useState({ ...animal });
+  const [salvando, setSalvando] = useState(false);
   const refs = useRef([]);
 
   useEffect(() => {
@@ -58,18 +60,22 @@ export default function ModalEditarAnimal({ animal, onFechar, onSalvar }) {
       mae: dados.mae,
     };
 
-    const token = localStorage.getItem('token');
-    await fetch(`${import.meta.env.VITE_API_URL || '/api'}/animais/${animal.id}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(formData),
-    });
-
-    window.dispatchEvent(new Event("animaisAtualizados"));
-    onSalvar();
+    try {
+      setSalvando(true);
+      const res = await api.put(`/animais/${animal.id}`, formData);
+      if (res.status === 200) {
+        window.dispatchEvent(new Event("animaisAtualizados"));
+        onSalvar();
+        alert("✅ Animal atualizado com sucesso");
+      } else {
+        alert("Falha ao atualizar animal");
+      }
+    } catch (err) {
+      console.error("Erro ao atualizar animal:", err);
+      alert("❌ Erro ao atualizar animal");
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const handleEnter = (e, index) => {
@@ -208,7 +214,7 @@ export default function ModalEditarAnimal({ animal, onFechar, onSalvar }) {
 
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "2rem" }}>
             <button onClick={onFechar} style={botaoCancelar}>Cancelar</button>
-            <button onClick={salvar} style={botaoConfirmar}>Salvar</button>
+            <button onClick={salvar} disabled={salvando} style={botaoConfirmar}>Salvar</button>
           </div>
         </div>
       </div>

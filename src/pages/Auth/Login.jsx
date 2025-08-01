@@ -52,8 +52,8 @@ export default function Login() {
     if (!validar()) return;
     try {
       setCarregando(true);
-      const { data } = await api.post('/auth/login', { email: email.trim(), senha: senha.trim() });
-      const { token } = data;
+      const res = await api.post('/auth/login', { email: email.trim(), senha: senha.trim() });
+      const token = res.data.token;
       localStorage.setItem('token', token);
       if (lembrar) {
         localStorage.setItem('rememberEmail', email.trim());

@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/autenticarToken');
+const authMiddleware = require('../middleware/authMiddleware');
 const animaisController = require('../controllers/animaisController');
 const { initDB } = require('../db');
 const animaisModel = require('../models/animaisModel');
@@ -34,7 +34,15 @@ router.get('/numero/:numero', (req, res) => {
 router.get('/:id', animaisController.buscarAnimalPorId);
 
 // ➕ Cadastrar novo animal
-router.post('/', animaisController.adicionarAnimal);
+router.post('/', async (req, res, next) => {
+  const db = initDB(req.user.email);
+  const numero = parseInt(req.body.numero);
+  const existente = animaisModel.getByNumero(db, numero, req.user.idProdutor);
+  if (existente) {
+    return res.status(400).json({ erro: 'Número já cadastrado' });
+  }
+  next();
+}, animaisController.adicionarAnimal);
 
 // ✏️ Editar animal
 router.put('/:id', animaisController.editarAnimal);
