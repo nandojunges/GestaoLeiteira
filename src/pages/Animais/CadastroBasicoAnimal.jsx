@@ -7,7 +7,7 @@ import {
   buscarRacasAdicionaisSQLite,
   inserirRacaAdicionalSQLite,
 } from "../../utils/apiFuncoes.js";
-import { salvarAnimais } from "../../sqlite/animais";
+import api from "../../api";
 
 export default function CadastroBasicoAnimal({ animais, onAtualizar }) {
   const [numero, setNumero] = useState("");
@@ -25,6 +25,7 @@ export default function CadastroBasicoAnimal({ animais, onAtualizar }) {
   const [idade, setIdade] = useState("");
   const [mensagemSucesso, setMensagemSucesso] = useState("");
   const [mensagemErro, setMensagemErro] = useState("");
+  const [salvando, setSalvando] = useState(false);
 
   const brincoRef = useRef();
   const nascimentoRef = useRef();
@@ -123,22 +124,36 @@ export default function CadastroBasicoAnimal({ animais, onAtualizar }) {
     };
 
     try {
-      const [inserido] = await salvarAnimais([novo]);
-      if (!inserido || !inserido.id) {
+      setSalvando(true);
+      const res = await api.post('/animais', novo);
+      if (res.status === 201) {
+        const inserido = res.data;
+        const atualizados = [...animais, inserido];
+        onAtualizar(atualizados);
+        window.dispatchEvent(new Event('animaisAtualizados'));
+        setMensagemSucesso('✅ Animal cadastrado com sucesso!');
+        setTimeout(() => setMensagemSucesso(''), 3000);
+        setMensagemErro('');
+        setBrinco('');
+        setNascimento('');
+        setSexo('');
+        setOrigem('propriedade');
+        setValorCompra('');
+        setRaca('');
+        setNovaRaca('');
+        setIdade('');
+        setCategoria('');
+        setMostrarCampoNovaRaca(false);
+        setMostrarComplementar(false);
+      } else {
         alert('⚠️ Não foi possível cadastrar. Verifique os dados.');
-        return;
       }
-      const atualizados = [...animais, inserido];
-      onAtualizar(atualizados);
-      window.dispatchEvent(new Event('animaisAtualizados'));
-      setMensagemSucesso('✅ Animal cadastrado com sucesso!');
-      setTimeout(() => setMensagemSucesso(''), 3000);
-      setMensagemErro('');
     } catch (err) {
       console.error('Erro ao salvar animal:', err);
       alert('❌ Erro no cadastro. Tente novamente ou contate suporte.');
       setMensagemErro('❌ Erro ao cadastrar animal');
-      return;
+    } finally {
+      setSalvando(false);
     }
     if (origem === "comprado") {
       const valorCorrigido =
@@ -164,17 +179,6 @@ export default function CadastroBasicoAnimal({ animais, onAtualizar }) {
       });
     }
 
-    setBrinco("");
-    setNascimento("");
-    setSexo("");
-    setOrigem("propriedade");
-    setValorCompra("");
-    setRaca("");
-    setNovaRaca("");
-    setIdade("");
-    setCategoria("");
-    setMostrarCampoNovaRaca(false);
-    setMostrarComplementar(false);
   };
 
   const handleEnter = (e, index) => {
@@ -340,7 +344,7 @@ export default function CadastroBasicoAnimal({ animais, onAtualizar }) {
 
         <div style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'space-between' }}>
           {!mostrarComplementar && (
-            <button onClick={() => salvarAnimal()} ref={salvarRef} style={botaoPrincipal()}>
+            <button onClick={() => salvarAnimal()} disabled={salvando} ref={salvarRef} style={botaoPrincipal()}>
               💾 Cadastrar Animal
             </button>
           )}
