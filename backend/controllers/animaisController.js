@@ -2,6 +2,29 @@ const { initDB } = require('../db');
 const Animais = require('../models/animaisModel');
 const Eventos = require('../models/eventosModel');
 
+// Novo endpoint simples para listar animais utilizando uma consulta
+// que continua funcionando mesmo que a tabela ficha_complementar nao exista.
+function getAnimais(req, res) {
+  const db = initDB(req.user.email);
+  try {
+    const tabelaExiste = db
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='ficha_complementar'"
+      )
+      .get();
+
+    const query = tabelaExiste
+      ? `\n      SELECT \n        a.id, a.numero, a.nascimento, a.origem, a.categoria,\n        f.numero_partos, f.ultimo_parto, f.ultima_inseminacao,\n        DATE('now') AS hoje,\n        CASE\n          WHEN f.ultimo_parto IS NOT NULL THEN julianday('now') - julianday(f.ultimo_parto)\n          ELSE NULL\n        END AS del\n      FROM animais a\n      LEFT JOIN ficha_complementar f ON a.id = f.animal_id\n    `
+      : `\n      SELECT\n        a.id, a.numero, a.nascimento, a.origem, a.categoria,\n        NULL AS numero_partos, NULL AS ultimo_parto, NULL AS ultima_inseminacao,\n        DATE('now') AS hoje, NULL AS del\n      FROM animais a`;
+
+    const animais = db.prepare(query).all();
+    res.json(animais);
+  } catch (error) {
+    console.error('Erro ao buscar animais:', error.message);
+    res.status(500).json({ error: 'Erro ao buscar animais' });
+  }
+}
+
 function calcularDELParaAnimal(db, animal_id, idProdutor) {
   const eventos = Eventos.getByAnimal(db, animal_id, idProdutor) || [];
   let ultimoParto = null;
@@ -242,4 +265,5 @@ module.exports = {
   excluirAnimal,
   aplicarSecagem,
   registrarParto,
+  getAnimais,
 };
