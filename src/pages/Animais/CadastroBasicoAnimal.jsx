@@ -124,15 +124,20 @@ export default function CadastroBasicoAnimal({ animais, onAtualizar }) {
 
     try {
       const [inserido] = await salvarAnimais([novo]);
-      const atualizados = [...animais, inserido || novo];
+      if (!inserido || !inserido.id) {
+        alert('⚠️ Não foi possível cadastrar. Verifique os dados.');
+        return;
+      }
+      const atualizados = [...animais, inserido];
       onAtualizar(atualizados);
-      window.dispatchEvent(new Event("animaisAtualizados"));
-      setMensagemSucesso("✅ Animal cadastrado com sucesso!");
-      setTimeout(() => setMensagemSucesso(""), 3000);
-      setMensagemErro("");
+      window.dispatchEvent(new Event('animaisAtualizados'));
+      setMensagemSucesso('✅ Animal cadastrado com sucesso!');
+      setTimeout(() => setMensagemSucesso(''), 3000);
+      setMensagemErro('');
     } catch (err) {
-      console.error("Erro ao salvar animal:", err);
-      setMensagemErro("❌ Erro ao cadastrar animal");
+      console.error('Erro ao salvar animal:', err);
+      alert('❌ Erro no cadastro. Tente novamente ou contate suporte.');
+      setMensagemErro('❌ Erro ao cadastrar animal');
       return;
     }
     if (origem === "comprado") {

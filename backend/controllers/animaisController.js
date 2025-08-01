@@ -53,8 +53,18 @@ async function listarAnimais(req, res) {
 
   try {
     console.log('🧩 Buscando animais');
-    const rows = Animais.getAll(db, req.user.idProdutor);
-    const animaisPadronizados = rows.map(padronizarDadosAnimal);
+    const animaisBrutos = Animais.getAll(db, req.user.idProdutor);
+    const animaisPadronizados = animaisBrutos
+      .map((animal) => {
+        try {
+          return padronizarDadosAnimal(animal);
+        } catch (e) {
+          console.error('❌ Erro ao padronizar animal:', animal, e.message);
+          return null;
+        }
+      })
+      .filter((a) => a !== null);
+
     for (const a of animaisPadronizados) {
       if (a.id) {
         const del = calcularDELParaAnimal(db, a.id, req.user.idProdutor);
@@ -69,8 +79,8 @@ async function listarAnimais(req, res) {
     console.log('✅ Resultado:', animaisPadronizados);
     res.json(animaisPadronizados);
   } catch (error) {
-    console.error('Erro ao listar animais:', error);
-    res.status(500).json({ erro: error.message });
+    console.error('❌ Erro geral ao listar animais:', error.message);
+    res.status(500).json({ erro: 'Erro ao buscar animais' });
   }
 }
 
