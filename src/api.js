@@ -1,11 +1,13 @@
-import axios from "axios";
+import axios from 'axios';
 
 const api = axios.create({
-  baseURL: "http://localhost:3000/api",
+  // Garante que a base da API termine com barra caso VITE_API_URL não esteja definida.
+  // Assim, chamadas como `api.post('auth/login')` resultam em '/api/auth/login' em vez de 'apiauth/login'.
+  baseURL: import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '/api/',
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
