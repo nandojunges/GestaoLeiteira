@@ -1,10 +1,7 @@
 const { initDB } = require('../db');
 const Animais = require('../models/animaisModel');
 const Eventos = require('../models/eventosModel');
-const {
-  padronizarDadosAnimal,
-  padronizarListaAnimais,
-} = require('../utils/padronizarDadosAnimal');
+const padronizarDadosAnimal = require('../utils/padronizarDadosAnimal');
 
 // Novo endpoint simples para listar animais utilizando uma consulta
 // que continua funcionando mesmo que a tabela ficha_complementar nao exista.
@@ -21,7 +18,8 @@ function getAnimais(req, res) {
       ? `\n      SELECT \n        a.id, a.numero, a.nascimento, a.origem, a.categoria,\n        f.numero_partos, f.ultimo_parto, f.ultima_inseminacao,\n        DATE('now') AS hoje,\n        CASE\n          WHEN f.ultimo_parto IS NOT NULL THEN julianday('now') - julianday(f.ultimo_parto)\n          ELSE NULL\n        END AS del\n      FROM animais a\n      LEFT JOIN ficha_complementar f ON a.id = f.animal_id\n    `
       : `\n      SELECT\n        a.id, a.numero, a.nascimento, a.origem, a.categoria,\n        NULL AS numero_partos, NULL AS ultimo_parto, NULL AS ultima_inseminacao,\n        DATE('now') AS hoje, NULL AS del\n      FROM animais a`;
 
-    const animais = padronizarListaAnimais(db.prepare(query).all());
+    const rows = db.prepare(query).all();
+    const animais = rows.map(padronizarDadosAnimal);
     res.json(animais);
   } catch (error) {
     console.error('Erro ao buscar animais:', error.message);
@@ -55,10 +53,9 @@ async function listarAnimais(req, res) {
 
   try {
     console.log('🧩 Buscando animais');
-    const animais = padronizarListaAnimais(
-      Animais.getAll(db, req.user.idProdutor)
-    );
-    for (const a of animais) {
+    const rows = Animais.getAll(db, req.user.idProdutor);
+    const animaisPadronizados = rows.map(padronizarDadosAnimal);
+    for (const a of animaisPadronizados) {
       if (a.id) {
         const del = calcularDELParaAnimal(db, a.id, req.user.idProdutor);
         if (del !== null) {
@@ -69,8 +66,8 @@ async function listarAnimais(req, res) {
       // Garantir valores válidos mesmo para registros antigos
       padronizarDadosAnimal(a);
     }
-    console.log('✅ Resultado:', animais);
-    res.json(animais);
+    console.log('✅ Resultado:', animaisPadronizados);
+    res.json(animaisPadronizados);
   } catch (error) {
     console.error('Erro ao listar animais:', error);
     res.status(500).json({ erro: error.message });
