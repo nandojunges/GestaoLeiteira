@@ -104,8 +104,11 @@ export default function VisaoGeralReproducao() {
   }, []);
 
   useEffect(() => {
-    carregarVacas();
-    carregarConfig();
+    const token = localStorage.getItem('token');
+    if (token) {
+      carregarVacas();
+      carregarConfig();
+    }
   }, [carregarVacas, carregarConfig]);
 
   useEffect(() => {
