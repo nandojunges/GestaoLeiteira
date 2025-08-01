@@ -1,5 +1,39 @@
 function getAll(db, idProdutor) {
-  return db.prepare('SELECT * FROM animais WHERE idProdutor = ?').all(idProdutor);
+  const tabelaExiste = db
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='ficha_complementar'",
+    )
+    .get();
+
+  const query = tabelaExiste
+    ? `
+        SELECT
+          a.id,
+          a.numero,
+          a.nascimento,
+          a.origem,
+          a.categoria,
+          f.numero_partos,
+          f.ultimo_parto,
+          f.ultima_inseminacao
+        FROM animais a
+        LEFT JOIN ficha_complementar f ON a.id = f.animal_id
+        WHERE a.idProdutor = ?
+      `
+    : `
+        SELECT
+          a.id,
+          a.numero,
+          a.nascimento,
+          a.origem,
+          a.categoria,
+          NULL AS numero_partos,
+          NULL AS ultimo_parto,
+          NULL AS ultima_inseminacao
+        FROM animais a
+        WHERE a.idProdutor = ?
+      `;
+  return db.prepare(query).all(idProdutor);
 }
 
 function getById(db, id, idProdutor) {
