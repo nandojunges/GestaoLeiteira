@@ -6,7 +6,14 @@ module.exports = function authMiddleware(req, res, next) {
   try {
     req.usuario = jwt.verify(token, process.env.JWT_SECRET);
     req.user = req.usuario;
-    console.log("\ud83d\udd10 Token decodificado no backend:", req.usuario);
+
+    if (!req.usuario || !req.usuario.idProdutor) {
+      return res
+        .status(403)
+        .json({ erro: 'Usuário sem permissão ou produtor não identificado' });
+    }
+
+    console.log('🔑 Token decodificado no backend:', req.usuario);
     next();
   } catch {
     return res.status(403).json({ erro: 'Token inválido' });

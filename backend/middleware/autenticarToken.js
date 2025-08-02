@@ -26,7 +26,15 @@ function autenticarToken(req, res, next) {
       )
       .get(decoded.idProdutor);
 
-    if (!usuario) return res.status(401).json({ message: 'Usuário não encontrado' });
+    if (!usuario) {
+      return res.status(401).json({ message: 'Usuário não encontrado' });
+    }
+
+    if (!decoded || !decoded.idProdutor) {
+      return res.status(403).json({
+        message: 'Usuário sem permissão ou produtor não identificado',
+      });
+    }
 
     const isAdmin = usuario.tipoConta === 'admin';
 
