@@ -4,8 +4,23 @@ import Login from './pages/Auth/Login';
 import Inicio from './pages/Inicio'; // substitua pelo seu componente correto
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import jwtDecode from 'jwt-decode';
 
 export default function App() {
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      if (!decoded || !decoded.idProdutor) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
+    } catch (e) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+  }
+
   return (
     <BrowserRouter>
       <Routes>

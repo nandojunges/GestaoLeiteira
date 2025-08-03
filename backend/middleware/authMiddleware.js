@@ -5,23 +5,15 @@ module.exports = function authMiddleware(req, res, next) {
   if (!token) return res.status(401).json({ erro: 'Token ausente' });
 
   try {
-    req.usuario = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = req.usuario;
-
-    // ✅ Verificação mais clara e com logs
-    if (!req.usuario) {
-      console.log('❌ Token inválido ou ausente');
-      return res.status(403).json({ erro: 'Token inválido' });
-    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.usuario = decoded;
+    req.user = decoded;
 
     if (!req.usuario.idProdutor) {
-      console.log('❌ idProdutor ausente no token:', req.usuario);
-      return res
-        .status(403)
-        .json({ erro: 'Usuário sem permissão: idProdutor ausente' });
+      console.log('❌ idProdutor ausente no token');
+      return res.status(403).json({ erro: 'Permissão negada: produtor não identificado' });
     }
 
-    console.log('🔓 Token válido. Usuário autenticado:', req.usuario);
     next();
   } catch (e) {
     console.error('❌ Erro ao verificar token:', e.message);
