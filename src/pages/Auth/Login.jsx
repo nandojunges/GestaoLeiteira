@@ -52,24 +52,33 @@ export default function Login() {
     if (!validar()) return;
     try {
       setCarregando(true);
-      const res = await api.post('/auth/login', { email: email.trim(), senha: senha.trim() });
-      const token = res.data.token;
-      localStorage.setItem('token', token);
-      if (lembrar) {
-        localStorage.setItem('rememberEmail', email.trim());
-      } else {
-        localStorage.removeItem('rememberEmail');
-      }
-const decoded = jwt_decode(token);
-const isAdmin = decoded?.perfil === 'admin';
+      const res = await api.post('/auth/login', {
+        email: email.trim(),
+        senha: senha.trim(),
+      });
 
-if (isAdmin) {
-  navigate('/admin'); // ou outra página específica
-} else {
-  navigate('/inicio');
-}
+      if (res.status === 200 && res.data?.token) {
+        const token = res.data.token;
+        localStorage.setItem('token', token);
+
+        if (lembrar) {
+          localStorage.setItem('rememberEmail', email.trim());
+        } else {
+          localStorage.removeItem('rememberEmail');
+        }
+
+        const decoded = jwt_decode(token);
+        const isAdmin = decoded?.perfil === 'admin';
+        navigate(isAdmin ? '/admin' : '/inicio');
+      } else {
+        alert('Token não recebido.');
+      }
     } catch (err) {
-      alert(err.response?.data?.message || 'Email ou senha incorretos.');
+      alert(
+        err.response?.data?.erro ||
+          err.response?.data?.message ||
+          'Email ou senha incorretos.'
+      );
     } finally {
       setCarregando(false);
     }
