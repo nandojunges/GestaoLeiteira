@@ -4,6 +4,18 @@ import fs from 'fs';
 import path from 'path';
 import net from 'net';
 import 'dotenv/config';
+import dbModule from './backend/db.js';
+
+const { initDB } = dbModule;
+
+// Correção automática para conta admin
+try {
+  const db = initDB('nandokkk@hotmail.com');
+  db.prepare("UPDATE usuarios SET verificado = 1 WHERE email = 'nandokkk@hotmail.com'").run();
+  console.log('✅ Conta admin verificada automaticamente.');
+} catch (err) {
+  console.error('⚠️ Erro ao verificar admin:', err.message);
+}
 
 // 🧹 Limpa a pasta dist com comando do Windows
 const distPath = path.join('.', 'dist');

@@ -241,8 +241,10 @@ async function login(req, res) {
     return res.status(400).json({ message: 'Usuário não encontrado.' });
   }
 
-  if (usuario.verificado !== 1) {
-    return res.status(403).json({ message: 'Verifique seu e-mail antes de fazer login.' });
+  if (!usuario.verificado) {
+    return res
+      .status(403)
+      .json({ erro: 'Usuário não verificado. Confirme seu e-mail.' });
   }
 
   const match = await bcrypt.compare(senha, usuario.senha);
@@ -430,13 +432,18 @@ function inicializarAdmins(db) {
     const existente = Usuario.getByEmail(db, admin.email);
     if (!existente) {
       try {
-        Usuario.create(db, admin);
+        Usuario.create(db, { ...admin, verificado: 1 });
         console.log(`✅ Admin criado: ${admin.email}`);
       } catch (err) {
         console.error(`❌ Erro ao criar admin ${admin.email}:`, err.message);
       }
     } else {
-      console.log(`ℹ️ Admin já existente: ${admin.email}`);
+      if (!existente.verificado) {
+        Usuario.liberarAcesso(db, admin.email);
+        console.log(`ℹ️ Admin existente atualizado como verificado: ${admin.email}`);
+      } else {
+        console.log(`ℹ️ Admin já existente: ${admin.email}`);
+      }
     }
   });
 }
