@@ -82,22 +82,19 @@ export default function Saude() {
       id: 'total',
       label: 'Animais monitorados',
       valor: animais.length,
-      cor: 'bg-gray-100 text-gray-700',
       icone: '🐄'
     },
     {
       id: 'tratamento',
       label: 'Tratamento ativo',
       valor: totalTratamentoAtivo,
-      cor: 'bg-orange-100 text-orange-700',
       icone: '✏️'
     },
     {
       id: 'ocorrencias',
       label: 'Ocorrências no mês',
       valor: totalOcorrenciasMes,
-      cor: 'bg-blue-100 text-blue-700',
-      icone: '🗓️'
+      icone: '📅'
     }
   ];
 
@@ -111,53 +108,55 @@ export default function Saude() {
     <div className="p-4 space-y-6 font-poppins">
       <h1 className="text-2xl font-semibold">Saúde dos Animais</h1>
 
-      {/* Filtros e ação */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap gap-4">
-          <input
-            type="text"
-            placeholder="Buscar por nome ou número"
-            value={busca}
-            onChange={e => setBusca(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2"
-          />
-          <select
-            value={grupoFiltro}
-            onChange={e => setGrupoFiltro(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2"
-          >
-            <option value="">Grupo</option>
-            {grupos.map(g => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
-          <select
-            value={statusFiltro}
-            onChange={e => setStatusFiltro(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2"
-          >
-            <option value="">Status</option>
-            <option value="Saudável">Saudável</option>
-            <option value="Tratamento ativo">Tratamento ativo</option>
-            <option value="Pendente">Pendente</option>
-          </select>
-        </div>
-        <button className="px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200">
-          + Registrar Evento de Saúde
-        </button>
-      </div>
-
-      {/* Cards resumo */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {cards.map(c => (
-          <div key={c.id} className={`flex items-center gap-4 p-4 rounded-md shadow-sm ${c.cor}`}>
-            <span className="text-4xl">{c.icone}</span>
-            <div>
-              <div className="text-sm">{c.label}</div>
-              <div className="text-2xl font-bold">{c.valor}</div>
-            </div>
+      <div className="flex flex-col gap-4">
+        {/* Filtros e ação */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex gap-4 items-center">
+            <input
+              type="text"
+              placeholder="Buscar por nome ou número"
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-2"
+            />
+            <select
+              value={grupoFiltro}
+              onChange={e => setGrupoFiltro(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="">Grupo</option>
+              {grupos.map(g => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+            <select
+              value={statusFiltro}
+              onChange={e => setStatusFiltro(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="">Status</option>
+              <option value="Saudável">Saudável</option>
+              <option value="Tratamento ativo">Tratamento ativo</option>
+              <option value="Pendente">Pendente</option>
+            </select>
           </div>
-        ))}
+          <button className="px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200">
+            + Registrar Evento de Saúde
+          </button>
+        </div>
+
+        {/* Cards resumo */}
+        <div className="flex gap-4">
+          {cards.map(c => (
+            <div key={c.id} className="bg-white shadow-sm rounded-md p-4 flex items-center gap-3 w-full max-w-xs">
+              <span className="text-2xl">{c.icone}</span>
+              <div>
+                <div className="text-sm font-medium">{c.label}</div>
+                <div className="text-xl font-bold">{c.valor}</div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Tabela */}
