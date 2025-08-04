@@ -111,73 +111,73 @@ export default function Saude() {
     <div className="p-4 font-poppins">
       <h1 className="text-2xl font-bold mb-4">Saúde dos Animais</h1>
 
-      {/* Barra de filtros */}
-      <div className="flex flex-col lg:flex-row justify-between items-center gap-4 bg-white p-4 shadow-md rounded-lg">
-        <div className="flex flex-col lg:flex-row items-center gap-3 w-full lg:w-auto">
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-600" htmlFor="buscar">🔍 Buscar</label>
-            <input
-              id="buscar"
-              type="text"
-              placeholder="Nome ou número"
-              value={busca}
-              onChange={e => setBusca(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+      <div className="w-full p-4 bg-white rounded-lg shadow-md flex flex-col gap-6">
+        {/* Linha de filtros */}
+        <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
+          {/* Input e filtros */}
+          <div className="flex flex-wrap gap-4 items-end">
+            <div className="flex flex-col">
+              <label className="text-sm text-gray-500 flex items-center gap-1">
+                🔍 Buscar
+              </label>
+              <input
+                type="text"
+                placeholder="Nome ou número"
+                className="border border-gray-300 px-3 py-1 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+                value={busca}
+                onChange={e => setBusca(e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-sm text-gray-500">Grupo</label>
+              <select
+                className="border border-gray-300 px-3 py-1 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+                value={grupoFiltro}
+                onChange={e => setGrupoFiltro(e.target.value)}
+              >
+                <option value="">Todos</option>
+                {grupos.map(g => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-sm text-gray-500">Status</label>
+              <select
+                className="border border-gray-300 px-3 py-1 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+                value={statusFiltro}
+                onChange={e => setStatusFiltro(e.target.value)}
+              >
+                <option value="">Todos</option>
+                <option value="Saudável">Saudável</option>
+                <option value="Pendente">Pendente</option>
+                <option value="Tratamento ativo">Tratamento ativo</option>
+              </select>
+            </div>
           </div>
 
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-600" htmlFor="grupo">Grupo</label>
-            <select
-              id="grupo"
-              value={grupoFiltro}
-              onChange={e => setGrupoFiltro(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Todos</option>
-              {grupos.map(g => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-600" htmlFor="status">Status</label>
-            <select
-              id="status"
-              value={statusFiltro}
-              onChange={e => setStatusFiltro(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Todos</option>
-              <option value="Saudável">Saudável</option>
-              <option value="Pendente">Pendente</option>
-              <option value="Tratamento ativo">Tratamento ativo</option>
-            </select>
-          </div>
+          {/* Botão de evento */}
+          <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-md shadow flex items-center gap-2 transition">
+            <span className="text-lg">➕</span> Registrar Evento de Saúde
+          </button>
         </div>
 
-        <button className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm shadow flex items-center gap-2 transition duration-200">
-          <span className="text-lg">➕</span> Registrar Evento de Saúde
-        </button>
-      </div>
-
-      {/* Cards resumo */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-        {cards.map(c => (
-          <div
-            key={c.id}
-            className="bg-white border border-gray-200 shadow-sm rounded-lg p-4 flex flex-col items-center text-center"
-          >
-            <div className="text-2xl">{c.icone}</div>
-            <p className="text-sm text-gray-500 mt-1">{c.label}</p>
-            <p className={`text-xl font-bold mt-1 ${c.cor}`}>{c.valor}</p>
-          </div>
-        ))}
+        {/* Cards Resumo */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {cards.map(c => (
+            <div key={c.id} className="border border-gray-300 rounded-lg p-4 flex flex-col items-center shadow-sm">
+              <span className="text-2xl">{c.icone}</span>
+              <span className="text-sm text-gray-600 mt-2">{c.label}</span>
+              <span className={`text-xl font-bold mt-1 ${c.cor}`}>{c.valor}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Tabela com dados dos animais */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto mt-6">
         <table className="table-auto w-full text-sm">
           <thead className="bg-blue-100 text-gray-800">
             <tr>
