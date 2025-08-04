@@ -94,45 +94,53 @@ export default function Saude() {
       <h1 className="text-2xl font-bold mb-4">Saúde dos Animais</h1>
 
       {/* Barra de filtros */}
-      <div className="flex flex-col sm:flex-row flex-wrap items-center gap-4 mb-4">
-        <input
-          type="text"
-          placeholder="Buscar por nome ou número"
-          value={busca}
-          onChange={e => setBusca(e.target.value)}
-          className="w-64 px-3 py-2 border rounded"
-        />
+      <div className="flex flex-wrap items-end justify-between gap-4 px-4 py-3 bg-blue-50 rounded-xl shadow-sm mb-4">
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="flex flex-col">
+            <label className="text-sm text-gray-700" htmlFor="buscar">Buscar</label>
+            <input
+              id="buscar"
+              type="text"
+              placeholder="🔍 Buscar por nome ou número"
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+              className="px-3 py-1 rounded-lg border border-blue-300 shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+            />
+          </div>
 
-        <label className="flex items-center gap-2">
-          <span>Grupo</span>
-          <select
-            value={grupoFiltro}
-            onChange={e => setGrupoFiltro(e.target.value)}
-            className="rounded px-2 py-1 border"
-          >
-            <option value="">Todos</option>
-            {grupos.map(g => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
-        </label>
+          <div className="flex flex-col">
+            <label className="text-sm text-gray-700" htmlFor="grupo">Grupo</label>
+            <select
+              id="grupo"
+              value={grupoFiltro}
+              onChange={e => setGrupoFiltro(e.target.value)}
+              className="px-3 py-1 rounded-lg border border-blue-300 shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+            >
+              <option value="">Todos</option>
+              {grupos.map(g => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+          </div>
 
-        <label className="flex items-center gap-2">
-          <span>Status</span>
-          <select
-            value={statusFiltro}
-            onChange={e => setStatusFiltro(e.target.value)}
-            className="rounded px-2 py-1 border"
-          >
-            <option value="">Todos</option>
-            <option value="Saudável">Saudável</option>
-            <option value="Tratamento ativo">Tratamento ativo</option>
-            <option value="Pendente">Pendente</option>
-          </select>
-        </label>
+          <div className="flex flex-col">
+            <label className="text-sm text-gray-700" htmlFor="status">Status</label>
+            <select
+              id="status"
+              value={statusFiltro}
+              onChange={e => setStatusFiltro(e.target.value)}
+              className="px-3 py-1 rounded-lg border border-blue-300 shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+            >
+              <option value="">Todos</option>
+              <option value="Saudável">Saudável</option>
+              <option value="Tratamento ativo">Tratamento</option>
+              <option value="Pendente">Pendente</option>
+            </select>
+          </div>
+        </div>
 
-        <button className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-          + Registrar Evento de Saúde
+        <button className="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-xl shadow-md text-sm">
+          ➕ Registrar Evento de Saúde
         </button>
       </div>
 
