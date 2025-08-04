@@ -70,6 +70,19 @@ export default function Saude() {
     return correspondeBusca && correspondeGrupo && correspondeStatus;
   });
 
+  const mesAtual = new Date().toISOString().slice(0, 7);
+  const totalOcorrenciasMes = animais.reduce(
+    (acc, a) => acc + a.ocorrencias.filter(o => o.data.startsWith(mesAtual)).length,
+    0
+  );
+  const totalTratamentoAtivo = animais.filter(a => a.status === 'Tratamento ativo').length;
+
+  const cards = [
+    { id: 'total', label: 'Animais monitorados', valor: animais.length, icone: '🐄' },
+    { id: 'tratamento', label: 'Tratamento ativo', valor: totalTratamentoAtivo, icone: '✏️' },
+    { id: 'ocorrencias', label: 'Ocorrências no mês', valor: totalOcorrenciasMes, icone: '📅' }
+  ];
+
   const mapaStatus = {
     'Tratamento ativo': { icone: '🔶', cor: 'text-orange-500' },
     Pendente: { icone: '🕒', cor: 'text-gray-500' },
@@ -80,49 +93,63 @@ export default function Saude() {
     <div className="p-4 font-poppins">
       <h1 className="text-2xl font-bold mb-4">Saúde dos Animais</h1>
 
-      {/* Filtros e ação */}
-      <div className="flex flex-wrap gap-4 justify-between items-end mb-4">
+      {/* Barra de filtros */}
+      <div className="flex flex-col sm:flex-row flex-wrap items-center gap-4 mb-4">
         <input
           type="text"
           placeholder="Buscar por nome ou número"
           value={busca}
           onChange={e => setBusca(e.target.value)}
-          className="w-60 px-3 py-2 border rounded"
+          className="w-64 px-3 py-2 border rounded"
         />
 
-        <div className="flex flex-col gap-2">
-          <label className="flex flex-col text-sm">
-            <span>Grupo</span>
-            <select
-              value={grupoFiltro}
-              onChange={e => setGrupoFiltro(e.target.value)}
-              className="w-40 px-2 py-2 border rounded"
-            >
-              <option value="">Todos</option>
-              {grupos.map(g => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
-          </label>
+        <label className="flex items-center gap-2">
+          <span>Grupo</span>
+          <select
+            value={grupoFiltro}
+            onChange={e => setGrupoFiltro(e.target.value)}
+            className="rounded px-2 py-1 border"
+          >
+            <option value="">Todos</option>
+            {grupos.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+        </label>
 
-          <label className="flex flex-col text-sm">
-            <span>Status</span>
-            <select
-              value={statusFiltro}
-              onChange={e => setStatusFiltro(e.target.value)}
-              className="w-40 px-2 py-2 border rounded"
-            >
-              <option value="">Todos</option>
-              <option value="Saudável">Saudável</option>
-              <option value="Tratamento ativo">Tratamento ativo</option>
-              <option value="Pendente">Pendente</option>
-            </select>
-          </label>
-        </div>
+        <label className="flex items-center gap-2">
+          <span>Status</span>
+          <select
+            value={statusFiltro}
+            onChange={e => setStatusFiltro(e.target.value)}
+            className="rounded px-2 py-1 border"
+          >
+            <option value="">Todos</option>
+            <option value="Saudável">Saudável</option>
+            <option value="Tratamento ativo">Tratamento ativo</option>
+            <option value="Pendente">Pendente</option>
+          </select>
+        </label>
 
-        <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+        <button className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
           + Registrar Evento de Saúde
         </button>
+      </div>
+
+      {/* Cards resumo */}
+      <div className="flex flex-col sm:flex-row flex-wrap justify-between gap-4 mb-6">
+        {cards.map(c => (
+          <div
+            key={c.id}
+            className="flex-1 min-w-[200px] bg-white shadow-md p-4 rounded flex items-center gap-2"
+          >
+            <span className="text-3xl">{c.icone}</span>
+            <div>
+              <p className="text-sm">{c.label}</p>
+              <p className="text-xl font-bold">{c.valor}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Tabela com dados dos animais */}
@@ -165,4 +192,3 @@ export default function Saude() {
     </div>
   );
 }
-
