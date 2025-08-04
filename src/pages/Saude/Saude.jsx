@@ -1,6 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { Plus } from 'lucide-react';
-import ModalRegistrarEvento from './ModalRegistrarEvento';
 
 function formatarData(iso) {
   return new Date(iso).toLocaleDateString('pt-BR');
@@ -59,7 +57,6 @@ export default function Saude() {
   const [busca, setBusca] = useState('');
   const [grupoFiltro, setGrupoFiltro] = useState('');
   const [statusFiltro, setStatusFiltro] = useState('');
-  const [modalAberto, setModalAberto] = useState(false);
 
   const grupos = useMemo(() => Array.from(new Set(animais.map(a => a.grupo))), [animais]);
 
@@ -81,84 +78,98 @@ export default function Saude() {
   const totalTratamentoAtivo = animais.filter(a => a.status === 'Tratamento ativo').length;
 
   const cards = [
-    { id: 'total', label: 'Animais monitorados', valor: animais.length, cor: 'bg-gray-100 text-gray-700', icone: '🐄' },
-    { id: 'tratamento', label: 'Tratamento ativo', valor: totalTratamentoAtivo, cor: 'bg-red-100 text-red-700', icone: '💊' },
-    { id: 'ocorrencias', label: 'Ocorrências no mês', valor: totalOcorrenciasMes, cor: 'bg-blue-100 text-blue-700', icone: '🗓️' }
+    {
+      id: 'total',
+      label: 'Animais monitorados',
+      valor: animais.length,
+      cor: 'bg-gray-100 text-gray-700',
+      icone: '🐄'
+    },
+    {
+      id: 'tratamento',
+      label: 'Tratamento ativo',
+      valor: totalTratamentoAtivo,
+      cor: 'bg-orange-100 text-orange-700',
+      icone: '✏️'
+    },
+    {
+      id: 'ocorrencias',
+      label: 'Ocorrências no mês',
+      valor: totalOcorrenciasMes,
+      cor: 'bg-blue-100 text-blue-700',
+      icone: '🗓️'
+    }
   ];
 
   const mapaStatus = {
-    'Saudável': { cor: 'text-green-600', icone: '✅' },
-    'Tratamento ativo': { cor: 'text-orange-500', icone: '🟠' },
-    Pendente: { cor: 'text-yellow-500', icone: '🕒' }
+    Saudável: { icone: '✅', cor: 'text-green-600' },
+    'Tratamento ativo': { icone: '🟠', cor: 'text-orange-500' },
+    Pendente: { icone: '🕒', cor: 'text-yellow-600' }
   };
 
   return (
     <div className="p-4 space-y-6 font-poppins">
       <h1 className="text-2xl font-semibold">Saúde dos Animais</h1>
 
-      {/* Filtros */}
-      <div className="bg-white p-4 rounded shadow flex flex-col sm:flex-row gap-4">
-        <input
-          type="text"
-          placeholder="Buscar por nome ou número"
-          value={busca}
-          onChange={e => setBusca(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2 flex-1"
-        />
-        <select
-          value={grupoFiltro}
-          onChange={e => setGrupoFiltro(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2 flex-1 sm:flex-none"
-        >
-          <option value="" disabled>Grupo</option>
-          {grupos.map(g => (
-            <option key={g} value={g}>{g}</option>
-          ))}
-        </select>
-        <select
-          value={statusFiltro}
-          onChange={e => setStatusFiltro(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2 flex-1 sm:flex-none"
-        >
-          <option value="" disabled>Status</option>
-          <option value="Saudável">Saudável</option>
-          <option value="Tratamento ativo">Tratamento ativo</option>
-          <option value="Pendente">Pendente</option>
-        </select>
-      </div>
-
-      {/* Cards resumo e ação */}
-      <div className="flex flex-col md:flex-row gap-4 items-stretch">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
-          {cards.map(c => (
-            <div key={c.id} className={`flex items-center p-4 rounded shadow ${c.cor}`}>
-              <span className="text-3xl mr-4">{c.icone}</span>
-              <div>
-                <div className="text-sm">{c.label}</div>
-                <div className="text-2xl font-bold">{c.valor}</div>
-              </div>
-            </div>
-          ))}
+      {/* Filtros e ação */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-4">
+          <input
+            type="text"
+            placeholder="Buscar por nome ou número"
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-2"
+          />
+          <select
+            value={grupoFiltro}
+            onChange={e => setGrupoFiltro(e.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-2"
+          >
+            <option value="">Grupo</option>
+            {grupos.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+          <select
+            value={statusFiltro}
+            onChange={e => setStatusFiltro(e.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-2"
+          >
+            <option value="">Status</option>
+            <option value="Saudável">Saudável</option>
+            <option value="Tratamento ativo">Tratamento ativo</option>
+            <option value="Pendente">Pendente</option>
+          </select>
         </div>
-        <button
-          onClick={() => setModalAberto(true)}
-          className="self-center md:self-auto px-4 py-2 bg-blue-100 text-blue-700 rounded flex items-center gap-2 hover:bg-blue-200 hover:scale-105 transition"
-        >
-          <Plus className="w-5 h-5" />
-          Registrar Evento de Saúde
+        <button className="px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200">
+          + Registrar Evento de Saúde
         </button>
       </div>
 
+      {/* Cards resumo */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {cards.map(c => (
+          <div key={c.id} className={`flex items-center gap-4 p-4 rounded-md shadow-sm ${c.cor}`}>
+            <span className="text-4xl">{c.icone}</span>
+            <div>
+              <div className="text-sm">{c.label}</div>
+              <div className="text-2xl font-bold">{c.valor}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Tabela */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white rounded shadow">
-          <thead className="bg-blue-900 text-white">
+      <div className="overflow-x-auto rounded-md shadow-sm">
+        <table className="table-fixed w-full text-sm">
+          <thead className="bg-blue-100 text-blue-900">
             <tr>
-              <th className="text-left p-2">Número/Nome</th>
-              <th className="text-left p-2">Grupo</th>
-              <th className="text-left p-2">Última Ocorrência</th>
-              <th className="text-left p-2">Último Tratamento</th>
-              <th className="text-left p-2">Status</th>
+              <th className="p-2 text-left">Número/Nome</th>
+              <th className="p-2 text-left">Grupo</th>
+              <th className="p-2 text-left">Última Ocorrência</th>
+              <th className="p-2 text-left">Último Tratamento</th>
+              <th className="p-2 text-left">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -167,16 +178,16 @@ export default function Saude() {
               const ultimoTr = a.tratamentos.sort((b, c) => c.data.localeCompare(b.data))[0];
               const infoStatus = mapaStatus[a.status] || mapaStatus['Pendente'];
               return (
-                <tr key={a.id} className="border-t odd:bg-white even:bg-blue-50">
-                  <td className="p-2">{a.numero} - {a.nome}</td>
+                <tr key={a.id} className="even:bg-gray-50 hover:bg-gray-100">
+                  <td className="p-2 truncate">{a.numero} - {a.nome}</td>
                   <td className="p-2">{a.grupo}</td>
                   <td className="p-2">{ultimaOc ? formatarData(ultimaOc.data) : '—'}</td>
                   <td className="p-2">
                     {ultimoTr ? `${formatarData(ultimoTr.data)} - ${ultimoTr.medicamento}` : '—'}
                   </td>
                   <td className="p-2">
-                    <span className={`flex items-center gap-1 ${infoStatus.cor}`}>
-                      <span>{infoStatus.icone}</span>
+                    <span className="flex items-center gap-1">
+                      <span className={infoStatus.cor}>{infoStatus.icone}</span>
                       {a.status}
                     </span>
                   </td>
@@ -186,8 +197,6 @@ export default function Saude() {
           </tbody>
         </table>
       </div>
-
-      <ModalRegistrarEvento aberto={modalAberto} onClose={() => setModalAberto(false)} />
     </div>
   );
 }
