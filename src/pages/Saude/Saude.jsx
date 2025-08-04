@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 function formatarData(iso) {
   return new Date(iso).toLocaleDateString('pt-BR');
@@ -90,70 +90,78 @@ export default function Saude() {
   };
 
   return (
-    <div className="p-4 space-y-6 font-poppins">
-      <h1 className="text-2xl font-bold">Saúde dos Animais</h1>
+    <div className="p-4 font-poppins">
+      <h1 className="text-2xl font-bold mb-4">Saúde dos Animais</h1>
 
-      <div className="flex flex-col gap-4">
-        {/* Filtros e ação */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-4 items-center">
-            <input
-              type="text"
-              placeholder="Buscar por nome ou número"
-              value={busca}
-              onChange={e => setBusca(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2"
-            />
-            <select
-              value={grupoFiltro}
-              onChange={e => setGrupoFiltro(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2"
-            >
-              <option value="">Grupo</option>
-              {grupos.map(g => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
-            <select
-              value={statusFiltro}
-              onChange={e => setStatusFiltro(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2"
-            >
-              <option value="">Status</option>
-              <option value="Saudável">Saudável</option>
-              <option value="Tratamento ativo">Tratamento ativo</option>
-              <option value="Pendente">Pendente</option>
-            </select>
-          </div>
-          <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-            + Registrar Evento de Saúde
-          </button>
-        </div>
+      {/* Barra de filtros */}
+      <div className="flex flex-col sm:flex-row flex-wrap items-center gap-4 mb-4">
+        <input
+          type="text"
+          placeholder="Buscar por nome ou número"
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+          className="w-64 px-3 py-2 border rounded"
+        />
 
-        {/* Cards resumo */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {cards.map(c => (
-            <div key={c.id} className="bg-white shadow rounded-md p-4 flex items-center gap-3">
-              <span className="text-3xl">{c.icone}</span>
-              <div>
-                <div className="text-sm">{c.label}</div>
-                <div className="text-xl font-bold">{c.valor}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <label className="flex items-center gap-2">
+          <span>Grupo</span>
+          <select
+            value={grupoFiltro}
+            onChange={e => setGrupoFiltro(e.target.value)}
+            className="rounded px-2 py-1 border"
+          >
+            <option value="">Todos</option>
+            {grupos.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex items-center gap-2">
+          <span>Status</span>
+          <select
+            value={statusFiltro}
+            onChange={e => setStatusFiltro(e.target.value)}
+            className="rounded px-2 py-1 border"
+          >
+            <option value="">Todos</option>
+            <option value="Saudável">Saudável</option>
+            <option value="Tratamento ativo">Tratamento ativo</option>
+            <option value="Pendente">Pendente</option>
+          </select>
+        </label>
+
+        <button className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+          + Registrar Evento de Saúde
+        </button>
       </div>
 
-      {/* Tabela */}
-      <div className="overflow-x-auto rounded-md shadow-sm">
-        <table className="table-fixed w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="p-2 text-left">Número/Nome</th>
-              <th className="p-2 text-left">Grupo</th>
-              <th className="p-2 text-left">Última Ocorrência</th>
-              <th className="p-2 text-left">Último Tratamento</th>
-              <th className="p-2 text-left">Status</th>
+      {/* Cards resumo */}
+      <div className="flex flex-col sm:flex-row flex-wrap justify-between gap-4 mb-6">
+        {cards.map(c => (
+          <div
+            key={c.id}
+            className="flex-1 min-w-[200px] bg-white shadow-md p-4 rounded flex items-center gap-2"
+          >
+            <span className="text-3xl">{c.icone}</span>
+            <div>
+              <p className="text-sm">{c.label}</p>
+              <p className="text-xl font-bold">{c.valor}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tabela com dados dos animais */}
+      <div className="overflow-x-auto">
+        <table className="table-auto w-full text-sm border-collapse">
+          <thead>
+            <tr className="border-b">
+              <th className="p-2 text-left font-semibold">Número/Nome</th>
+              <th className="p-2 text-left font-semibold">Grupo</th>
+              <th className="p-2 text-left font-semibold">Última Ocorrência</th>
+              <th className="p-2 text-left font-semibold">Último Tratamento</th>
+              <th className="p-2 text-left font-semibold">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -162,8 +170,8 @@ export default function Saude() {
               const ultimoTr = a.tratamentos.sort((b, c) => c.data.localeCompare(b.data))[0];
               const infoStatus = mapaStatus[a.status] || mapaStatus['Pendente'];
               return (
-                <tr key={a.id} className="even:bg-gray-50 hover:bg-gray-100">
-                  <td className="p-2 truncate">{a.numero} - {a.nome}</td>
+                <tr key={a.id} className="border-b">
+                  <td className="p-2">{a.numero} - {a.nome}</td>
                   <td className="p-2">{a.grupo}</td>
                   <td className="p-2">{ultimaOc ? formatarData(ultimaOc.data) : '—'}</td>
                   <td className="p-2">
@@ -184,3 +192,4 @@ export default function Saude() {
     </div>
   );
 }
+
