@@ -12,8 +12,8 @@ export default function Saude() {
       numero: 'A001',
       nome: 'Luna',
       grupo: 'Lote 1',
-      ocorrencias: [{ data: '2024-06-01', descricao: 'Mastite' }],
-      tratamentos: [{ data: '2024-06-02', medicamento: 'Antibiótico', ativo: true }],
+      ocorrencias: [{ data: '2023-05-01', descricao: 'Mastite' }],
+      tratamentos: [{ data: '2023-05-02', medicamento: 'Antibiótico', ativo: true }],
       status: 'Tratamento ativo'
     },
     {
@@ -30,7 +30,7 @@ export default function Saude() {
       numero: 'A003',
       nome: 'Sol',
       grupo: 'Lote 1',
-      ocorrencias: [{ data: '2024-05-15', descricao: 'Casco' }],
+      ocorrencias: [{ data: '2023-04-15', descricao: 'Casco' }],
       tratamentos: [],
       status: 'Pendente'
     },
@@ -39,8 +39,8 @@ export default function Saude() {
       numero: 'A004',
       nome: 'Aurora',
       grupo: 'Lote 2',
-      ocorrencias: [{ data: '2024-06-03', descricao: 'Febre' }],
-      tratamentos: [{ data: '2024-06-04', medicamento: 'Antitérmico', ativo: false }],
+      ocorrencias: [{ data: '2023-05-03', descricao: 'Febre' }],
+      tratamentos: [{ data: '2023-05-04', medicamento: 'Antitérmico', ativo: false }],
       status: 'Saudável'
     },
     {
@@ -78,40 +78,25 @@ export default function Saude() {
   const totalTratamentoAtivo = animais.filter(a => a.status === 'Tratamento ativo').length;
 
   const cards = [
-    {
-      id: 'total',
-      label: 'Animais monitorados',
-      valor: animais.length,
-      icone: '🐄'
-    },
-    {
-      id: 'tratamento',
-      label: 'Tratamento ativo',
-      valor: totalTratamentoAtivo,
-      icone: '✏️'
-    },
-    {
-      id: 'ocorrencias',
-      label: 'Ocorrências no mês',
-      valor: totalOcorrenciasMes,
-      icone: '📅'
-    }
+    { id: 'total', label: 'Animais monitorados', valor: animais.length, icone: '🐄' },
+    { id: 'tratamento', label: 'Tratamento ativo', valor: totalTratamentoAtivo, icone: '✏️' },
+    { id: 'ocorrencias', label: 'Ocorrências no mês', valor: totalOcorrenciasMes, icone: '📅' }
   ];
 
   const mapaStatus = {
-    Saudável: { icone: '✅', cor: 'text-green-600' },
-    'Tratamento ativo': { icone: '🟠', cor: 'text-orange-500' },
-    Pendente: { icone: '🕒', cor: 'text-yellow-600' }
+    'Tratamento ativo': { icone: '🔶', cor: 'text-orange-500' },
+    Pendente: { icone: '🕒', cor: 'text-gray-500' },
+    Saudável: { icone: '✅', cor: 'text-green-600' }
   };
 
   return (
     <div className="p-4 space-y-6 font-poppins">
-      <h1 className="text-2xl font-semibold">Saúde dos Animais</h1>
+      <h1 className="text-2xl font-bold">Saúde dos Animais</h1>
 
       <div className="flex flex-col gap-4">
         {/* Filtros e ação */}
         <div className="flex items-center justify-between gap-4">
-          <div className="flex gap-4 items-center">
+          <div className="flex flex-wrap gap-4 items-center">
             <input
               type="text"
               placeholder="Buscar por nome ou número"
@@ -140,18 +125,18 @@ export default function Saude() {
               <option value="Pendente">Pendente</option>
             </select>
           </div>
-          <button className="px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200">
+          <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
             + Registrar Evento de Saúde
           </button>
         </div>
 
         {/* Cards resumo */}
-        <div className="flex gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {cards.map(c => (
-            <div key={c.id} className="bg-white shadow-sm rounded-md p-4 flex items-center gap-3 w-full max-w-xs">
-              <span className="text-2xl">{c.icone}</span>
+            <div key={c.id} className="bg-white shadow rounded-md p-4 flex items-center gap-3">
+              <span className="text-3xl">{c.icone}</span>
               <div>
-                <div className="text-sm font-medium">{c.label}</div>
+                <div className="text-sm">{c.label}</div>
                 <div className="text-xl font-bold">{c.valor}</div>
               </div>
             </div>
@@ -162,7 +147,7 @@ export default function Saude() {
       {/* Tabela */}
       <div className="overflow-x-auto rounded-md shadow-sm">
         <table className="table-fixed w-full text-sm">
-          <thead className="bg-blue-100 text-blue-900">
+          <thead className="bg-gray-50">
             <tr>
               <th className="p-2 text-left">Número/Nome</th>
               <th className="p-2 text-left">Grupo</th>
