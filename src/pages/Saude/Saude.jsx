@@ -84,8 +84,8 @@ export default function Saude() {
   ];
 
   const mapaStatus = {
-    'Tratamento ativo': { icone: '🔶', cor: 'text-orange-500' },
-    Pendente: { icone: '🕒', cor: 'text-gray-500' },
+    'Tratamento ativo': { icone: '🟧', cor: 'text-orange-500' },
+    Pendente: { icone: '⏳', cor: 'text-gray-500' },
     Saudável: { icone: '✅', cor: 'text-green-600' }
   };
 
@@ -94,7 +94,7 @@ export default function Saude() {
       <h1 className="text-2xl font-bold mb-4">Saúde dos Animais</h1>
 
       {/* Barra de filtros */}
-      <div className="flex flex-wrap items-end justify-between gap-4 px-4 py-3 bg-blue-50 rounded-xl shadow-sm mb-4">
+      <div className="flex justify-between items-end flex-wrap gap-4 p-4 bg-blue-50 rounded-lg shadow mb-4">
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex flex-col">
             <label className="text-sm text-gray-700" htmlFor="buscar">Buscar</label>
@@ -104,7 +104,7 @@ export default function Saude() {
               placeholder="🔍 Buscar por nome ou número"
               value={busca}
               onChange={e => setBusca(e.target.value)}
-              className="px-3 py-1 rounded-lg border border-blue-300 shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+              className="px-3 py-1 rounded-lg border border-blue-300 shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 transition-all duration-300"
             />
           </div>
 
@@ -114,7 +114,7 @@ export default function Saude() {
               id="grupo"
               value={grupoFiltro}
               onChange={e => setGrupoFiltro(e.target.value)}
-              className="px-3 py-1 rounded-lg border border-blue-300 shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+              className="px-3 py-1 rounded-lg border border-blue-300 shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 transition-all duration-300"
             >
               <option value="">Todos</option>
               {grupos.map(g => (
@@ -129,7 +129,7 @@ export default function Saude() {
               id="status"
               value={statusFiltro}
               onChange={e => setStatusFiltro(e.target.value)}
-              className="px-3 py-1 rounded-lg border border-blue-300 shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+              className="px-3 py-1 rounded-lg border border-blue-300 shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 transition-all duration-300"
             >
               <option value="">Todos</option>
               <option value="Saudável">Saudável</option>
@@ -139,17 +139,17 @@ export default function Saude() {
           </div>
         </div>
 
-        <button className="bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-xl shadow-md text-sm">
+        <button className="bg-blue-700 text-white rounded px-4 py-2 shadow">
           ➕ Registrar Evento de Saúde
         </button>
       </div>
 
       {/* Cards resumo */}
-      <div className="flex flex-col sm:flex-row flex-wrap justify-between gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-4 mb-6">
         {cards.map(c => (
           <div
             key={c.id}
-            className="flex-1 min-w-[200px] bg-white shadow-md p-4 rounded flex items-center gap-2"
+            className="border rounded p-3 shadow-sm bg-white flex items-center gap-2"
           >
             <span className="text-3xl">{c.icone}</span>
             <div>
@@ -162,14 +162,14 @@ export default function Saude() {
 
       {/* Tabela com dados dos animais */}
       <div className="overflow-x-auto">
-        <table className="table-auto w-full text-sm border-collapse">
-          <thead>
-            <tr className="border-b">
-              <th className="p-2 text-left font-semibold">Número/Nome</th>
-              <th className="p-2 text-left font-semibold">Grupo</th>
-              <th className="p-2 text-left font-semibold">Última Ocorrência</th>
-              <th className="p-2 text-left font-semibold">Último Tratamento</th>
-              <th className="p-2 text-left font-semibold">Status</th>
+        <table className="table-auto w-full text-sm">
+          <thead className="bg-blue-100 text-gray-800">
+            <tr>
+              <th className="px-3 py-2 text-left font-semibold">Número/Nome</th>
+              <th className="px-3 py-2 text-left font-semibold">Grupo</th>
+              <th className="px-3 py-2 text-left font-semibold">Última Ocorrência</th>
+              <th className="px-3 py-2 text-left font-semibold">Último Tratamento</th>
+              <th className="px-3 py-2 text-left font-semibold">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -178,14 +178,14 @@ export default function Saude() {
               const ultimoTr = a.tratamentos.sort((b, c) => c.data.localeCompare(b.data))[0];
               const infoStatus = mapaStatus[a.status] || mapaStatus['Pendente'];
               return (
-                <tr key={a.id} className="border-b">
-                  <td className="p-2">{a.numero} - {a.nome}</td>
-                  <td className="p-2">{a.grupo}</td>
-                  <td className="p-2">{ultimaOc ? formatarData(ultimaOc.data) : '—'}</td>
-                  <td className="p-2">
+                <tr key={a.id} className="border-b odd:bg-white even:bg-gray-50">
+                  <td className="px-3 py-2">{a.numero} - {a.nome}</td>
+                  <td className="px-3 py-2">{a.grupo}</td>
+                  <td className="px-3 py-2">{ultimaOc ? formatarData(ultimaOc.data) : '—'}</td>
+                  <td className="px-3 py-2">
                     {ultimoTr ? `${formatarData(ultimoTr.data)} - ${ultimoTr.medicamento}` : '—'}
                   </td>
-                  <td className="p-2">
+                  <td className="px-3 py-2">
                     <span className="flex items-center gap-1">
                       <span className={infoStatus.cor}>{infoStatus.icone}</span>
                       {a.status}
