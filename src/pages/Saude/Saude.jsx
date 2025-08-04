@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Plus } from 'lucide-react';
 import ModalRegistrarEvento from './ModalRegistrarEvento';
 
 function formatarData(iso) {
@@ -80,15 +81,15 @@ export default function Saude() {
   const totalTratamentoAtivo = animais.filter(a => a.status === 'Tratamento ativo').length;
 
   const cards = [
-    { id: 'total', label: 'Animais monitorados', valor: animais.length, cor: 'bg-blue-100 text-blue-700', icone: '🐄' },
-    { id: 'tratamento', label: 'Tratamento ativo', valor: totalTratamentoAtivo, cor: 'bg-yellow-100 text-yellow-700', icone: '💊' },
-    { id: 'ocorrencias', label: 'Ocorrências no mês', valor: totalOcorrenciasMes, cor: 'bg-red-100 text-red-700', icone: '🗓️' }
+    { id: 'total', label: 'Animais monitorados', valor: animais.length, cor: 'bg-gray-100 text-gray-700', icone: '🐄' },
+    { id: 'tratamento', label: 'Tratamento ativo', valor: totalTratamentoAtivo, cor: 'bg-red-100 text-red-700', icone: '💊' },
+    { id: 'ocorrencias', label: 'Ocorrências no mês', valor: totalOcorrenciasMes, cor: 'bg-blue-100 text-blue-700', icone: '🗓️' }
   ];
 
   const mapaStatus = {
     'Saudável': { cor: 'text-green-600', icone: '✅' },
-    'Tratamento ativo': { cor: 'text-orange-600', icone: '⚠️' },
-    Pendente: { cor: 'text-gray-600', icone: '⏳' }
+    'Tratamento ativo': { cor: 'text-orange-500', icone: '🟠' },
+    Pendente: { cor: 'text-yellow-500', icone: '🕒' }
   };
 
   return (
@@ -96,7 +97,7 @@ export default function Saude() {
       <h1 className="text-2xl font-semibold">Saúde dos Animais</h1>
 
       {/* Filtros */}
-      <div className="bg-white p-4 rounded shadow flex flex-col md:flex-row gap-4">
+      <div className="bg-white p-4 rounded shadow flex flex-col sm:flex-row gap-4">
         <input
           type="text"
           placeholder="Buscar por nome ou número"
@@ -107,9 +108,9 @@ export default function Saude() {
         <select
           value={grupoFiltro}
           onChange={e => setGrupoFiltro(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2"
+          className="border border-gray-300 rounded px-3 py-2 flex-1 sm:flex-none"
         >
-          <option value="">Todos os grupos</option>
+          <option value="" disabled>Grupo</option>
           {grupos.map(g => (
             <option key={g} value={g}>{g}</option>
           ))}
@@ -117,42 +118,41 @@ export default function Saude() {
         <select
           value={statusFiltro}
           onChange={e => setStatusFiltro(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2"
+          className="border border-gray-300 rounded px-3 py-2 flex-1 sm:flex-none"
         >
-          <option value="">Todos os status</option>
+          <option value="" disabled>Status</option>
           <option value="Saudável">Saudável</option>
           <option value="Tratamento ativo">Tratamento ativo</option>
           <option value="Pendente">Pendente</option>
         </select>
       </div>
 
-      {/* Cards resumo */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {cards.map(c => (
-          <div key={c.id} className={`flex items-center p-4 rounded shadow ${c.cor}`}>
-            <span className="text-3xl mr-4">{c.icone}</span>
-            <div>
-              <div className="text-sm">{c.label}</div>
-              <div className="text-xl font-bold">{c.valor}</div>
+      {/* Cards resumo e ação */}
+      <div className="flex flex-col md:flex-row gap-4 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+          {cards.map(c => (
+            <div key={c.id} className={`flex items-center p-4 rounded shadow ${c.cor}`}>
+              <span className="text-3xl mr-4">{c.icone}</span>
+              <div>
+                <div className="text-sm">{c.label}</div>
+                <div className="text-2xl font-bold">{c.valor}</div>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Botão para registrar evento */}
-      <div className="flex justify-end">
+          ))}
+        </div>
         <button
           onClick={() => setModalAberto(true)}
-          className="mb-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="self-center md:self-auto px-4 py-2 bg-blue-100 text-blue-700 rounded flex items-center gap-2 hover:bg-blue-200 hover:scale-105 transition"
         >
-          + Registrar Evento de Saúde
+          <Plus className="w-5 h-5" />
+          Registrar Evento de Saúde
         </button>
       </div>
 
       {/* Tabela */}
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white rounded shadow">
-          <thead className="bg-gray-100">
+          <thead className="bg-blue-900 text-white">
             <tr>
               <th className="text-left p-2">Número/Nome</th>
               <th className="text-left p-2">Grupo</th>
@@ -167,7 +167,7 @@ export default function Saude() {
               const ultimoTr = a.tratamentos.sort((b, c) => c.data.localeCompare(b.data))[0];
               const infoStatus = mapaStatus[a.status] || mapaStatus['Pendente'];
               return (
-                <tr key={a.id} className="border-t">
+                <tr key={a.id} className="border-t odd:bg-white even:bg-blue-50">
                   <td className="p-2">{a.numero} - {a.nome}</td>
                   <td className="p-2">{a.grupo}</td>
                   <td className="p-2">{ultimaOc ? formatarData(ultimaOc.data) : '—'}</td>
