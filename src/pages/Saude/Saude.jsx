@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import CabecalhoSaude from './CabecalhoSaude';
 
 function formatarData(iso) {
   return new Date(iso).toLocaleDateString('pt-BR');
@@ -111,70 +112,16 @@ export default function Saude() {
     <div className="p-4 font-poppins">
       <h1 className="text-2xl font-bold mb-4">Saúde dos Animais</h1>
 
-      <div className="w-full p-4 bg-white rounded-lg shadow-md flex flex-col gap-6">
-        {/* Linha de filtros */}
-        <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
-          {/* Input e filtros */}
-          <div className="flex flex-wrap gap-4 items-end">
-            <div className="flex flex-col">
-              <label className="text-sm text-gray-500 flex items-center gap-1">
-                🔍 Buscar
-              </label>
-              <input
-                type="text"
-                placeholder="Nome ou número"
-                className="border border-gray-300 px-3 py-1 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
-                value={busca}
-                onChange={e => setBusca(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-sm text-gray-500">Grupo</label>
-              <select
-                className="border border-gray-300 px-3 py-1 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
-                value={grupoFiltro}
-                onChange={e => setGrupoFiltro(e.target.value)}
-              >
-                <option value="">Todos</option>
-                {grupos.map(g => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-sm text-gray-500">Status</label>
-              <select
-                className="border border-gray-300 px-3 py-1 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
-                value={statusFiltro}
-                onChange={e => setStatusFiltro(e.target.value)}
-              >
-                <option value="">Todos</option>
-                <option value="Saudável">Saudável</option>
-                <option value="Pendente">Pendente</option>
-                <option value="Tratamento ativo">Tratamento ativo</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Botão de evento */}
-          <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-md shadow flex items-center gap-2 transition">
-            <span className="text-lg">➕</span> Registrar Evento de Saúde
-          </button>
-        </div>
-
-        {/* Cards Resumo */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {cards.map(c => (
-            <div key={c.id} className="border border-gray-300 rounded-lg p-4 flex flex-col items-center shadow-sm">
-              <span className="text-2xl">{c.icone}</span>
-              <span className="text-sm text-gray-600 mt-2">{c.label}</span>
-              <span className={`text-xl font-bold mt-1 ${c.cor}`}>{c.valor}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <CabecalhoSaude
+        busca={busca}
+        setBusca={setBusca}
+        grupos={grupos}
+        grupoFiltro={grupoFiltro}
+        setGrupoFiltro={setGrupoFiltro}
+        statusFiltro={statusFiltro}
+        setStatusFiltro={setStatusFiltro}
+        cards={cards}
+      />
 
       {/* Tabela com dados dos animais */}
       <div className="overflow-x-auto mt-6">
