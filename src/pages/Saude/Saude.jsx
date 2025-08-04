@@ -78,9 +78,27 @@ export default function Saude() {
   const totalTratamentoAtivo = animais.filter(a => a.status === 'Tratamento ativo').length;
 
   const cards = [
-    { id: 'total', label: 'Animais monitorados', valor: animais.length, icone: '🐄' },
-    { id: 'tratamento', label: 'Tratamento ativo', valor: totalTratamentoAtivo, icone: '✏️' },
-    { id: 'ocorrencias', label: 'Ocorrências no mês', valor: totalOcorrenciasMes, icone: '📅' }
+    {
+      id: 'total',
+      label: 'Animais monitorados',
+      valor: animais.length,
+      icone: '🐄',
+      cor: 'text-blue-700'
+    },
+    {
+      id: 'tratamento',
+      label: 'Tratamento ativo',
+      valor: totalTratamentoAtivo,
+      icone: '✏️',
+      cor: 'text-orange-600'
+    },
+    {
+      id: 'ocorrencias',
+      label: 'Ocorrências no mês',
+      valor: totalOcorrenciasMes,
+      icone: '📅',
+      cor: 'text-gray-700'
+    }
   ];
 
   const mapaStatus = {
@@ -94,27 +112,27 @@ export default function Saude() {
       <h1 className="text-2xl font-bold mb-4">Saúde dos Animais</h1>
 
       {/* Barra de filtros */}
-      <div className="flex justify-between items-end flex-wrap gap-4 p-4 bg-blue-50 rounded-lg shadow mb-4">
-        <div className="flex flex-wrap items-end gap-4">
+      <div className="flex flex-col lg:flex-row justify-between items-center gap-4 bg-white p-4 shadow-md rounded-lg">
+        <div className="flex flex-col lg:flex-row items-center gap-3 w-full lg:w-auto">
           <div className="flex flex-col">
-            <label className="text-sm text-gray-700" htmlFor="buscar">Buscar</label>
+            <label className="text-sm font-medium text-gray-600" htmlFor="buscar">🔍 Buscar</label>
             <input
               id="buscar"
               type="text"
-              placeholder="🔍 Buscar por nome ou número"
+              placeholder="Nome ou número"
               value={busca}
               onChange={e => setBusca(e.target.value)}
-              className="px-3 py-1 rounded-lg border border-blue-300 shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 transition-all duration-300"
+              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div className="flex flex-col">
-            <label className="text-sm text-gray-700" htmlFor="grupo">Grupo</label>
+            <label className="text-sm font-medium text-gray-600" htmlFor="grupo">Grupo</label>
             <select
               id="grupo"
               value={grupoFiltro}
               onChange={e => setGrupoFiltro(e.target.value)}
-              className="px-3 py-1 rounded-lg border border-blue-300 shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 transition-all duration-300"
+              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Todos</option>
               {grupos.map(g => (
@@ -124,38 +142,36 @@ export default function Saude() {
           </div>
 
           <div className="flex flex-col">
-            <label className="text-sm text-gray-700" htmlFor="status">Status</label>
+            <label className="text-sm font-medium text-gray-600" htmlFor="status">Status</label>
             <select
               id="status"
               value={statusFiltro}
               onChange={e => setStatusFiltro(e.target.value)}
-              className="px-3 py-1 rounded-lg border border-blue-300 shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 transition-all duration-300"
+              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Todos</option>
               <option value="Saudável">Saudável</option>
-              <option value="Tratamento ativo">Tratamento</option>
               <option value="Pendente">Pendente</option>
+              <option value="Tratamento ativo">Tratamento ativo</option>
             </select>
           </div>
         </div>
 
-        <button className="bg-blue-700 text-white rounded px-4 py-2 shadow">
-          ➕ Registrar Evento de Saúde
+        <button className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm shadow flex items-center gap-2 transition duration-200">
+          <span className="text-lg">➕</span> Registrar Evento de Saúde
         </button>
       </div>
 
       {/* Cards resumo */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
         {cards.map(c => (
           <div
             key={c.id}
-            className="border rounded p-3 shadow-sm bg-white flex items-center gap-2"
+            className="bg-white border border-gray-200 shadow-sm rounded-lg p-4 flex flex-col items-center text-center"
           >
-            <span className="text-3xl">{c.icone}</span>
-            <div>
-              <p className="text-sm">{c.label}</p>
-              <p className="text-xl font-bold">{c.valor}</p>
-            </div>
+            <div className="text-2xl">{c.icone}</div>
+            <p className="text-sm text-gray-500 mt-1">{c.label}</p>
+            <p className={`text-xl font-bold mt-1 ${c.cor}`}>{c.valor}</p>
           </div>
         ))}
       </div>
