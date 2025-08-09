@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ModalPlanoCiclo from "./ModalPlanoCiclo";
-import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
+import ModalExclusaoPadrao from "../../components/modals/ModalExclusaoPadrao";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 import {

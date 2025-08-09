@@ -9,7 +9,7 @@ import CadastroProduto from "./CadastroProduto";
 import AjustesEstoque from "./AjustesEstoque";
 import ModalEditarProduto from "./ModalEditarProduto";
 import Select from "react-select";
-import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
+import ModalExclusaoPadrao from "../../components/modals/ModalExclusaoPadrao";
 import "../../styles/botoes.css";
 import "../../styles/tabelaModerna.css";
 import "../../styles/estoque.css";

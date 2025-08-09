@@ -10,7 +10,7 @@ import ModalRegistrarOcorrencia from './ModalRegistrarOcorrencia';
 import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
 import { carregarRegistro, calcularEtapasOcorrencia } from '../../utils/registroReproducao';
-import OverflowInfo from '../../components/OverflowInfo';
+import OverflowInfo from '../../components/shared/OverflowInfo';
 
 export default function VisaoGeralReproducao() {
   const [vacas, setVacas] = useState([]);

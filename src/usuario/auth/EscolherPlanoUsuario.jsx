@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { Star, Rocket, Crown } from 'lucide-react';
-import api from '../api';
-import ModalPlanoSelecionado from '../components/ModalPlanoSelecionado';
+import api from '../../api';
+import ModalPlanoSelecionado from '../ModalPlanoSelecionado';
 
 export default function EscolherPlanoUsuario() {
   const planos = [

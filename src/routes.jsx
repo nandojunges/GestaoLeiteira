@@ -34,9 +34,9 @@ import RotaAdmin from './utils/RotaAdmin';
 import Fazenda from './pages/Fazenda/Fazenda';
 import ConfigTelaInicial from './pages/ConfigTelaInicial';
 
-import EscolherPlanoInicio from './pages/EscolherPlanoInicio';
-import EscolherPlanoUsuario from './pages/EscolherPlanoUsuario';
-import EscolherPlanoCadastro from './pages/EscolherPlanoCadastro';
+import EscolherPlanoInicio from './usuario/auth/EscolherPlanoInicio';
+import EscolherPlanoUsuario from './usuario/auth/EscolherPlanoUsuario';
+import EscolherPlanoCadastro from './usuario/auth/EscolherPlanoCadastro';
 import StatusPlanoUsuario from './pages/StatusPlanoUsuario';
 
 const routes = createRoutesFromElements(

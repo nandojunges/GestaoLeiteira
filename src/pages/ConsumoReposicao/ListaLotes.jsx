@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 import ModalInfoLote from "./ModalInfoLote";
-import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
+import ModalExclusaoPadrao from "../../components/modals/ModalExclusaoPadrao";
 import {
   db,
   buscarTodos,

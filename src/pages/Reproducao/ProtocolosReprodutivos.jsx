@@ -7,7 +7,7 @@ import {
 } from "../../utils/apiFuncoes.js";
 
 import { buscarTodosAnimais } from "../../sqlite/animais"; // ✅ também CORRETO
-import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
+import ModalConfirmarExclusao from "../../components/modals/ModalConfirmarExclusao";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 import {

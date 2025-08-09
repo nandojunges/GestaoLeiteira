@@ -58,7 +58,7 @@ function gerarAlertas(ocorrencias, tratamentos) {
   return lista;
 }
 
-export default function AbaSaude() {
+export default function Saude() {
   const [aba, setAba] = useState('ocorrencias');
   const [ocorrencias, setOcorrencias] = useState([]);
   const [tratamentos, setTratamentos] = useState([]);

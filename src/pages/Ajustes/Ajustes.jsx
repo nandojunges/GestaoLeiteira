@@ -1,8 +1,8 @@
 import { useContext, useState, useRef } from 'react';
 import { ConfiguracaoContext } from '../../context/ConfiguracaoContext';
 import { toast } from 'react-toastify';
-import ModalCapa from '../../components/ModalCapa';
-import ModalFoto from '../../components/ModalFoto';
+import ModalCapa from '../../usuario/ModalCapa';
+import ModalFoto from '../../usuario/ModalFoto';
 import SecaoConfiguracoesVisuais from './SecaoConfiguracoesVisuais';
 import SecaoNotificacoes from './SecaoNotificacoes';
 import SecaoPreferenciasGerais from './SecaoPreferenciasGerais';
