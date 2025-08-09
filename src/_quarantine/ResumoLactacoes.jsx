@@ -1,3 +1,4 @@
+// [quarantine] movido na Fase 1.2 — manter até Fase 2 validar remoção definitiva.
 import React, { useEffect, useState } from 'react';
 import { buscarPorId } from '../../utils/backendApi';
 

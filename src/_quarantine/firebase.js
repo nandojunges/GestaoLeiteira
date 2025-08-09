@@ -1,3 +1,4 @@
+// [quarantine] movido na Fase 1.2 — manter até Fase 2 validar remoção definitiva.
 /* Arquivo legado - uso proibido. */
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';

@@ -1,3 +1,4 @@
+// [quarantine] movido na Fase 1.2 — manter até Fase 2 validar remoção definitiva.
 import { createContext, useState, useEffect } from 'react';
 import { buscarTodos, adicionarItem, atualizarItem, excluirItem } from '../utils/backendApi';
 

@@ -1,5 +1,5 @@
 [
-  { "titulo": "Bem-vindo ao Gestão Leiteira", "mensagem": "Controle total do rebanho, manejo e reprodução.", "imagem": "icones/telafundo.png", "tempo": 5 },
-  { "titulo": "Eficiência e produtividade", "mensagem": "Reduza perdas com alertas de estoque e vencimento.", "imagem": "icones/telafundo.png", "tempo": 5 },
+  { "titulo": "Bem-vindo ao Gestão Leiteira", "mensagem": "Controle total do rebanho, manejo e reprodução.", "imagem": "/icones/telafundo.png", "tempo": 5 },
+  { "titulo": "Eficiência e produtividade", "mensagem": "Reduza perdas com alertas de estoque e vencimento.", "imagem": "/icones/telafundo.png", "tempo": 5 },
   { "titulo": "Curva de lactação inteligente", "mensagem": "Monitore a produção de leite com gráficos.", "imagem": "", "tempo": 5 }
 ]
