@@ -1,3 +1,4 @@
+// [quarantine] movido na Fase 1.2 — manter até Fase 2 validar remoção definitiva.
 import React, { useEffect, useState } from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { buscarTodos } from '../../utils/backendApi';

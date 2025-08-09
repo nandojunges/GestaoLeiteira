@@ -1,10 +1,10 @@
 import React, { useContext } from 'react';
 import { ConfiguracaoContext } from '../../context/ConfiguracaoContext';
-import estoqueIcone from '/icones/estoque.png';
-import lotesIcone from '/icones/lotes.png';
-import dietaIcone from '/icones/dieta.png';
-import limpezaIcone from '/icones/limpeza.png';
-import calendarioSanitarioIcone from '/icones/calendariosanitario.png';
+const estoqueIcone = new URL('/icones/estoque.png', import.meta.url).href;
+const lotesIcone = new URL('/icones/lotes.png', import.meta.url).href;
+const dietaIcone = new URL('/icones/dieta.png', import.meta.url).href;
+const limpezaIcone = new URL('/icones/limpeza.png', import.meta.url).href;
+const calendarioSanitarioIcone = new URL('/icones/calendariosanitario.png', import.meta.url).href;
 
 export default function SubAbasConsumoReposicao({
   abaAtiva,
