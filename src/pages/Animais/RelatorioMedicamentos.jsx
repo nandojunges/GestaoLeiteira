@@ -4,7 +4,7 @@ import {
   salvarMedicamentosSecagemSQLite,
   removerMedicamentoSecagemSQLite,
 } from "../../utils/apiFuncoes.js";
-import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
+import ModalConfirmarExclusao from "../../components/modals/ModalConfirmarExclusao";
 
 export default function RelatorioMedicamentos({ onFechar }) {
   const [medicamentos, setMedicamentos] = useState({});

@@ -9,7 +9,7 @@ import {
 import verificarAlertaEstoqueInteligente from "../../utils/verificarAlertaEstoque";
 import verificarValidadeProduto from "../../utils/VerificarValidadeProduto";
 import ModalEditarProduto from "./ModalEditarProduto";
-import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
+import ModalExclusaoPadrao from "../../components/modals/ModalExclusaoPadrao";
 
 export default function ListaProdutos({ categoriaFiltro }) {
   const [produtos, setProdutos] = useState([]);

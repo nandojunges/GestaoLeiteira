@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Star, Rocket, Crown, Gift } from 'lucide-react';
-import api from '../api';
-import ModalPlanoSelecionado from '../components/ModalPlanoSelecionado';
+import api from '../../api';
+import ModalPlanoSelecionado from '../ModalPlanoSelecionado';
 import { useNavigate } from 'react-router-dom';
 
 export default function EscolherPlanoCadastro() {

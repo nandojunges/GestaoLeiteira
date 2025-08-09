@@ -14,7 +14,7 @@ import {
   buscarEventosCalendarioSQLite,
   salvarEventosCalendarioSQLite,
 } from "../../utils/apiFuncoes.js";
-import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
+import ModalConfirmarExclusao from "../../components/modals/ModalConfirmarExclusao";
 import {
   carregarRegistroReprodutivo,
   excluirOcorrenciaFirestore,

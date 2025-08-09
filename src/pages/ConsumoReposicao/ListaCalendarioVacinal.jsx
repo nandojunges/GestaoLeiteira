@@ -5,7 +5,7 @@ import {
 } from "../../utils/backendApi";
 import ModalCadastroManejoSanitario from "./ModalCadastroManejoSanitario";
 import ModalRegistroAplicacao from "./ModalRegistroAplicacao";
-import ModalConfirmarExclusao from "../../components/ModalConfirmarExclusao";
+import ModalConfirmarExclusao from "../../components/modals/ModalConfirmarExclusao";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
 

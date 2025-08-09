@@ -1,3 +1,5 @@
+/* Utilitário de desenvolvimento - não importar em produção */
+
 npm run dev
 
 npx kill-port 5173

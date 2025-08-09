@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import CadastroDietas from "./CadastroDietas";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";
-import ModalExclusaoPadrao from "../../components/ModalExclusaoPadrao";
+import ModalExclusaoPadrao from "../../components/modals/ModalExclusaoPadrao";
 import {
   db,
   buscarTodos,

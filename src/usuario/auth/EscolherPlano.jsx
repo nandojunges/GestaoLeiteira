@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import Select from 'react-select';
 import jwtDecode from 'jwt-decode';
-import api from '../api';
-import '../styles/botoes.css';
+import api from '../../api';
+import '../../styles/botoes.css';
 
 export default function EscolherPlano() {
   const planos = [

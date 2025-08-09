@@ -1,4 +1,4 @@
-import infoIcon from '@/assets/icones/informacoes.png';
+const infoIcon = '/icones/informacoes.png';
 
 export default function IconeInfo({ onClick }) {
   return (
