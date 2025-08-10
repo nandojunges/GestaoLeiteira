@@ -56,6 +56,14 @@ function getByNumero(db, numero, idProdutor) {
   return db.prepare('SELECT * FROM animais WHERE numero = ? AND idProdutor = ?').get(numero, idProdutor);
 }
 
+function getByEstado(db, estado, idProdutor = 1) {
+  return db.prepare('SELECT * FROM animais WHERE estado = ? AND idProdutor = ?').all(estado, idProdutor);
+}
+
+function updateEstado(db, id, estado, idProdutor = 1) {
+  return db.prepare('UPDATE animais SET estado = ? WHERE id = ? AND idProdutor = ?').run(estado, id, idProdutor);
+}
+
 function create(db, animal, idProdutor) {
   const stmt = db.prepare(`
     INSERT INTO animais (
@@ -238,6 +246,8 @@ module.exports = {
   getAll,
   getById,
   getByNumero,
+  getByEstado,
+  updateEstado,
   create,
   update,
   updateByNumero,
