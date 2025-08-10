@@ -6,14 +6,6 @@ import '../../styles/botoes.css';
 import { buscarAnimais } from '../../utils/apiFuncoes';
 import { toast } from 'react-toastify';
 
-function calcularPrevisaoParto(dataIA) {
-  if (!dataIA || dataIA.length !== 10) return null;
-  const [dia, mes, ano] = dataIA.split('/');
-  const data = new Date(`${ano}-${mes}-${dia}`);
-  data.setDate(data.getDate() + 280);
-  return data.toLocaleDateString('pt-BR');
-}
-
 export default function ConteudoSecagem({ vacas, onAtualizar }) {
   const [colunasVisiveis, setColunasVisiveis] = useState({
     numero: true,
@@ -56,9 +48,7 @@ export default function ConteudoSecagem({ vacas, onAtualizar }) {
     }
   };
 
-  const vacasFiltradas = (Array.isArray(vacas) ? vacas : []).filter(
-    (v) => v.status === 2
-  );
+  const vacasFiltradas = Array.isArray(vacas) ? vacas : [];
 
   const titulos = [
     "Número", "Brinco", "Lactações", "DEL", "Categoria", "Idade",
@@ -116,11 +106,11 @@ export default function ConteudoSecagem({ vacas, onAtualizar }) {
               vaca.categoria,
               vaca.idade,
               vaca.ultimaIA || '—',
-              vaca.ultimoParto || '—',
+              vaca.parto || vaca.ultimoParto || '—',
               vaca.raca,
               vaca.nomeTouro || vaca.pai || '—',
               vaca.nomeMae || vaca.mae || '—',
-              calcularPrevisaoParto(vaca.ultimaIA) || '—',
+              vaca.previsaoParto || '—',
               <button className="botao-editar" onClick={() => abrirModalSecagem(vaca)}>Secar</button>
             ];
 

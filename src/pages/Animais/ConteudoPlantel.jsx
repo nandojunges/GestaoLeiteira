@@ -8,14 +8,6 @@ import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
 import '../../styles/filtros.css';
 
-function calcularPrevisaoParto(dataIA) {
-  if (!dataIA || dataIA.length !== 10) return null;
-  const [dia, mes, ano] = dataIA.split('/');
-  const data = new Date(`${ano}-${mes}-${dia}`);
-  data.setDate(data.getDate() + 280);
-  return data.toLocaleDateString('pt-BR');
-}
-
 export default function ConteudoPlantel({ vacas = [], onAtualizar }) {
   const [animalSelecionado, setAnimalSelecionado] = useState(null);
 
@@ -295,6 +287,7 @@ export default function ConteudoPlantel({ vacas = [], onAtualizar }) {
               {vacasFiltradas.map((vaca, index) => {
               // 🟡 Buscar último parto: preferir campo direto, mas também procurar no array de partos
               const ultimoParto =
+                vaca.parto ||
                 vaca.ultimoParto ||
                 (vaca.partos && vaca.partos.length > 0 ? vaca.partos[vaca.partos.length - 1].data : '—');
 
@@ -302,7 +295,7 @@ export default function ConteudoPlantel({ vacas = [], onAtualizar }) {
                 vaca.numero,
                 vaca.brinco,
                 vaca.nLactacoes ?? '—',
-                calcularDEL(ultimoParto !== '—' ? ultimoParto : null),
+                vaca.del ?? calcularDEL(ultimoParto !== '—' ? ultimoParto : null),
                 vaca.categoria,
                 vaca.idade,
                 vaca.ultimaIA || '—',
@@ -310,7 +303,7 @@ export default function ConteudoPlantel({ vacas = [], onAtualizar }) {
                 vaca.raca,
                 vaca.nomeTouro || vaca.pai || '—',
                 vaca.nomeMae || vaca.mae || '—',
-                calcularPrevisaoParto(vaca.ultimaIA) || '—',
+                vaca.previsaoParto || '—',
                 <>
                   <button className="botao-editar" onClick={() => setAnimalSelecionado(vaca)}>Editar</button>
                   <button className="botao-editar" onClick={() => abrirFicha(vaca)}>

@@ -1,4 +1,5 @@
 const reproductionService = require('../services/reproductionService');
+const animalsService = require('../services/animalsService');
 
 async function registrarInseminacao(req, res, next) {
   try {
@@ -9,6 +10,7 @@ async function registrarInseminacao(req, res, next) {
       Number(req.params.id),
       req.body
     );
+    await animalsService.onInseminada(Number(req.params.id), req.body);
     res.status(201).json(result);
   } catch (err) {
     next(err);
@@ -24,6 +26,7 @@ async function registrarDiagnostico(req, res, next) {
       Number(req.params.id),
       req.body
     );
+    await animalsService.onDiagnostico(Number(req.params.id), req.body);
     res.status(201).json(result);
   } catch (err) {
     next(err);
@@ -39,6 +42,7 @@ async function registrarParto(req, res, next) {
       Number(req.params.id),
       req.body
     );
+    await animalsService.onParto(Number(req.params.id), req.body.data);
     res.status(201).json(result);
   } catch (err) {
     next(err);
@@ -54,6 +58,7 @@ async function registrarSecagem(req, res, next) {
       Number(req.params.id),
       req.body
     );
+    await animalsService.onSecagem(Number(req.params.id), req.body.data);
     res.status(201).json(result);
   } catch (err) {
     next(err);

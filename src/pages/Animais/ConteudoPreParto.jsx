@@ -24,9 +24,9 @@ export default function ConteudoPreParto({ vacas }) {
   const [colunaHover, setColunaHover] = useState(null);
 
   const vacasFiltradas = (Array.isArray(vacas) ? vacas : []).filter(v => {
-    const dataParto = parseBRDate(v.dataPrevistaParto);
+    const dataParto = parseBRDate(v.previsaoParto);
     const dias = dataParto ? diffDias(dataParto) : null;
-    return v.status === 1 && dias !== null && dias > 0 && dias <= filtroDias;
+    return dias !== null && dias > 0 && dias <= filtroDias;
   });
 
   const alternarColuna = (coluna) => {
@@ -51,7 +51,7 @@ export default function ConteudoPreParto({ vacas }) {
     { chave: 'raca', titulo: 'Raça' },
     { chave: 'pai', titulo: 'Pai' },
     { chave: 'mae', titulo: 'Mãe' },
-    { chave: 'dataPrevistaParto', titulo: 'Previsão Parto' }
+    { chave: 'previsaoParto', titulo: 'Previsão Parto' }
   ];
 
   return (
@@ -120,11 +120,11 @@ export default function ConteudoPreParto({ vacas }) {
               vaca.categoria,
               vaca.idade,
               vaca.ultimaIA || '—',
-              vaca.ultimoParto || '—',
+              vaca.parto || vaca.ultimoParto || '—',
               vaca.raca,
               vaca.nomeTouro || vaca.pai || '—',
               vaca.nomeMae || vaca.mae || '—',
-              vaca.dataPrevistaParto || '—'
+              vaca.previsaoParto || '—'
             ];
 
             return (
