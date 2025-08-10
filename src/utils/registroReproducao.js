@@ -37,7 +37,7 @@ export async function excluirOcorrenciaFirestore(idOcorrencia) {
   window.dispatchEvent(new Event('registroReprodutivoAtualizado'));
 }
 
-const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const BASE_URL = '/api';
 
 export async function carregarRegistro(numero) {
   const token = localStorage.getItem('token');

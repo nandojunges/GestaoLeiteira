@@ -1,6 +1,6 @@
 import { toast } from 'react-toastify';
 
-export const baseURL = import.meta.env.VITE_API_URL || '/api';
+export const baseURL = '/api';
 
 export const db = {}; // reservado se quiser guardar dados em cache
 

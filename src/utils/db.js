@@ -5,7 +5,7 @@ export const db = {
   serialize: (fn) => fn && fn()
 };
 
-const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const BASE_URL = '/api';
 
 async function fetchJson(url, options) {
   try {

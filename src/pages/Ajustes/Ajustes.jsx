@@ -13,7 +13,7 @@ import { enviarImagem } from '../../utils/backendApi';
 import { salvarConfiguracao } from '../../utils/configUsuario';
 import { motion, AnimatePresence } from 'framer-motion';
 import jwtDecode from 'jwt-decode';
-import { promoverPreParto } from '../../api';
+import { promoverPreParto, ping } from '../../api';
 
 export default function Ajustes() {
   const { config, setConfig } = useContext(ConfiguracaoContext);
@@ -59,6 +59,15 @@ export default function Ajustes() {
       toast.error('Não foi possível promover Pré-Parto');
     } finally {
       setProcessingPreParto(false);
+    }
+  };
+
+  const handlePing = async () => {
+    try {
+      const res = await ping();
+      toast.info(`ok: ${res.ok}, ts: ${res.ts}`);
+    } catch (err) {
+      toast.error('API indisponível');
     }
   };
 
@@ -236,6 +245,11 @@ export default function Ajustes() {
               </button>
             </div>
           )}
+          <div className="text-right mt-8">
+            <button onClick={handlePing} className="botao-acao">
+              Testar conexão API
+            </button>
+          </div>
           <div className="text-right mt-8">
             <button
               onClick={() => {
