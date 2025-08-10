@@ -2,7 +2,8 @@ const animalsService = require('../services/animalsService');
 
 async function list(req, res, next) {
   try {
-    const animals = await animalsService.list();
+    const { estado, q, page, limit } = req.query;
+    const animals = await animalsService.list({ estado, q, page, limit });
     res.json(animals);
   } catch (err) {
     next(err);

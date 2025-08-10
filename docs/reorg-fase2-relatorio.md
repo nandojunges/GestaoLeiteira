@@ -53,3 +53,53 @@ Os seguintes arquivos deixaram de importar `src/sqlite/animais.js` ou `src/sqlit
 
 ## Evidências de teste
 Tentativa de executar `node backend/server.js` falhou devido à ausência do pacote `dotenv`.
+
+## Estados reprodutivos
+| Estado   | Gatilho                                           |
+|----------|--------------------------------------------------|
+| vazia    | estado inicial ou diagnóstico negativo           |
+| gestante | diagnóstico positivo                             |
+| preparto | 21 dias antes da previsão de parto               |
+| lactante | registro de parto                                |
+| seca     | registro de secagem                              |
+| inativa  | descarte                                         |
+
+### Exemplos de payloads
+```json
+// POST /api/v1/reproducao/1/inseminacoes
+{ "data": "2024-11-13" }
+
+// POST /api/v1/reproducao/1/diagnosticos
+{ "data": "2025-02-01", "resultado": "positivo" }
+
+// POST /api/v1/reproducao/1/partos
+{ "data": "2025-08-20" }
+
+// POST /api/v1/reproducao/1/secagens
+{ "data": "2026-04-20" }
+```
+
+### Exemplo de filtro
+```
+GET /api/v1/animais?estado=gestante
+```
+
+### Smoke test
+1. Criar animal → IA → diagnóstico positivo → `GET ?estado=gestante`
+2. Janela pré-parto automática → `GET ?estado=preparto`
+3. Registrar parto → `GET ?estado=lactante`
+4. Registrar secagem → `GET ?estado=seca`
+
+```bash
+$ curl /api/v1/animais?estado=gestante
+[{"estado":"gestante","previsaoParto":"2026-09-07"}]
+
+$ curl /api/v1/animais?estado=preparto
+[{"estado":"preparto","previsaoParto":"2025-08-20"}]
+
+$ curl /api/v1/animais?estado=lactante
+[{"estado":"lactante","parto":"2025-08-20","previsaoSecagem":"2026-06-21"}]
+
+$ curl /api/v1/animais?estado=seca
+[{"estado":"seca","secagem":"2026-04-20"}]
+```

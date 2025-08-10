@@ -88,7 +88,11 @@ const createAnimais = `CREATE TABLE IF NOT EXISTS animais (
   pai TEXT,
   mae TEXT,
   ultimaIA TEXT,
-  ultimoParto TEXT,
+  diagnosticoGestacao TEXT,
+  previsaoParto TEXT,
+  parto TEXT,
+  secagem TEXT,
+  estado TEXT DEFAULT 'vazia',
   nLactacoes INTEGER,
   status TEXT DEFAULT 'ativo',
   motivoSaida TEXT,
@@ -96,7 +100,6 @@ const createAnimais = `CREATE TABLE IF NOT EXISTS animais (
   valorVenda REAL,
   observacoesSaida TEXT,
   tipoSaida TEXT,
-  previsaoParto TEXT,
   idProdutor INTEGER
 )`;
 
@@ -258,7 +261,11 @@ const novasColunas = {
     pai: 'TEXT',
     mae: 'TEXT',
     ultimaIA: 'TEXT',
-    ultimoParto: 'TEXT',
+    diagnosticoGestacao: 'TEXT',
+    previsaoParto: 'TEXT',
+    parto: 'TEXT',
+    secagem: 'TEXT',
+    estado: "TEXT DEFAULT 'vazia'",
     nLactacoes: 'INTEGER',
     status: "TEXT DEFAULT 'ativo'",
     motivoSaida: 'TEXT',

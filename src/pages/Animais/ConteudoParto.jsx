@@ -10,7 +10,7 @@ export default function ConteudoParto({ vacas = [], onAtualizar }) {
   const [colunasVisiveis, setColunasVisiveis] = useState({
     numero: true, brinco: true, lactacoes: true, del: true,
     categoria: true, idade: true, ultimaIA: true, ultimoParto: true,
-    raca: true, pai: true, mae: true, dataPrevistaParto: true, acoes: true
+    raca: true, pai: true, mae: true, previsaoParto: true, acoes: true
   });
 
   const [mostrarModalParto, setMostrarModalParto] = useState(false);
@@ -20,9 +20,9 @@ export default function ConteudoParto({ vacas = [], onAtualizar }) {
 
   // ⏬ Atualiza local ao montar e após evento de parto
   const vacasFiltradas = (Array.isArray(vacas) ? vacas : []).filter(v => {
-    const previsao = parseBRDate(v.dataPrevistaParto);
+    const previsao = parseBRDate(v.previsaoParto);
     const dif = previsao ? diffDias(previsao) : null;
-    return v.status === 1 && dif !== null && dif <= 0;
+    return dif !== null && dif <= 0;
   });
 
   const abrirModalParto = (vaca) => {
@@ -42,7 +42,7 @@ export default function ConteudoParto({ vacas = [], onAtualizar }) {
     { chave: 'raca', titulo: 'Raça' },
     { chave: 'pai', titulo: 'Pai' },
     { chave: 'mae', titulo: 'Mãe' },
-    { chave: 'dataPrevistaParto', titulo: 'Previsão de Parto' },
+    { chave: 'previsaoParto', titulo: 'Previsão de Parto' },
     { chave: 'acoes', titulo: 'Ações' }
   ];
 
@@ -99,11 +99,11 @@ export default function ConteudoParto({ vacas = [], onAtualizar }) {
               vaca.categoria,
               vaca.idade,
               vaca.ultimaIA || '—',
-              vaca.ultimoParto || '—',
+              vaca.parto || vaca.ultimoParto || '—',
               vaca.raca,
               vaca.nomeTouro || vaca.pai || '—',
               vaca.nomeMae || vaca.mae || '—',
-              vaca.dataPrevistaParto || '—'
+              vaca.previsaoParto || '—'
             ];
 
             return (
