@@ -2,10 +2,6 @@ const db = require('./dbAdapter');
 const animaisModel = require('../models/animaisModel');
 const PRODUTOR_ID = 1;
 
-function getPrePartoWindow() {
-  return parseInt(process.env.PREPARTO_WINDOW_DAYS || '21', 10);
-}
-
 function addDerived(animal) {
   if (!animal) return animal;
   const today = new Date();
@@ -29,39 +25,34 @@ function applyDerivedOnArray(array) {
   return (array || []).map(addDerived);
 }
 
-function shouldPromoteToPreParto(animal, today = new Date()) {
-  if (!animal || animal.estado !== 'gestante' || !animal.previsaoParto) return false;
-  const diff = (new Date(animal.previsaoParto) - today) / (1000 * 60 * 60 * 24);
-  return diff <= getPrePartoWindow();
+function shouldPromoteToPreParto(animal, today = new Date(), windowDays = +process.env.PREPARTO_WINDOW_DAYS || 21) {
+  if (!animal?.previsaoParto) return false;
+  const dpp = new Date(animal.previsaoParto);
+  const limite = new Date(dpp); limite.setDate(limite.getDate() - windowDays);
+  return animal.estado === 'gestante' && today >= limite;
 }
 
-async function promoteToPrePartoIfDue(id, today = new Date()) {
-  const atual = animaisModel.getById(db.getDb(), id, PRODUTOR_ID);
-  if (shouldPromoteToPreParto(atual, today) && atual.estado !== 'preparto') {
-    animaisModel.update(db.getDb(), id, { ...atual, estado: 'preparto' }, PRODUTOR_ID);
-    return { id, promoted: true };
-  }
-  return { id, promoted: false };
+async function promoteToPrePartoIfDue(id) {
+  const a = await this.getById(id); // garantir que addDerived esteja ativo
+  if (!a) return {updated:false};
+  if (!shouldPromoteToPreParto(a)) return {updated:false};
+  await animaisModel.updateEstado(db.getDb(), id, 'preparto');
+  return {updated:true, id};
 }
 
 async function promoteBatchPreParto(today = new Date()) {
-  const todos = animaisModel.getAll(db.getDb(), PRODUTOR_ID) || [];
+  const gestantes = await animaisModel.getByEstado(db.getDb(), 'gestante');
   const ids = [];
-  for (const a of todos) {
-    if (a.estado === 'gestante') {
-      const res = await promoteToPrePartoIfDue(a.id, today);
-      if (res.promoted) ids.push(a.id);
+  for (const g of gestantes) {
+    if (shouldPromoteToPreParto(g, today)) {
+      await animaisModel.updateEstado(db.getDb(), g.id, 'preparto');
+      ids.push(g.id);
     }
   }
-  return { count: ids.length, ids };
-}
-
-function tryTransitionPreParto() {
-  promoteBatchPreParto();
+  return {count: ids.length, ids};
 }
 
 function list(params = {}) {
-  tryTransitionPreParto();
   let animais = animaisModel.getAll(db.getDb(), PRODUTOR_ID) || [];
   if (params.estado) {
     animais = animais.filter((a) => a.estado === params.estado);
@@ -140,7 +131,6 @@ module.exports = {
   onParto,
   onSecagem,
   onDescartar,
-  tryTransitionPreParto,
   shouldPromoteToPreParto,
   promoteToPrePartoIfDue,
   promoteBatchPreParto,

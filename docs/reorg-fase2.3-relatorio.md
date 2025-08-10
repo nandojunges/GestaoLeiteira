@@ -1,14 +1,18 @@
 # Reorg Fase 2.3 – Relatório
 
 ## Promoção Pré-Parto
-- Lógica automática em `animalsService.shouldPromoteToPreParto`.
+- Helper `animalsService.shouldPromoteToPreParto` utiliza `PREPARTO_WINDOW_DAYS` (padrão 21).
 - Endpoint utilitário `POST /api/v1/maintenance/promote-preparto`.
+- Como usar:
+```bash
+curl -X POST http://localhost:3000/api/v1/maintenance/promote-preparto
+```
 - Flags `.env`:
   - `ENABLE_PREPARTO_JOB`: ativa job diário com `node-cron`.
-  - `PREPARTO_WINDOW_DAYS`: janela em dias (padrão 21).
+  - `PREPARTO_WINDOW_DAYS`: janela em dias.
 - Exemplo de resposta:
 ```json
-{ "ok": true, "processed": 2, "ids": [1, 5] }
+{ "ok": true, "count": 2, "ids": [1, 5] }
 ```
 
 ## Consolidação EscolherPlano
@@ -22,7 +26,14 @@
 - Removidos arquivos confirmados em `src/_quarantine` sem referências:
   - `firebase.js`, `AnimalContext.jsx`, `SaudeAnimais.jsx`,
     `GraficoDescarteIdade.jsx`, `ResumoLactacoes.jsx`, `icones/informacoes.png`.
-- Varredura com `rg` confirmou ausência de imports externos antes da exclusão.
+- Grep de verificação:
+```bash
+$ rg "_quarantine/firebase.js" -n --glob '!docs/**'
+$ rg "_quarantine/AnimalContext.jsx" -n --glob '!docs/**'
+$ rg "_quarantine/SaudeAnimais.jsx" -n --glob '!docs/**'
+$ rg "_quarantine/Grafico" -n --glob '!docs/**'
+```
+- Nenhuma ocorrência encontrada.
 
 ## Colapso EscolherPlano
 - Arquivos removidos:
@@ -33,7 +44,7 @@
 - Rotas/locais atualizados para `EscolherPlanoUnified`:
   - `/escolher-plano` → `mode="inicio"`
   - `/escolher-plano-finalizar` → `mode="cadastro"`
-- Build: tentativa de `npm install` falhou (`react-input-mask@^3.0.0` ausente), portanto `npm run build` não pôde ser executado.
+- Build: `npm run build` falhou (`vite: not found`) após `npm install` retornar 403 para `http-proxy-middleware`.
 
 ## Checklist – Próximo passo (Fase 2.4)
 - [ ] Ativar cron via `ENABLE_PREPARTO_JOB=true` (opcional).
