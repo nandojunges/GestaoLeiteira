@@ -26,7 +26,7 @@ function addDerived(animal) {
 }
 
 function list(idProdutor) {
-  const animais = animaisModel.getAll(db.getDb(), idProdutor);
+  const animais = animaisModel.getAll(db.getDb(), idProdutor) || [];
   return animais.map(addDerived);
 }
 
