@@ -23,6 +23,7 @@ const rotasExtras = require('./routes/rotasExtras');
 const adminRoutes = require('./routes/adminRoutes');
 const authRoutes = require('./routes/authRoutes');
 const apiV1Routes = require('./routes/apiV1');
+const maintenanceRoutes = require('./routes/maintenanceRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const { inicializarAdmins } = require('./controllers/authController');
 const { initDB } = require('./db');
@@ -70,6 +71,7 @@ app.use('/api', rotasExtras);
 app.use('/api', adminRoutes);
 // Rotas v1 com services reestruturados
 app.use(apiV1Routes);
+app.use(maintenanceRoutes);
 
 // Middleware de tratamento de erros padronizado
 app.use(errorHandler);
@@ -87,6 +89,10 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 if (require.main === module) {
+  if (process.env.ENABLE_PREPARTO_JOB === 'true') {
+    const schedulePrePartoJob = require('./jobs/preparto');
+    schedulePrePartoJob();
+  }
   const server = app.listen(PORT, () => {
     console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
   });

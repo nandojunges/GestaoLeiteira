@@ -126,3 +126,11 @@ arquivo_absoluto;pertence_a;utilizado_em;status_utilizacao;observacoes
 ```
 
 Este relatório deve acompanhar o pull request.
+
+## Remoções confirmadas Fase 2.3
+- `src/_quarantine/firebase.js`
+- `src/_quarantine/AnimalContext.jsx`
+- `src/_quarantine/SaudeAnimais.jsx`
+- `src/_quarantine/GraficoDescarteIdade.jsx`
+- `src/_quarantine/ResumoLactacoes.jsx`
+- `src/_quarantine/icones/informacoes.png`

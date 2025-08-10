@@ -2,6 +2,10 @@ const db = require('./dbAdapter');
 const animaisModel = require('../models/animaisModel');
 const PRODUTOR_ID = 1;
 
+function getPrePartoWindow() {
+  return parseInt(process.env.PREPARTO_WINDOW_DAYS || '21', 10);
+}
+
 function addDerived(animal) {
   if (!animal) return animal;
   const today = new Date();
@@ -25,17 +29,35 @@ function applyDerivedOnArray(array) {
   return (array || []).map(addDerived);
 }
 
-function tryTransitionPreParto() {
+function shouldPromoteToPreParto(animal, today = new Date()) {
+  if (!animal || animal.estado !== 'gestante' || !animal.previsaoParto) return false;
+  const diff = (new Date(animal.previsaoParto) - today) / (1000 * 60 * 60 * 24);
+  return diff <= getPrePartoWindow();
+}
+
+async function promoteToPrePartoIfDue(id, today = new Date()) {
+  const atual = animaisModel.getById(db.getDb(), id, PRODUTOR_ID);
+  if (shouldPromoteToPreParto(atual, today) && atual.estado !== 'preparto') {
+    animaisModel.update(db.getDb(), id, { ...atual, estado: 'preparto' }, PRODUTOR_ID);
+    return { id, promoted: true };
+  }
+  return { id, promoted: false };
+}
+
+async function promoteBatchPreParto(today = new Date()) {
   const todos = animaisModel.getAll(db.getDb(), PRODUTOR_ID) || [];
-  const hoje = new Date();
-  todos.forEach((a) => {
-    if (a.previsaoParto && a.estado === 'gestante') {
-      const diff = (new Date(a.previsaoParto) - hoje) / (1000 * 60 * 60 * 24);
-      if (diff <= 21) {
-        animaisModel.update(db.getDb(), a.id, { ...a, estado: 'preparto' }, PRODUTOR_ID);
-      }
+  const ids = [];
+  for (const a of todos) {
+    if (a.estado === 'gestante') {
+      const res = await promoteToPrePartoIfDue(a.id, today);
+      if (res.promoted) ids.push(a.id);
     }
-  });
+  }
+  return { count: ids.length, ids };
+}
+
+function tryTransitionPreParto() {
+  promoteBatchPreParto();
 }
 
 function list(params = {}) {
@@ -119,4 +141,7 @@ module.exports = {
   onSecagem,
   onDescartar,
   tryTransitionPreParto,
+  shouldPromoteToPreParto,
+  promoteToPrePartoIfDue,
+  promoteBatchPreParto,
 };
