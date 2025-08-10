@@ -103,3 +103,11 @@ $ curl /api/v1/animais?estado=lactante
 $ curl /api/v1/animais?estado=seca
 [{"estado":"seca","secagem":"2026-04-20"}]
 ```
+
+## Remoções confirmadas Fase 2.3
+- `src/_quarantine/firebase.js`
+- `src/_quarantine/AnimalContext.jsx`
+- `src/_quarantine/SaudeAnimais.jsx`
+- `src/_quarantine/GraficoDescarteIdade.jsx`
+- `src/_quarantine/ResumoLactacoes.jsx`
+- `src/_quarantine/icones/informacoes.png`
