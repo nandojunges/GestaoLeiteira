@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { salvarAnimais, buscarTodosAnimais } from '../../sqlite/animais';
+import { salvarAnimais, buscarTodosAnimais } from '../../api';
 import { carregarMovimentacoes, excluirMovimentoFinanceiro } from '../../utils/financeiro';
 import ModalHistoricoCompleto from './ModalHistoricoCompleto';
 import '../../styles/tabelaModerna.css';

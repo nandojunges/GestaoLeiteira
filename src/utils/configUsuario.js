@@ -1,8 +1,8 @@
-import { carregarConfiguracao as carregarConfigSqlite, salvarConfiguracao as salvarConfigSqlite } from '../sqlite/ajustes';
+import { carregarConfiguracao as carregarConfigApi, salvarConfiguracao as salvarConfigApi } from '../api';
 
 export async function salvarConfiguracao(config) {
   try {
-    await salvarConfigSqlite(config);
+    await salvarConfigApi(config);
   } catch {
     // ignore storage errors
   }
@@ -10,7 +10,7 @@ export async function salvarConfiguracao(config) {
 
 export async function carregarConfiguracao() {
   try {
-     return await carregarConfigSqlite();
+     return await carregarConfigApi();
   } catch {
     return {};
   }

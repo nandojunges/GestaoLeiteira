@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { exportarAnimaisSQLite } from "../../utils/apiFuncoes.js";
-import { buscarTodosAnimais } from "../../sqlite/animais";
+import { buscarTodosAnimais } from "../../api";
 import { saveAs } from "file-saver";
 
 const CHAVES = {

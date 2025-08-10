@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { buscarTodosAnimais, salvarAnimais } from "../../sqlite/animais";
+import { buscarTodosAnimais, salvarAnimais } from "../../api";
 import { adicionarEventoHistorico } from "../../utils/historico";
 import {
   ResponsiveContainer,

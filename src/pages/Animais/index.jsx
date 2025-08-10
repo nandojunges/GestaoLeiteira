@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { buscarTodosAnimais, salvarAnimais } from '../../sqlite/animais'; // ✅ CORRETO
+import { buscarTodosAnimais, salvarAnimais } from '../../api'; // ✅ CORRETO
 import ModalLateralAnimais from './ModalLateralAnimais';
 import ConteudoEntradaAnimal from './ConteudoEntradaAnimal';
 import ConteudoSaidaAnimal from './ConteudoSaidaAnimal';

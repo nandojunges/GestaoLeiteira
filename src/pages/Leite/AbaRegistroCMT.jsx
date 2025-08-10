@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "../../styles/botoes.css";
-import { buscarTodosAnimais, salvarAnimais } from "../../sqlite/animais";
+import { buscarTodosAnimais, salvarAnimais } from "../../api";
 import { buscarTodos, adicionarItem } from"../../utils/apiFuncoes.js";
 
 export default function AbaRegistroCMT({ vaca }) {

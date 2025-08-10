@@ -8,7 +8,7 @@ import {
   buscarTodosBezerrosSQLite,
   salvarBezerrosSQLite,
 } from "../../utils/apiFuncoes.js";
-import { buscarTodosAnimais, salvarAnimais } from "../../sqlite/animais";
+import { buscarTodosAnimais, salvarAnimais } from "../../api";
 import { adicionarOcorrenciaFirestore } from "../../utils/registroReproducao";
 import { adicionarEventoHistorico } from "../../utils/historico";
 

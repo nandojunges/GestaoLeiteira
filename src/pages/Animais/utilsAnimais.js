@@ -17,7 +17,7 @@ export function calcularCategoria(dataNascimento) {
 }
 
 // 📦 LOCAL STORAGE: Carregar e salvar lista completa de animais
-// Funções de acesso ao banco foram movidas para src/sqlite/animais.js
+// Funções de acesso ao banco foram movidas para s../api.js
 
 // ✅ CALCULAR DEL ATUAL COM BASE NA DATA DO ÚLTIMO PARTO
 export function calcularDELAtual(ultimoParto, dataReferencia = new Date()) {

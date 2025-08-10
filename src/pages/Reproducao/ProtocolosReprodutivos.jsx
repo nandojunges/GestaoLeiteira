@@ -6,7 +6,7 @@ import {
   excluirItem, // agora deve funcionar
 } from "../../utils/apiFuncoes.js";
 
-import { buscarTodosAnimais } from "../../sqlite/animais"; // ✅ também CORRETO
+import { buscarTodosAnimais } from "../../api"; // ✅ também CORRETO
 import ModalConfirmarExclusao from "../../components/modals/ModalConfirmarExclusao";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";

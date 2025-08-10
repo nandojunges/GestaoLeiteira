@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Select from "react-select";
 import "../../styles/botoes.css";
-import { buscarTodosAnimais, salvarAnimais } from "../../sqlite/animais";
+import { buscarTodosAnimais, salvarAnimais } from "../../api";
 import {
   buscarPelagensSQLite,
   inserirPelagemSQLite,

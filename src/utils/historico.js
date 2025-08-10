@@ -1,4 +1,4 @@
-import { buscarAnimalPorNumero, atualizarAnimalNoBanco } from '../sqlite/animais';
+import { buscarAnimalPorNumero, atualizarAnimalNoBanco } from '../api';
 
 const TIPOS = [
   'partos',
