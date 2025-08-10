@@ -84,7 +84,7 @@ export async function registrarTratamento(id, data) {
   return res.data;
 }
 
-// Configuração do usuário (substituindo sqlite/ajustes)
+// Configuração do usuário
 export async function carregarConfiguracao() {
   const res = await api.get('configuracao');
   return res.data;
@@ -108,3 +108,9 @@ export const atualizarAnimalNoBanco = (animal) => atualizarAnimal(animal.id, ani
 export const excluirAnimal = removerAnimal;
 export const salvarSaidaAnimal = (saida) =>
   api.post('v1/animais/saidas', saida).then((r) => r.data);
+
+// Manutenção
+export async function promoverPreParto() {
+  const res = await api.post('v1/maintenance/promote-preparto');
+  return res.data;
+}

@@ -12,6 +12,8 @@ import SecaoTabelas from './SecaoTabelas';
 import { enviarImagem } from '../../utils/backendApi';
 import { salvarConfiguracao } from '../../utils/configUsuario';
 import { motion, AnimatePresence } from 'framer-motion';
+import jwtDecode from 'jwt-decode';
+import { promoverPreParto } from '../../api';
 
 export default function Ajustes() {
   const { config, setConfig } = useContext(ConfiguracaoContext);
@@ -23,11 +25,23 @@ export default function Ajustes() {
   const [imagemFotoEdicao, setImagemFotoEdicao] = useState(null);
   const [recorteFotoEdicao, setRecorteFotoEdicao] = useState(null);
   const [imagemPerfil, setImagemPerfil] = useState(config.foto || '');
+  const [processingPreParto, setProcessingPreParto] = useState(false);
   const inputFotoRef = useRef(null);
   const inputCapaRef = useRef(null);
   const nomeRef = useRef(null);
   const proprietarioRef = useRef(null);
   const siteRef = useRef(null);
+
+  let isAdmin = false;
+  try {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decoded = jwtDecode(token);
+      isAdmin = decoded?.perfil === 'admin';
+    }
+  } catch (e) {
+    /* ignore */
+  }
 
   const abrirExibicao = () => setAbaAtiva('exibicao');
   const abrirNotificacoes = () => setAbaAtiva('notificacoes');
@@ -35,6 +49,18 @@ export default function Ajustes() {
   const abrirCalendario = () => setAbaAtiva('calendario');
   const abrirDimensoes = () => setAbaAtiva('dimensoes');
   const abrirTabelas = () => setAbaAtiva('tabelas');
+
+  const handlePromoverPreParto = async () => {
+    setProcessingPreParto(true);
+    try {
+      const { count = 0, ids = [] } = await promoverPreParto();
+      toast.success(`Processados: ${count}, IDs: ${ids.join(', ')}`);
+    } catch (err) {
+      toast.error('Não foi possível promover Pré-Parto');
+    } finally {
+      setProcessingPreParto(false);
+    }
+  };
 
   const abrirEdicaoFoto = () => {
     setImagemFotoEdicao(config.fotoOriginal || config.foto || null);
@@ -199,6 +225,17 @@ export default function Ajustes() {
               </AnimatePresence>
             </div>
           </div>
+          {isAdmin && (
+            <div className="text-right mt-8">
+              <button
+                onClick={handlePromoverPreParto}
+                disabled={processingPreParto}
+                className="botao-acao"
+              >
+                {processingPreParto ? 'Processando...' : 'Promover Pré-Parto (D-21)'}
+              </button>
+            </div>
+          )}
           <div className="text-right mt-8">
             <button
               onClick={() => {
