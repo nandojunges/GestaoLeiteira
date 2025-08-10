@@ -24,6 +24,17 @@
     `GraficoDescarteIdade.jsx`, `ResumoLactacoes.jsx`, `icones/informacoes.png`.
 - Varredura com `rg` confirmou ausência de imports externos antes da exclusão.
 
+## Colapso EscolherPlano
+- Arquivos removidos:
+  - `src/usuario/auth/EscolherPlano.jsx`
+  - `src/usuario/auth/EscolherPlanoCadastro.jsx`
+  - `src/usuario/auth/EscolherPlanoUsuario.jsx`
+  - `src/usuario/auth/EscolherPlanoInicio.jsx`
+- Rotas/locais atualizados para `EscolherPlanoUnified`:
+  - `/escolher-plano` → `mode="inicio"`
+  - `/escolher-plano-finalizar` → `mode="cadastro"`
+- Build: tentativa de `npm install` falhou (`react-input-mask@^3.0.0` ausente), portanto `npm run build` não pôde ser executado.
+
 ## Checklist – Próximo passo (Fase 2.4)
 - [ ] Ativar cron via `ENABLE_PREPARTO_JOB=true` (opcional).
 - [ ] Iniciar testes ponta a ponta no front.
