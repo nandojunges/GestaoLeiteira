@@ -1,9 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  // Garante que a base da API termine com barra caso VITE_API_URL não esteja definida.
-  // Assim, chamadas como `api.post('auth/login')` resultam em '/api/auth/login' em vez de 'apiauth/login'.
-  baseURL: import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '/api/',
+  baseURL: '/api/',
 });
 
 api.interceptors.request.use((config) => {
@@ -113,4 +111,9 @@ export const salvarSaidaAnimal = (saida) =>
 export async function promoverPreParto() {
   const res = await api.post('v1/maintenance/promote-preparto');
   return res.data;
+}
+
+export async function ping() {
+  const res = await fetch('/api/v1/health');
+  return res.json();
 }

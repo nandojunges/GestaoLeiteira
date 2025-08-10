@@ -49,8 +49,7 @@
     "react-toastify": "^11.0.5",
     "recharts": "^2.15.3",
     "sqlite3": "^5.1.7",
-    "xlsx": "^0.18.5",
-    "http-proxy-middleware": "^2.0.6"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.11",

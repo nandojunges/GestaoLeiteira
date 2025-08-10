@@ -117,7 +117,7 @@ export default function CalendarioAtividades() {
     const salvarExtras = async () => {
       try {
         const token = localStorage.getItem('token');
-        await fetch(`${import.meta.env.VITE_API_URL || '/api'}/eventos`, {
+        await fetch('/api/eventos', {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
