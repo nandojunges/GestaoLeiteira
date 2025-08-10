@@ -8,7 +8,9 @@
     "dev:front": "vite",
     "dev:back": "nodemon backend/server.js",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postclean": "rm -rf node_modules package-lock.json",
+    "install:ci": "bash scripts/install.sh"
   },
   "dependencies": {
     "@fullcalendar/bootstrap5": "^6.1.17",
@@ -49,7 +51,8 @@
     "react-toastify": "^11.0.5",
     "recharts": "^2.15.3",
     "sqlite3": "^5.1.7",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "invariant": "^2.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.11",
@@ -60,5 +63,8 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.11",
     "vite": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=20.12.2"
   }
 }
