@@ -1,9 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const dbMiddleware = require('./middleware/dbMiddleware');
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config();
 
 const vacasRoutes = require('./routes/vacasRoutes');
 const animaisRoutes = require('./routes/animaisRoutes');

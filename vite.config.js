@@ -1,31 +1,27 @@
-// vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
+
+const API_TARGET = process.env.VITE_API_URL || 'http://localhost:3000';
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
   },
   server: {
-    host: true,
     port: 5173,
-    strictPort: true,
-    allowedHosts: ['.ngrok-free.app'],
-    fs: {
-      strict: false,
-    },
+    proxy: {
+      '/api': {
+        target: API_TARGET,
+        changeOrigin: true,
+        secure: false
+      }
+    }
   },
-  // ✅ ESSA OPÇÃO FAZ O REACT ROUTER FUNCIONAR CORRETAMENTE COM REFRESH E NAVIGATE
   build: {
-    outDir: 'dist',
-  },
-  preview: {
-    // Permite que o preview do build funcione com SPA
-    // (caso use `vite preview` depois do build)
-    port: 4173,
-  },
+    outDir: 'dist'
+  }
 });
