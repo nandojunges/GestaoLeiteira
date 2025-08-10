@@ -11,4 +11,5 @@ curl http://localhost:3001/api/v1/health
 ```
 
 ## Build
-- `npm i` e `npm run build` falharam (`vite: not found`).
+- `npm i` falhou (403 Forbidden ao buscar pacote `invariant`).
+- `npm run build` não executou devido à falha na instalação.
