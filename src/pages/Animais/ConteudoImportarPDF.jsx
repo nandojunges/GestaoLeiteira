@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
-import { buscarTodosAnimais, salvarAnimais } from "../../sqlite/animais";
+import { buscarTodosAnimais, salvarAnimais } from "../../api";
 
 export default function ImportarDados() {
   const [dados, setDados] = useState([]);

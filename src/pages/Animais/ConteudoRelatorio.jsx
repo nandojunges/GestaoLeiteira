@@ -1,5 +1,5 @@
 import React from "react";
-import { buscarTodosAnimais, salvarAnimais } from "../../sqlite/animais";
+import { buscarTodosAnimais, salvarAnimais } from "../../api";
 
 export default function ConteudoRelatorio() {
   const atualizarVacasComPartos = async () => {

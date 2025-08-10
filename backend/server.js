@@ -22,6 +22,8 @@ const mockRoutes = require('./routes/mockRoutes');
 const rotasExtras = require('./routes/rotasExtras');
 const adminRoutes = require('./routes/adminRoutes');
 const authRoutes = require('./routes/authRoutes');
+const apiV1Routes = require('./routes/apiV1');
+const errorHandler = require('./middleware/errorHandler');
 const { inicializarAdmins } = require('./controllers/authController');
 const { initDB } = require('./db');
 
@@ -66,6 +68,11 @@ app.use('/', mockRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api', rotasExtras);
 app.use('/api', adminRoutes);
+// Rotas v1 com services reestruturados
+app.use(apiV1Routes);
+
+// Middleware de tratamento de erros padronizado
+app.use(errorHandler);
 
 // 🧾 Servir frontend estático (build do React)
 const distPath = path.join(__dirname, '..', 'dist');

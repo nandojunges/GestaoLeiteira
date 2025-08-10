@@ -3,7 +3,7 @@ import ModalFiltroLoteInteligente from "./ModalFiltroLoteInteligente";
 import TabelaMedicaoLeite from "./TabelaMedicaoLeite";
 import { calcularDEL } from "../Animais/utilsAnimais";
 import { buscarTodos, adicionarItem } from "../../utils/apiFuncoes.js";
-import { buscarTodosAnimais, salvarAnimais } from "../../sqlite/animais";
+import { buscarTodosAnimais, salvarAnimais } from "../../api";
 
 export default function ModalMedicaoLeite({ data, vacas, onFechar, onSalvar }) {
   const [tipoLancamento, setTipoLancamento] = useState("2");

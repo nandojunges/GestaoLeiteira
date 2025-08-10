@@ -1,4 +1,4 @@
-import { buscarTodosAnimais } from '../sqlite/animais';
+import { buscarTodosAnimais } from '../api';
 import { buscarTodos } from './backendApi';
 
 export default async function gerarEventosCalendario() {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import ModalMedicaoLeite from "./ModalMedicaoLeite";
 import ModalRegistroLeite from "./ModalRegistroLeite";
 import { calcularDEL } from "../Animais/utilsAnimais";
-import { buscarTodosAnimais } from "../../sqlite/animais";
+import { buscarTodosAnimais } from "../../api";
 import { buscarTodos } from"../../utils/apiFuncoes.js";
 import "../../styles/tabelaModerna.css";
 import "../../styles/botoes.css";

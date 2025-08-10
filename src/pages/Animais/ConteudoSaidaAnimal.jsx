@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Select from "react-select";
-import { buscarTodosAnimais } from "../../sqlite/animais";
+import { buscarTodosAnimais } from "../../api";
 import { atualizarItem } from "../../utils/backendApi";
 import { registrarMovimentoFinanceiro } from "../../utils/financeiro";
 

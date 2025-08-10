@@ -1,6 +1,6 @@
 import { addDays } from 'date-fns';
 import { formatarDataBR } from '../pages/Animais/utilsAnimais';
-import { buscarTodosAnimais } from '../sqlite/animais';
+import { buscarTodosAnimais } from '../api';
 import {
   buscarTodos,
   adicionarItem,

@@ -12,7 +12,7 @@ function parseData(data) {
 }
 
 import api from '../api';
-import { buscarTodosAnimais } from '../sqlite/animais';
+import { buscarTodosAnimais } from '../api';
 
 export async function gerarTarefasDoDia(dataHoje) {
   const animais = await buscarTodosAnimais();
