@@ -111,3 +111,14 @@ $ curl /api/v1/animais?estado=seca
 - `src/_quarantine/GraficoDescarteIdade.jsx`
 - `src/_quarantine/ResumoLactacoes.jsx`
 - `src/_quarantine/icones/informacoes.png`
+
+## Remoções definitivas Fase 2.4
+```bash
+$ rg "src/_quarantine" -n --glob '!docs/**'
+$ rg "assets/icones" -n --glob '!docs/**'
+$ rg "sqlite/animais" -n --glob '!docs/**'
+$ rg "sqlite/ajustes" -n --glob '!docs/**'
+$ rg "src/firebase.js" -n --glob '!docs/**'
+```
+- Nenhuma ocorrência encontrada.
+- Diretório `src/sqlite/` removido.

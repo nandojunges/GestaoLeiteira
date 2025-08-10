@@ -89,7 +89,8 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 if (require.main === module) {
-  if (process.env.ENABLE_PREPARTO_JOB === 'true') {
+  const enablePrePartoJob = process.env.ENABLE_PREPARTO_JOB === 'true';
+  if (enablePrePartoJob) {
     const schedulePrePartoJob = require('./jobs/preparto');
     schedulePrePartoJob();
   }
