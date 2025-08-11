@@ -1,0 +1,62 @@
+openapi: 3.0.3
+info:
+  title: Gestao Leiteira API
+  version: "1.0"
+servers:
+  - url: http://localhost:3000
+paths:
+  /api/v1/health:
+    get:
+      summary: Healthcheck
+      responses:
+        "200":
+          description: OK
+  /api/v1/animais:
+    get:
+      summary: Listar animais
+      parameters:
+        - in: query
+          name: estado
+          schema: { type: string, enum: [vazia, gestante, preparto, lactante, seca, inativa] }
+        - in: query
+          name: q
+          schema: { type: string }
+      responses: { "200": { description: OK } }
+    post:
+      summary: Criar animal
+      responses: { "201": { description: Criado } }
+  /api/v1/animais/{id}:
+    get:
+      summary: Detalhar animal
+      parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
+      responses: { "200": { description: OK }, "404": { description: Não encontrado } }
+    put:
+      summary: Atualizar animal
+      parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
+      responses: { "200": { description: OK } }
+    delete:
+      summary: Remover animal
+      parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
+      responses: { "204": { description: Removido } }
+  /api/v1/reproducao/{id}/inseminacoes:
+    post: { summary: Registrar IA, responses: { "200": { description: OK } } }
+  /api/v1/reproducao/{id}/diagnosticos:
+    post: { summary: Registrar diagnóstico, responses: { "200": { description: OK } } }
+  /api/v1/reproducao/{id}/partos:
+    post: { summary: Registrar parto, responses: { "200": { description: OK } } }
+  /api/v1/reproducao/{id}/secagens:
+    post: { summary: Registrar secagem, responses: { "200": { description: OK } } }
+  /api/v1/maintenance/promote-preparto:
+    post: { summary: Promover gestantes para pré-parto (D-21), responses: { "200": { description: OK } } }
+  /api/v1/auth/register:
+    post: { summary: Cadastrar usuário, responses: { "200": { description: OK } } }
+  /api/v1/auth/send-code:
+    post: { summary: Reenviar código de verificação, responses: { "200": { description: OK }, "429": { description: Limite } } }
+  /api/v1/auth/verify:
+    post: { summary: Verificar código, responses: { "200": { description: OK } } }
+  /api/v1/auth/login:
+    post: { summary: Login, responses: { "200": { description: OK }, "401": { description: Credenciais inválidas } } }
+  /api/v1/auth/forgot-password:
+    post: { summary: Solicitar reset de senha, responses: { "200": { description: OK }, "429": { description: Limite } } }
+  /api/v1/auth/reset-password:
+    post: { summary: Resetar senha com token, responses: { "200": { description: OK } } }
