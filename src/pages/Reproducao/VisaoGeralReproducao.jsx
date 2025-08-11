@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { buscarVacas } from '../../utils/apiFuncoes.js';
-import { buscarAnimaisComCache } from "../../utils/cacheAnimais";
+import { getAnimais } from '../../api';
 import { buscarTodos } from '../../utils/backendApi';
-import { calcularDEL } from '../Animais/utilsAnimais';
 import ModalHistoricoCompleto from "../Animais/ModalHistoricoCompleto";
 import ModalConfiguracaoPEV from "./ModalConfiguracaoPEV";
-import { getStatusVaca, filtrarAnimaisAtivos, filtrarPorStatus } from './utilsReproducao';
+import { getStatusVaca } from './utilsReproducao';
 import ModalRegistrarOcorrencia from './ModalRegistrarOcorrencia';
 import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
-import { carregarRegistro, calcularEtapasOcorrencia } from '../../utils/registroReproducao';
 import OverflowInfo from '../../components/shared/OverflowInfo';
 
 export default function VisaoGeralReproducao() {
@@ -27,69 +24,21 @@ export default function VisaoGeralReproducao() {
   });
   const [carregandoConfig, setCarregandoConfig] = useState(true);
   const [filtroStatus, setFiltroStatus] = useState('todos');
-  const [filtroDelMin, setFiltroDelMin] = useState('');
-  const [filtroDelMax, setFiltroDelMax] = useState('');
   const [selecionados, setSelecionados] = useState([]);
 
   const carregarVacas = useCallback(async () => {
     setCarregandoVacas(true);
     try {
-      const dados = await buscarAnimaisComCache();
-      const animais = dados.filter((a) => a.status !== 'Inativo');
-      const ativos = await filtrarAnimaisAtivos(animais);
-
-      const ativosComDados = await Promise.all(
-      ativos.map(async (a) => {
-        const registro = await carregarRegistro(a.numero);
-        const ocorr = registro.ocorrencias || [];
-
-        if (a.protocoloAtivo) {
-          const etapas = a.protocoloAtivo.etapasProgramadas || [];
-          const ultima = [...etapas].reverse().find((e) => e.status === 'concluida');
-          const proxima = etapas.find((e) => e.status === 'pendente');
-          if (ultima) {
-            a.ultimaAcao = {
-              tipo: `${ultima.acao}${ultima.subtipo ? ' ' + ultima.subtipo : ''}`,
-              data: ultima.data.split('-').reverse().join('/'),
-            };
-          }
-          if (proxima) {
-            a.proximaAcao = {
-              tipo: `${proxima.acao}${proxima.subtipo ? ' ' + proxima.subtipo : ''}`,
-              dataPrevista: proxima.data.split('-').reverse().join('/'),
-            };
-          }
-        }
-
-        if (!a.ultimaAcao && ocorr.length) {
-          const ultimo = ocorr[ocorr.length - 1];
-          a.ultimaAcao = { tipo: ultimo.tipo, data: ultimo.data };
-        }
-
-        if (!a.proximaAcao) {
-          const protocolo = [...ocorr].reverse().find((o) => Array.isArray(o.etapas));
-          if (protocolo) {
-            const { ultima, proxima } = calcularEtapasOcorrencia(protocolo);
-            if (!a.ultimaAcao) a.ultimaAcao = ultima;
-            a.proximaAcao = proxima;
-          }
-        }
-
-        return a;
-      })
-    );
-
-      const unicos = ativosComDados.filter(
-        (v, i, arr) => arr.findIndex((o) => o.numero === v.numero) === i
-      );
-      setVacas(unicos);
+      const params = filtroStatus !== 'todos' ? { estado: filtroStatus } : {};
+      const lista = await getAnimais(params);
+      setVacas(Array.isArray(lista) ? lista : []);
     } catch (err) {
       console.error('Erro ao carregar vacas:', err);
       setVacas([]);
     } finally {
       setCarregandoVacas(false);
     }
-  }, []);
+  }, [filtroStatus]);
 
   const carregarConfig = useCallback(async () => {
     setCarregandoConfig(true);
@@ -232,10 +181,7 @@ export default function VisaoGeralReproducao() {
     );
   };
 
-  const vacasFiltradas = useMemo(
-    () => filtrarPorStatus(vacas, filtroStatus, filtroDelMin, filtroDelMax),
-    [vacas, filtroStatus, filtroDelMin, filtroDelMax]
-  );
+  const vacasFiltradas = useMemo(() => vacas, [vacas]);
 
   const todasSelecionadas = selecionados.length === vacasFiltradas.length && vacasFiltradas.length > 0;
 
@@ -269,20 +215,6 @@ export default function VisaoGeralReproducao() {
           <option value="pev">Pós-parto</option>
           <option value="liberada">Liberada</option>
         </select>
-        <input
-          type="number"
-          placeholder="DEL mínimo"
-          value={filtroDelMin}
-          onChange={(e) => setFiltroDelMin(e.target.value)}
-          className="border p-2 rounded w-24"
-        />
-        <input
-          type="number"
-          placeholder="DEL máximo"
-          value={filtroDelMax}
-          onChange={(e) => setFiltroDelMax(e.target.value)}
-          className="border p-2 rounded w-24"
-        />
         <div className="ml-auto">
           <button onClick={() => setMostrarModalPEV(true)} className="botao-acao">
             ⚙️ Configurar PEV
@@ -316,7 +248,7 @@ export default function VisaoGeralReproducao() {
         </thead>
         <tbody>
           {vacasFiltradas.map((vaca) => {
-            const del = vaca.ultimoParto ? calcularDEL(vaca.ultimoParto) : null;
+            const del = vaca.del;
             const statusAtual = obterStatus(vaca, del);
             const proximaAcaoTexto = obterProximaAcao(vaca);
               const infoProximaAcao = formatarDetalhes(obterDetalhesAcao(vaca, "proxima"));

@@ -59,7 +59,7 @@ export default function Animais() {
 
     if (abaLateral === 'todos') {
       return (
-        <ConteudoTodosAnimais vacas={lista} onAtualizar={carregar} />
+        <ConteudoTodosAnimais />
       );
     }
 
@@ -75,7 +75,7 @@ export default function Animais() {
       case 'saida':
         return <ConteudoSaidaAnimal animais={lista} onAtualizar={atualizarAnimais} />;
       case 'inativas':
-        return <ConteudoInativas animais={lista} onAtualizar={atualizarAnimais} />;
+        return <ConteudoInativas onAtualizar={atualizarAnimais} />;
       case 'relatorio':
         return <ConteudoRelatorio animais={lista} />;
       case 'importar':
