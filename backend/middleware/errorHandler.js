@@ -1,8 +1,8 @@
 module.exports = (err, req, res, _next) => {
-  const status = err.status || 500;
-  const payload = { error: err.message || 'Erro interno' };
-  if (process.env.NODE_ENV !== 'production') {
+  const code = err.status || err.code || 500;
+  const payload = { ok: false, message: err.message || 'Erro interno', code };
+  if (process.env.NODE_ENV !== 'production' && err.stack) {
     payload.stack = err.stack;
   }
-  res.status(status).json(payload);
+  res.status(code).json(payload);
 };

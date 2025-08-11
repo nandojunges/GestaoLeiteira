@@ -1,10 +1,12 @@
 const reproductionService = require('../services/reproductionService');
 const animalsService = require('../services/animalsService');
+const { requireFields, isDate } = require('../utils/validate');
 
 async function registrarInseminacao(req, res, next) {
   try {
-    if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ error: 'Dados inválidos' });
+    const check = requireFields(req.body, ['data']);
+    if (!check.ok || (req.body.data && !isDate(req.body.data))) {
+      return res.status(400).json({ ok: false, message: 'Dados inválidos' });
     }
     const result = await reproductionService.registrarInseminacao(
       Number(req.params.id),
@@ -19,8 +21,9 @@ async function registrarInseminacao(req, res, next) {
 
 async function registrarDiagnostico(req, res, next) {
   try {
-    if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ error: 'Dados inválidos' });
+    const check = requireFields(req.body, ['data']);
+    if (!check.ok || (req.body.data && !isDate(req.body.data))) {
+      return res.status(400).json({ ok: false, message: 'Dados inválidos' });
     }
     const result = await reproductionService.registrarDiagnostico(
       Number(req.params.id),
@@ -35,8 +38,9 @@ async function registrarDiagnostico(req, res, next) {
 
 async function registrarParto(req, res, next) {
   try {
-    if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ error: 'Dados inválidos' });
+    const check = requireFields(req.body, ['data']);
+    if (!check.ok || (req.body.data && !isDate(req.body.data))) {
+      return res.status(400).json({ ok: false, message: 'Dados inválidos' });
     }
     const result = await reproductionService.registrarParto(
       Number(req.params.id),
@@ -51,8 +55,9 @@ async function registrarParto(req, res, next) {
 
 async function registrarSecagem(req, res, next) {
   try {
-    if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ error: 'Dados inválidos' });
+    const check = requireFields(req.body, ['data']);
+    if (!check.ok || (req.body.data && !isDate(req.body.data))) {
+      return res.status(400).json({ ok: false, message: 'Dados inválidos' });
     }
     const result = await reproductionService.registrarSecagem(
       Number(req.params.id),

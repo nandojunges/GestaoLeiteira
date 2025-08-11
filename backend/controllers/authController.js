@@ -6,6 +6,7 @@ const emailUtils = require('../utils/email');
 const { initDB, getDBPath } = require('../db');
 
 const pendentes = new Map();
+const { requireFields, isEmail } = require('../utils/validate');
 
 const SECRET = process.env.JWT_SECRET || 'segredo';
 
@@ -20,6 +21,13 @@ async function cadastro(req, res) {
     plano: planoSolicitado,
     formaPagamento,
   } = req.body;
+  const check = requireFields(req.body, ['nome', 'email', 'senha']);
+  if (!check.ok) {
+    return res.status(400).json({ ok: false, message: 'Campos obrigatórios ausentes', missing: check.missing });
+  }
+  if (!isEmail(endereco)) {
+    return res.status(400).json({ ok: false, message: 'Email inválido' });
+  }
   const codigo = Math.floor(100000 + Math.random() * 900000).toString();
 
   if (!endereco || typeof endereco !== 'string') {
@@ -233,6 +241,13 @@ async function finalizarCadastro(req, res) {
 // ➤ Login e geração do token JWT
 async function login(req, res) {
   const { email, senha } = req.body;
+  const check = requireFields(req.body, ['email', 'senha']);
+  if (!check.ok) {
+    return res.status(400).json({ ok: false, message: 'Campos obrigatórios ausentes', missing: check.missing });
+  }
+  if (!isEmail(email)) {
+    return res.status(400).json({ ok: false, message: 'Email inválido' });
+  }
 
   const db = initDB(email);
   const usuario = Usuario.getByEmail(db, email);

@@ -1,4 +1,5 @@
 const animalsService = require('../services/animalsService');
+const { requireFields, isDate } = require('../utils/validate');
 
 async function list(req, res, next) {
   try {
@@ -23,7 +24,14 @@ async function getById(req, res, next) {
 async function create(req, res, next) {
   try {
     if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ error: 'Dados inválidos' });
+      return res.status(400).json({ ok: false, message: 'Dados inválidos', code: 400 });
+    }
+    const check = requireFields(req.body, ['numero']);
+    if (!check.ok) {
+      return res.status(400).json({ ok: false, message: 'Campos obrigatórios ausentes', missing: check.missing });
+    }
+    if (req.body.nascimento && !isDate(req.body.nascimento)) {
+      return res.status(400).json({ ok: false, message: 'Data inválida: nascimento' });
     }
     const novo = await animalsService.create(req.body);
     res.status(201).json(novo);
@@ -35,7 +43,14 @@ async function create(req, res, next) {
 async function update(req, res, next) {
   try {
     if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ error: 'Dados inválidos' });
+      return res.status(400).json({ ok: false, message: 'Dados inválidos', code: 400 });
+    }
+    const check = requireFields(req.body, ['numero']);
+    if (!check.ok) {
+      return res.status(400).json({ ok: false, message: 'Campos obrigatórios ausentes', missing: check.missing });
+    }
+    if (req.body.nascimento && !isDate(req.body.nascimento)) {
+      return res.status(400).json({ ok: false, message: 'Data inválida: nascimento' });
     }
     const atualizado = await animalsService.update(Number(req.params.id), req.body);
     res.json(atualizado);

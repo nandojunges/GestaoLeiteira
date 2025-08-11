@@ -25,6 +25,8 @@ const authRoutes = require('./routes/authRoutes');
 const apiV1Routes = require('./routes/apiV1');
 const maintenanceRoutes = require('./routes/maintenanceRoutes');
 const healthRoutes = require('./routes/healthRoutes');
+const logger = require('./middleware/logger');
+const rateLimit = require('./middleware/rateLimit');
 const errorHandler = require('./middleware/errorHandler');
 const { inicializarAdmins } = require('./controllers/authController');
 const { initDB } = require('./db');
@@ -33,6 +35,7 @@ const app = express();
 app.use(cors());
 // aumenta o limite de tamanho do JSON para aceitar PDFs codificados em Base64 (até 10 mb)
 app.use(express.json({ limit: '10mb' }));
+app.use(logger);
 
 // 📁 Pasta para backups de dados excluídos
 fs.mkdirSync(path.join(__dirname, 'dadosExcluidos'), { recursive: true });
@@ -68,15 +71,15 @@ app.use('/api/touros', authMiddleware, dbMiddleware, tourosRoutes);
 // Rotas não protegidas (mock e auth) não devem exigir token nem acessar banco
 app.use('/', mockRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/v1/auth/send-code', rateLimit);
+app.use('/api/v1/auth/login', rateLimit);
+app.use('/api/v1/auth', authRoutes);
 app.use('/api', rotasExtras);
 app.use('/api', adminRoutes);
 // Rotas v1 com services reestruturados
 app.use(apiV1Routes);
 app.use(maintenanceRoutes);
 app.use(healthRoutes);
-
-// Middleware de tratamento de erros padronizado
-app.use(errorHandler);
 
 // 🧾 Servir frontend estático (build do React)
 const distPath = path.join(__dirname, '..', 'dist');
@@ -86,6 +89,9 @@ app.use(express.static(distPath));
 app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
+
+// Middleware de tratamento de erros padronizado
+app.use(errorHandler);
 
 // 🚀 Inicialização do servidor (somente se executado diretamente)
 const PORT = process.env.PORT || 3000;
