@@ -3,7 +3,7 @@ import ModalRegistrarParto from './ModalRegistrarParto';
 import '../../styles/botoes.css';
 import '../../styles/tabelaModerna.css';
 import { parseBRDate, diffDias } from '@/utils/dateUtils';
-import { buscarAnimais } from '../../utils/apiFuncoes';
+import { getAnimais } from '../../api';
 import { toast } from 'react-toastify';
 
 export default function ConteudoParto({ vacas = [], onAtualizar }) {
@@ -139,7 +139,7 @@ export default function ConteudoParto({ vacas = [], onAtualizar }) {
           onClose={() => setMostrarModalParto(false)}
           onRegistrado={async () => {
             try {
-              const lista = await buscarAnimais();
+              const lista = await getAnimais({ estado: 'lactante' });
               onAtualizar && onAtualizar(lista);
             } catch (err) {
               console.error('Erro ao atualizar lista de animais:', err);

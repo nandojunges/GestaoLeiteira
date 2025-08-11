@@ -3,6 +3,8 @@
 ## Telas ajustadas
 - **Animais/ConteudoPlantel**: usa `vaca.del`, `previsaoParto` e `previsaoSecagem` vindos do backend e exibe estado.
 - **Animais/ConteudoInativas**: busca animais inativos via API.
+- **Animais/ConteudoSecagem**: atualiza lista via `getAnimais({estado:'seca'})`.
+- **Animais/ConteudoParto**: recarrega com `getAnimais({estado:'lactante'})` após registrar parto.
 - **Animais/ModalHistoricoCompleto + FichaAnimalEventos**: seção "Histórico" carrega ocorrências de reprodução e saúde da API.
 - **Animais/FichaAnimalResumoReprodutivo**: apresenta DEL e previsões fornecidas pelo backend.
 - **Reproducao/VisaoGeralReproducao**: lista vacas conforme filtro de estado diretamente da API.

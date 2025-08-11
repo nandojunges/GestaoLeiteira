@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import AcaoSecagem from './AcaoSecagem';
 import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
-import { buscarAnimais } from '../../utils/apiFuncoes';
+import { getAnimais } from '../../api';
 import { toast } from 'react-toastify';
 
 export default function ConteudoSecagem({ vacas, onAtualizar }) {
@@ -40,7 +40,7 @@ export default function ConteudoSecagem({ vacas, onAtualizar }) {
   const aplicarSecagem = async () => {
     setMostrarModalSecagem(false);
     try {
-      const lista = await buscarAnimais();
+      const lista = await getAnimais({ estado: 'seca' });
       onAtualizar && onAtualizar(lista);
     } catch (err) {
       console.error('Erro ao atualizar lista de animais:', err);
