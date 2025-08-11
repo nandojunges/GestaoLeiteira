@@ -18,7 +18,7 @@ export default function ConteudoRelatorio() {
 
   const restaurarPlantel = async () => {
     try {
-      const resposta = await fetch("/vacas_plantel_corrigido.json");
+      const resposta = await fetch("/api/vacas_plantel_corrigido.json");
       const dados = await resposta.json();
      await salvarAnimais(dados);
       window.dispatchEvent(new Event("animaisAtualizados"));
