@@ -72,6 +72,7 @@ app.use('/api/touros', authMiddleware, dbMiddleware, tourosRoutes);
 app.use('/', mockRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/v1/auth/send-code', rateLimit);
+app.use('/api/v1/auth/forgot-password', rateLimit);
 app.use('/api/v1/auth/login', rateLimit);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api', rotasExtras);
