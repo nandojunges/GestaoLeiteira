@@ -22,6 +22,8 @@
 { "ok": true }
 ```
 
+Gera um token temporário (30 min) e envia link de reset para `AUTH_BASE_URL`.
+
 ### POST /api/v1/auth/reset-password
 - Payload:
 ```json
