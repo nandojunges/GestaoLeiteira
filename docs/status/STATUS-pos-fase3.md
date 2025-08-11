@@ -20,3 +20,8 @@
 ## Próximas frentes sugeridas
 - Fase 2.6N/2.7N/2.8N: já iniciadas (auth resend/forgot/reset; front preparado p/ estados/histórico)
 - Go/No-Go checklist e roteiro de QA manual (abaixo)
+
+## Próximo passo sugerido
+- Destravar build (Plano A: manter @fullcalendar/bootstrap5 com registry npmjs; Plano B: remover plugin temporariamente).
+- Rodar cURLs de smoke quando quiser validar rapidamente.
+
