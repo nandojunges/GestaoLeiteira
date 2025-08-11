@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { buscarRacasAdicionaisSQLite } from '../../utils/apiFuncoes';
-import { calcularDEL } from './utilsAnimais';
 import ModalEditarAnimal from './ModalEditarAnimal';
 import ModalHistoricoCompleto from './ModalHistoricoCompleto';
 import '../../styles/tabelaModerna.css';
@@ -28,6 +27,7 @@ export default function ConteudoPlantel({ vacas = [], onAtualizar }) {
   const todasAsColunas = [
     'Número',
     'Brinco',
+    'Estado',
     'Lactações',
     'DEL',
     'Categoria',
@@ -38,6 +38,7 @@ export default function ConteudoPlantel({ vacas = [], onAtualizar }) {
     'Pai',
     'Mãe',
     'Previsão Parto',
+    'Previsão Secagem',
     'Ação'
   ];
 
@@ -58,6 +59,7 @@ export default function ConteudoPlantel({ vacas = [], onAtualizar }) {
   const colunasCfg = [
     { id: 'numero', label: 'Número' },
     { id: 'brinco', label: 'Brinco' },
+    { id: 'estado', label: 'Estado' },
     { id: 'lactacoes', label: 'Lactações' },
     { id: 'del', label: 'DEL' },
     { id: 'categoria', label: 'Categoria' },
@@ -68,6 +70,7 @@ export default function ConteudoPlantel({ vacas = [], onAtualizar }) {
     { id: 'pai', label: 'Pai' },
     { id: 'mae', label: 'Mãe' },
     { id: 'previsaoParto', label: 'Previsão Parto' },
+    { id: 'previsaoSecagem', label: 'Previsão Secagem' },
     { id: 'acoes', label: 'Ação' },
   ];
 
@@ -294,8 +297,13 @@ export default function ConteudoPlantel({ vacas = [], onAtualizar }) {
               const dados = [
                 vaca.numero,
                 vaca.brinco,
+                vaca.estado ? (
+                  <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">
+                    {vaca.estado}
+                  </span>
+                ) : '—',
                 vaca.nLactacoes ?? '—',
-                vaca.del ?? calcularDEL(ultimoParto !== '—' ? ultimoParto : null),
+                vaca.del ?? '—',
                 vaca.categoria,
                 vaca.idade,
                 vaca.ultimaIA || '—',
@@ -304,6 +312,7 @@ export default function ConteudoPlantel({ vacas = [], onAtualizar }) {
                 vaca.nomeTouro || vaca.pai || '—',
                 vaca.nomeMae || vaca.mae || '—',
                 vaca.previsaoParto || '—',
+                vaca.previsaoSecagem || '—',
                 <>
                   <button className="botao-editar" onClick={() => setAnimalSelecionado(vaca)}>Editar</button>
                   <button className="botao-editar" onClick={() => abrirFicha(vaca)}>

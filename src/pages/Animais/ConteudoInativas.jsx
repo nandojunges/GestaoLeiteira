@@ -1,24 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { salvarAnimais, buscarTodosAnimais } from '../../api';
+import { salvarAnimais, getAnimais } from '../../api';
 import { carregarMovimentacoes, excluirMovimentoFinanceiro } from '../../utils/financeiro';
 import ModalHistoricoCompleto from './ModalHistoricoCompleto';
 import '../../styles/tabelaModerna.css';
 import '../../styles/botoes.css';
 
-export default function ConteudoInativas({ animais = [], onAtualizar }) {
-  const [lista, setLista] = useState(() =>
-    (Array.isArray(animais) ? animais : []).filter(a => a.status === 'inativo')
-  );
+export default function ConteudoInativas({ onAtualizar }) {
+  const [lista, setLista] = useState([]);
   const [animalFicha, setAnimalFicha] = useState(null);
   const [mostrarFicha, setMostrarFicha] = useState(false);
   const [colunaHover, setColunaHover] = useState(null);
 
   const carregar = async () => {
-    const dados = await buscarTodosAnimais();
-    const filtrados = (Array.isArray(dados) ? dados : []).filter(
-      a => a.status === 'inativo'
-    );
-    setLista(filtrados);
+    const filtrados = await getAnimais({ estado: 'inativa' });
+    setLista(Array.isArray(filtrados) ? filtrados : []);
   };
 
   useEffect(() => {
@@ -33,22 +28,19 @@ export default function ConteudoInativas({ animais = [], onAtualizar }) {
   };
 
   const reativarAnimal = async (numero) => {
-    const todos = await buscarTodosAnimais();
-    const atualizadas = (Array.isArray(todos) ? todos : []).map((v) =>
-      v.numero === numero
-        ? {
-            ...v,
-            status: 'ativo',
-            saida: undefined,
-            motivoSaida: undefined,
-            dataSaida: undefined,
-            valorVenda: undefined,
-            observacoesSaida: undefined,
-          }
-        : v
-    );
+    const alvo = lista.find((v) => String(v.numero) === String(numero));
+    if (!alvo) return;
+    const atualizado = {
+      ...alvo,
+      status: 'ativo',
+      saida: undefined,
+      motivoSaida: undefined,
+      dataSaida: undefined,
+      valorVenda: undefined,
+      observacoesSaida: undefined,
+    };
 
-    await salvarAnimais(atualizadas);
+    await salvarAnimais([atualizado]);
 
     const movimentos = await carregarMovimentacoes();
     for (const m of movimentos) {
@@ -60,7 +52,7 @@ export default function ConteudoInativas({ animais = [], onAtualizar }) {
       }
     }
 
-    onAtualizar?.(atualizadas);
+    onAtualizar?.();
     carregar();
   };
 

@@ -45,15 +45,7 @@ export default function FichaAnimalResumoReprodutivo({ animal }) {
   const totalIA = ciclos.reduce((acc, c) => acc + c.ia.length, 0);
   const totalPartos = ciclos.filter(c => !!c.parto).length;
 
-  const cicloComUltimoParto = [...ciclos].reverse().find(c => c.parto?.data);
-  const dataUltimoParto = cicloComUltimoParto?.parto?.data || null;
-
-  const delAtual = useMemo(() => {
-    if (!dataUltimoParto) return "—";
-    const partoData = new Date(dataUltimoParto.split("/").reverse().join("-"));
-    const dias = Math.floor((hoje - partoData) / (1000 * 60 * 60 * 24));
-    return dias;
-  }, [dataUltimoParto]);
+  const delAtual = animal.del ?? "—";
 
   const delPorCiclo = useMemo(() => {
     const base = calcularDELPorCiclo(ciclos, (hist.secagens || []), hoje);
@@ -81,16 +73,11 @@ export default function FichaAnimalResumoReprodutivo({ animal }) {
         valor={delAtual}
         tooltip="Dias em Lactação desde o último parto"
         destaque={typeof delAtual === "number" ? delAtual : null}
-        onClick={() => setCardAberto(cardAberto === "DEL" ? null : "DEL")}
-        expandido={cardAberto === "DEL"}
         detalhes={
-          dataUltimoParto && typeof delAtual === "number" ? (
-            <>
-              <div>📅 Último parto: <strong>{dataUltimoParto}</strong></div>
-              <div>⏱️ DEL atual: <strong>{delAtual} dias</strong></div>
-              <div>🧮 Secagem prevista: <strong>{calcSecagem(dataUltimoParto)}</strong></div>
-            </>
-          ) : <div>Sem informações de parto.</div>
+          <>
+            <div>📅 Previsão parto: <strong>{animal.previsaoParto || '—'}</strong></div>
+            <div>🧮 Previsão secagem: <strong>{animal.previsaoSecagem || '—'}</strong></div>
+          </>
         }
       />
       <Resumo
@@ -100,12 +87,6 @@ export default function FichaAnimalResumoReprodutivo({ animal }) {
       />
     </div>
   );
-}
-
-function calcSecagem(dataPartoStr) {
-  const parto = new Date(dataPartoStr.split("/").reverse().join("-"));
-  parto.setDate(parto.getDate() + 245);
-  return parto.toLocaleDateString("pt-BR");
 }
 
 function Resumo({ titulo, valor, tooltip, destaque, detalhes, onClick, expandido }) {

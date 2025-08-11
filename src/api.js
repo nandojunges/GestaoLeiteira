@@ -15,7 +15,12 @@ api.interceptors.request.use((config) => {
 export default api;
 
 // Animais
-export async function getAnimais(params = {}) {
+export async function getAnimais({ estado, q, page, limit } = {}) {
+  const params = {};
+  if (estado) params.estado = estado;
+  if (q) params.q = q;
+  if (page) params.page = page;
+  if (limit) params.limit = limit;
   const res = await api.get('v1/animais', { params });
   return res.data;
 }
