@@ -119,6 +119,6 @@ export async function promoverPreParto() {
 }
 
 export async function ping() {
-  const res = await fetch('/api/v1/health');
-  return res.json();
+  const res = await api.get('v1/health');
+  return res.data;
 }
