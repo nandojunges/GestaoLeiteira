@@ -1,0 +1,11 @@
+# QA mínimo (sem build)
+- [ ] Endpoints ativos documentados em docs/api/openapi-v1.yaml
+- [ ] Auth: /auth/send-code, /auth/forgot-password, /auth/reset-password presentes
+- [ ] Animais: CRUD + filtros ?estado= retornam campos derivados (DEL, previsões)
+- [ ] Reprodução: IA → diagnóstico → parto → secagem alteram estado
+- [ ] Manutenção: /maintenance/promote-preparto promove gestantes D-21
+- [ ] Front (código): usa /api e api.js centralizado; sem referência a src/sqlite/*
+- [ ] Não restam wrappers/duplicatas de EscolherPlano*
+- [ ] Firebase removido (arquivo e imports)
+- [ ] Quarentena limpa (ou listada para remoção definitiva)
+- [ ] Pendentes: FullCalendar 403 & build Vite documentados
