@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/authController');
 const autenticar = require('../middleware/autenticarToken');
+const rateLimit = require('../middleware/rateLimit');
 
 
 // ✅ Cadastro: envia o código de verificação por e-mail
@@ -12,7 +13,9 @@ router.post('/register', controller.cadastro); // alias /auth/register
 // ✅ Verifica o código enviado por e-mail e cria o usuário
 router.post('/verificar-email', controller.verificarEmail);
 router.post('/verify-code', controller.verifyCode); // alias /auth/verify-code
-router.post('/forgot-password', controller.solicitarReset); // envia codigo de reset
+router.post('/send-code', rateLimit, controller.sendCode);
+router.post('/forgot-password', rateLimit, controller.forgotPassword);
+router.post('/reset-password', controller.resetPassword);
 router.post('/finalizar-cadastro', controller.finalizarCadastro);
 
 // ✅ Login (só funciona após verificação do e-mail)

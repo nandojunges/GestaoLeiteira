@@ -4,8 +4,12 @@ const fs = require('fs');
 const Usuario = require('../models/Usuario');
 const emailUtils = require('../utils/email');
 const { initDB, getDBPath } = require('../db');
+const emailService = require('../services/emailService');
+const { setResetToken, getResetToken, deleteResetToken } = require('../services/userService');
+const crypto = require('crypto');
 
 const pendentes = new Map();
+const lastCodes = new Map();
 const { requireFields, isEmail } = require('../utils/validate');
 
 const SECRET = process.env.JWT_SECRET || 'segredo';
@@ -316,49 +320,103 @@ function listarUsuarios(req, res) {
   }
 }
 
-// ➤ Envia código para recuperação de senha
-async function solicitarReset(req, res) {
+// ➤ Reenvio de código de verificação
+async function sendCode(req, res) {
+  const check = requireFields(req.body, ['email']);
+  if (!check.ok) {
+    return res.status(400).json({ ok: false, message: 'Campos obrigatórios ausentes', missing: check.missing });
+  }
   const { email } = req.body;
-  if (!email || typeof email !== 'string') {
-    return res.status(400).json({ message: 'Email inválido.' });
+  if (!isEmail(email)) {
+    return res.status(400).json({ ok: false, message: 'Email inválido' });
   }
-  const dbPath = getDBPath(email);
-  if (!fs.existsSync(dbPath)) {
-    return res.status(404).json({ message: 'Usuário não encontrado.' });
-  }
-  const db = initDB(email);
-  const usuario = Usuario.getByEmail(db, email);
-  if (!usuario) return res.status(404).json({ message: 'Usuário não encontrado.' });
 
-  const codigo = Math.floor(100000 + Math.random() * 900000).toString();
-  Usuario.definirCodigo(db, usuario.id, codigo);
+  const last = lastCodes.get(email);
+  if (last && Date.now() - last < 60 * 1000) {
+    return res.status(429).json({ ok: false, message: 'Aguarde para reenviar.' });
+  }
+
+  let registro = pendentes.get(email);
+  if (!registro) {
+    registro = { codigo: Math.floor(100000 + Math.random() * 900000).toString(), criado_em: new Date() };
+    pendentes.set(email, registro);
+  } else if (!registro.codigo) {
+    registro.codigo = Math.floor(100000 + Math.random() * 900000).toString();
+    registro.criado_em = new Date();
+    pendentes.set(email, registro);
+  }
+
+  lastCodes.set(email, Date.now());
+
   try {
-    await emailUtils.enviarCodigo(email, codigo);
-    res.json({ message: 'Código enviado ao e-mail.' });
+    await emailService.sendCode(email, registro.codigo);
+    return res.json({ ok: true, sent: true });
   } catch (err) {
-    console.error('Erro ao enviar e-mail:', err);
-    res.status(500).json({ message: 'Erro ao enviar código.' });
+    console.error('Erro ao enviar e-mail:', err.message);
+    return res.status(500).json({ ok: false, sent: false });
   }
 }
 
-// ➤ Verifica código e redefine senha
-async function resetarSenha(req, res) {
-  const { email, codigo, senha } = req.body;
-  if (!email || !codigo || !senha) {
-    return res.status(400).json({ message: 'Dados inválidos.' });
+// ➤ Esqueci minha senha: gera token e envia link
+async function forgotPassword(req, res) {
+  const check = requireFields(req.body, ['email']);
+  if (!check.ok) {
+    return res.status(400).json({ ok: false, message: 'Campos obrigatórios ausentes', missing: check.missing });
   }
+  const { email } = req.body;
+  if (!isEmail(email)) {
+    return res.status(400).json({ ok: false, message: 'Email inválido' });
+  }
+
   const dbPath = getDBPath(email);
   if (!fs.existsSync(dbPath)) {
-    return res.status(404).json({ message: 'Usuário não encontrado.' });
+    return res.status(404).json({ ok: false, message: 'Usuário não encontrado' });
   }
   const db = initDB(email);
   const usuario = Usuario.getByEmail(db, email);
-  if (!usuario || usuario.codigoVerificacao !== codigo) {
-    return res.status(400).json({ message: 'Código inválido.' });
+  if (!usuario) {
+    return res.status(404).json({ ok: false, message: 'Usuário não encontrado' });
   }
-  const hash = await bcrypt.hash(senha, 10);
-  Usuario.atualizarSenha(db, usuario.id, hash);
-  res.json({ message: 'Senha atualizada com sucesso.' });
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const exp = Date.now() + 30 * 60 * 1000;
+  setResetToken(email, usuario.id, token, exp);
+
+  const base = process.env.AUTH_BASE_URL || 'http://localhost:5173';
+  const link = `${base}/reset?token=${token}`;
+
+  try {
+    await emailService.sendTemplate(email, 'Recuperação de senha', `<p>Para redefinir sua senha clique <a href="${link}">aqui</a>.</p>`);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Erro ao enviar e-mail:', err.message);
+    return res.status(500).json({ ok: false });
+  }
+}
+
+// ➤ Define nova senha a partir do token
+async function resetPassword(req, res) {
+  const check = requireFields(req.body, ['token', 'newPassword']);
+  if (!check.ok) {
+    return res.status(400).json({ ok: false, message: 'Campos obrigatórios ausentes', missing: check.missing });
+  }
+  const { token, newPassword } = req.body;
+
+  const data = getResetToken(token);
+  if (!data) {
+    return res.status(400).json({ ok: false, message: 'Token inválido ou expirado' });
+  }
+
+  try {
+    const hash = await bcrypt.hash(newPassword, 10);
+    const db = initDB(data.email);
+    Usuario.atualizarSenha(db, data.userId, hash);
+    deleteResetToken(token);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Erro ao redefinir senha:', err.message);
+    return res.status(500).json({ ok: false });
+  }
 }
 
 // ➤ Nova verificação de código simples (cadastro)
@@ -408,14 +466,6 @@ async function verifyCode(req, res) {
     .json({ message: 'Usuário verificado e criado com sucesso.' });
 }
 
-// ➤ Verifica código: usado para cadastro ou reset de senha
-async function verificarCodigo(req, res) {
-  if (req.body.senha) {
-    return resetarSenha(req, res);
-  }
-  return verificarEmail(req, res);
-}
-
 module.exports = {
   cadastro,
   verificarEmail,
@@ -423,9 +473,9 @@ module.exports = {
   login,
   dados,
   listarUsuarios,
-  solicitarReset,
-  resetarSenha,
-  verificarCodigo,
+  sendCode,
+  forgotPassword,
+  resetPassword,
   finalizarCadastro,
   inicializarAdmins,
 };
