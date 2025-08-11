@@ -10,7 +10,7 @@ export default function LoginInfoRotativo() {
     async function carregarArquivos() {
       const arquivos = ['01.txt', '02.txt', '03.txt'];
       const promessas = arquivos.map(async (nome) => {
-        const resp = await fetch(`/data/rotativos/${nome}`);
+        const resp = await fetch(`/api/data/rotativos/${nome}`);
         const texto = await resp.text();
         const linhas = texto.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
         const obj = {};
@@ -101,7 +101,7 @@ export default function LoginInfoRotativo() {
                 {item.imagem.split(',').map((img, i) => (
                   <img
                     key={i}
-                    src={`/${img.trim()}`}
+                    src={`/api/${img.trim()}`}
                     alt=""
                     className="rounded-lg shadow"
                     style={{ maxWidth: '200px', marginTop: '10px' }}
