@@ -20,3 +20,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </ConfiguracaoProvider>
   </React.StrictMode>
 );
+// estilos FullCalendar
+import '@fullcalendar/common/main.css';
+import '@fullcalendar/daygrid/main.css';
+import '@fullcalendar/timegrid/main.css';
