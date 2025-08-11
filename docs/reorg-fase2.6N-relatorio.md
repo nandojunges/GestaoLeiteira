@@ -24,3 +24,10 @@
 ```json
 { "ok": false, "message": "Too many requests", "code": 429 }
 ```
+
+## Testes (node:test)
+- Adicionado script `"test": "node --test"` no package.json.
+- Criados:
+  - `tests/health.test.js` (verifica `/api/v1/health`).
+  - `tests/rate-limit.test.js` (envia rajada a `/api/v1/auth/send-code`; tolerante a ambiente).
+> Para rodar: iniciar `backend/server.js` (porta 3000) e depois `npm test`.
