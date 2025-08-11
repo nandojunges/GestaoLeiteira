@@ -29,6 +29,11 @@ npm run build # vite: not found
 Resultado final: falha na instalação (403) e build não executado.
 
 ## Fase 2.5.3 – Anti-403 + Node pinado
-- Node: `v20.19.4`
+- Node: `v20.19.4` (padrão .nvmrc)
 - `./scripts/install.sh`: falhou (403 ao baixar `@fullcalendar/bootstrap5`, mesmo com mirror)
+- `npm run build`: falha (`vite: not found`)
+
+## Fase 2.5.4 – anti-403 @fullcalendar e build OK
+- Node: `v20.19.4`
+- `./scripts/install.sh`: falhou (403 @fullcalendar/bootstrap5 mesmo com mirror e legacy-peer-deps)
 - `npm run build`: falha (`vite: not found`)
