@@ -1,38 +1,29 @@
 const nodemailer = require('nodemailer');
-require('dotenv').config();
+const cfg = require('../config/env');
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.zoho.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_REMETENTE,
-    pass: process.env.EMAIL_SENHA_APP,
-  },
-});
+let transporter;
+function getTransporter() {
+  if (transporter) return transporter;
+  transporter = nodemailer.createTransport({
+    service: cfg.mail.service,
+    auth: { user: cfg.mail.user, pass: cfg.mail.pass }
+  });
+  return transporter;
+}
+
+async function sendMail(to, subject, html) {
+  const tr = getTransporter();
+  await tr.sendMail({ from: cfg.mail.from, to, subject, html });
+  return true;
+}
 
 async function sendCode(to, code) {
-  const message = {
-    from: process.env.EMAIL_REMETENTE,
-    to,
-    subject: 'Código de verificação - Gestão Leiteira',
-    text: `Seu código de verificação é: ${code}`,
-    headers: { 'X-Mailer': 'GestaoLeiteira' },
-    replyTo: 'no-reply@gestaoleiteira.com',
-  };
-  return transporter.sendMail(message);
+  const html = `<p>Seu código de verificação é: ${code}</p>`;
+  return sendMail(to, 'Código de verificação - Gestão Leiteira', html);
 }
 
 async function sendTemplate(to, subject, html) {
-  const message = {
-    from: process.env.EMAIL_REMETENTE,
-    to,
-    subject,
-    html,
-    headers: { 'X-Mailer': 'GestaoLeiteira' },
-    replyTo: 'no-reply@gestaoleiteira.com',
-  };
-  return transporter.sendMail(message);
+  return sendMail(to, subject, html);
 }
 
-module.exports = { sendCode, sendTemplate };
+module.exports = { sendMail, sendCode, sendTemplate };
