@@ -31,7 +31,12 @@ const logger = require('./middleware/logger');
 const rateLimit = require('./middleware/rateLimit');
 const errorHandler = require('./middleware/errorHandler');
 const { inicializarAdmins } = require('./controllers/authController');
-const { initDB } = require('./db');
+const { initDB, getDb } = require('./db');
+
+(async () => {
+  await initDB('system@gestao'); // roda applyMigrations/abre pool
+  inicializarAdmins(getDb());
+})();
 
 const app = express();
 app.use(cors());
@@ -41,10 +46,6 @@ app.use(logger);
 
 // 📁 Pasta para backups de dados excluídos
 fs.mkdirSync(path.join(__dirname, 'dadosExcluidos'), { recursive: true });
-
-// 👤 Inicializa o admin padrão
-const adminDb = initDB('nandokkk@hotmail.com');
-inicializarAdmins(adminDb);
 
 // Importa middleware de autenticação para uso seletivo nas rotas protegidas
 const authMiddleware = require('./middleware/authMiddleware');

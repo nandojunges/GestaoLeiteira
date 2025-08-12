@@ -283,9 +283,54 @@ async function initDB(email, _forceCreate = true) {
   return pool;
 }
 
-// Compat: em vez de retornar o objeto do better-sqlite3, retornamos o pool
-function getDb() {
+// === ADAPTADOR DE COMPATIBILIDADE SQLITE-LIKE PARA PG ===
+function toPgParams(sql) {
+  // troca cada '?' por $1, $2, ...
+  let i = 0;
+  return sql.replace(/\?/g, () => `$${++i}`);
+}
+
+function getPool() {
+  // se você já tem 'pool' declarado acima, apenas exporte ele
   return pool;
 }
 
-module.exports = { initDB, getDb, sanitizeEmail };
+function getDbCompat() {
+  const p = getPool();
+  return {
+    prepare(sql) {
+      const pgSql = toPgParams(sql);
+      return {
+        // retorna um único registro (ou null)
+        async get(...params) {
+          const { rows } = await p.query(pgSql, params);
+          return rows[0] || null;
+        },
+        // retorna lista
+        async all(...params) {
+          const { rows } = await p.query(pgSql, params);
+          return rows;
+        },
+        // exec sem retorno (ou com RETURNING, se seu SQL tiver)
+        async run(...params) {
+          const res = await p.query(pgSql, params);
+          // compat com better-sqlite3
+          return { changes: res.rowCount, lastInsertRowid: res.rows?.[0]?.id };
+        }
+      };
+    },
+    // compat: alguns lugares podem chamar db.exec(sql)
+    async exec(sql) {
+      await p.query(sql);
+      return { changes: 0 };
+    }
+  };
+}
+
+// >>> MUDE AS EXPORTAÇÕES para expor o compat por padrão
+module.exports = {
+  initDB,        // já existente no seu arquivo
+  getDb: getDbCompat, // devolve o ADAPTADOR com prepare/get/all/run
+  getPool,       // caso você queira usar pool.query direto em arquivos novos
+  sanitizeEmail  // se existir no seu arquivo
+};

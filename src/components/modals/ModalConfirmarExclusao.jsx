@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import "../styles/botoes.css";
+import "../../styles/botoes.css";
 
 export default function ModalConfirmarExclusao({
   mensagem = "Deseja realmente excluir este item?",
