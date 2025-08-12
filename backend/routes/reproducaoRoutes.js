@@ -14,19 +14,19 @@ router.get('/:numero', (req, res) => {
   res.json(dados);
 });
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const db = initDB(req.user.email);
   const dados = Reproducao.registrarIA(db, req.body, req.user.idProdutor);
   // Aciona serviços complementares (tarefas, estoque, etc.)
-  handleReproducao(db, req.body, req.user.idProdutor);
+  await handleReproducao(db, req.body, req.user.idProdutor);
   res.status(201).json(dados);
 });
 
-router.post('/diagnostico', (req, res) => {
+router.post('/diagnostico', async (req, res) => {
   const db = initDB(req.user.email);
   const dados = Reproducao.registrarDiagnostico(db, req.body, req.user.idProdutor);
   // Diagnóstico também aciona o serviço de reprodução
-  handleReproducao(db, req.body, req.user.idProdutor);
+  await handleReproducao(db, req.body, req.user.idProdutor);
   res.status(201).json(dados);
 });
 

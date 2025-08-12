@@ -1,52 +1,54 @@
 const { getDb } = require('../db');
 
-function create(produtor) {
+async function create(produtor) {
   const db = getDb();
   const stmt = db.prepare(`INSERT INTO produtores (nome, email, senha, emailVerificado, codigoVerificacao, status) VALUES (?, ?, ?, ?, ?, ?)`);
-  const info = stmt.run(
+  const info = await stmt.run(
     produtor.nome,
     produtor.email,
     produtor.senha,
-    produtor.emailVerificado ? 1 : 0,
+    produtor.emailVerificado ?? false,
     produtor.codigoVerificacao,
     produtor.status || 'ativo'
   );
-  return getById(info.lastInsertRowid);
+  return await getById(info.lastInsertRowid);
 }
 
-function getByEmail(email) {
+async function getByEmail(email) {
   const db = getDb();
-  return db.prepare('SELECT * FROM produtores WHERE email = ?').get(email);
+  return await db.prepare('SELECT * FROM produtores WHERE email = ?').get(email);
 }
 
-function getById(id) {
+async function getById(id) {
   const db = getDb();
-  return db.prepare('SELECT * FROM produtores WHERE id = ?').get(id);
+  return await db.prepare('SELECT * FROM produtores WHERE id = ?').get(id);
 }
 
-function marcarVerificado(id) {
+async function marcarVerificado(id) {
   const db = getDb();
-  db.prepare('UPDATE produtores SET emailVerificado = 1, codigoVerificacao = NULL WHERE id = ?').run(id);
+  await db
+    .prepare('UPDATE produtores SET emailVerificado = ?, codigoVerificacao = NULL WHERE id = ?')
+    .run(true, id);
 }
 
-function definirCodigo(id, codigo) {
+async function definirCodigo(id, codigo) {
   const db = getDb();
-  db.prepare('UPDATE produtores SET codigoVerificacao = ? WHERE id = ?').run(codigo, id);
+  await db.prepare('UPDATE produtores SET codigoVerificacao = ? WHERE id = ?').run(codigo, id);
 }
 
-function atualizarSenha(id, senha) {
+async function atualizarSenha(id, senha) {
   const db = getDb();
-  db.prepare('UPDATE produtores SET senha = ?, codigoVerificacao = NULL WHERE id = ?').run(senha, id);
+  await db.prepare('UPDATE produtores SET senha = ?, codigoVerificacao = NULL WHERE id = ?').run(senha, id);
 }
 
-function getAll() {
+async function getAll() {
   const db = getDb();
-  return db.prepare('SELECT * FROM produtores').all();
+  return await db.prepare('SELECT * FROM produtores').all();
 }
 
-function getAllComFazendas() {
+async function getAllComFazendas() {
   const db = getDb();
-  return db.prepare(`
+  return await db.prepare(`
     SELECT p.id, p.nome, p.email, p.status,
            f.id AS fazendaId, f.nome AS fazendaNome, f.limiteAnimais,
            (SELECT COUNT(*) FROM animais a WHERE a.idProdutor = p.id) AS totalAnimais
@@ -55,10 +57,10 @@ function getAllComFazendas() {
   `).all();
 }
 
-function updateStatus(id, status) {
+async function updateStatus(id, status) {
   const db = getDb();
-  db.prepare('UPDATE produtores SET status = ? WHERE id = ?').run(status, id);
-  return getById(id);
+  await db.prepare('UPDATE produtores SET status = ? WHERE id = ?').run(status, id);
+  return await getById(id);
 }
 
 module.exports = {

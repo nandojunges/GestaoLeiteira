@@ -16,8 +16,8 @@ router.get('/admin/dash', (req, res) => {
   res.json({ message: 'Bem-vindo ao painel de administração' });
 });
 
-router.get('/admin/produtores', (req, res) => {
-  const produtores = Produtor.getAll();
+router.get('/admin/produtores', async (req, res) => {
+  const produtores = await Produtor.getAll();
   const lista = produtores.map(p => {
     const fazenda = Fazenda.getByProdutor(p.id) || { nome: '', limiteAnimais: 0 };
     const total = Animal.countByProdutor(p.id);
@@ -40,11 +40,11 @@ router.patch('/admin/limite/:id', (req, res) => {
   res.json(fazenda);
 });
 
-router.patch('/admin/status/:id', (req, res) => {
-  const produtor = Produtor.getById(req.params.id);
+router.patch('/admin/status/:id', async (req, res) => {
+  const produtor = await Produtor.getById(req.params.id);
   if (!produtor) return res.status(404).json({ error: 'Produtor não encontrado' });
   const novoStatus = produtor.status === 'ativo' ? 'suspenso' : 'ativo';
-  Produtor.updateStatus(req.params.id, novoStatus);
+  await Produtor.updateStatus(req.params.id, novoStatus);
   res.json({ status: novoStatus });
 });
 
@@ -89,7 +89,7 @@ router.get('/admin/usuarios', async (req, res) => {
     if (dir === 'backups') continue;
     const email = unsanitizeEmail(dir);
     const db = initDB(email);
-    const usuarios = Usuario.getAll(db).filter(u => u.perfil !== 'admin');
+    const usuarios = (await Usuario.getAll(db)).filter(u => u.perfil !== 'admin');
 
     usuarios.forEach(u => {
       lista.push({

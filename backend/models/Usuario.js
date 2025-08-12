@@ -7,9 +7,8 @@ function dirSemCriar(email) {
   return path.join(__dirname, '..', 'data', email.replace(/[@.]/g, '_'));
 }
 
-function getAll(db) {
-  return db
-    .prepare(`
+async function getAll(db) {
+  const stmt = db.prepare(`
       SELECT
         id,
         nome,
@@ -19,11 +18,11 @@ function getAll(db) {
         verificado,
         perfil
       FROM usuarios
-    `)
-    .all();
+    `);
+  return await stmt.all();
 }
 
-function create(db, usuario) {
+async function create(db, usuario) {
   const stmt = db.prepare(`
     INSERT INTO usuarios (
       nome,
@@ -38,19 +37,19 @@ function create(db, usuario) {
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  const info = stmt.run(
+  const info = await stmt.run(
     usuario.nome,
     usuario.nomeFazenda,
     usuario.email,
     usuario.telefone,
     usuario.senha,
-    usuario.verificado ? 1 : 0,
+    usuario.verificado ?? false,
     usuario.codigoVerificacao,
     usuario.perfil || 'funcionario', // padrão
     usuario.tipoConta || usuario.perfil || 'usuario'
   );
 
-  const novo = getById(db, info.lastInsertRowid);
+  const novo = await getById(db, info.lastInsertRowid);
   try {
     const dir = getUserDir(usuario.email);
     fs.writeFileSync(
@@ -64,88 +63,75 @@ function create(db, usuario) {
   return novo;
 }
 
-function getByEmail(db, email) {
+async function getByEmail(db, email) {
   console.log('🔍 Verificando usuário pelo e-mail:', email);
   const stmt = db.prepare('SELECT * FROM usuarios WHERE email = ?');
-  const usuario = stmt.get(email);
+  const usuario = await stmt.get(email);
   console.log('📦 Retorno do banco:', usuario);
   return usuario;
 }
 
-function existeNoBanco(db, email) {
-  return db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email);
+async function existeNoBanco(db, email) {
+  const stmt = db.prepare('SELECT * FROM usuarios WHERE email = ?');
+  return await stmt.get(email);
 }
 
-function getById(db, id) {
-  return db
-    .prepare('SELECT * FROM usuarios WHERE id = ?')
-    .get(id);
+async function getById(db, id) {
+  const stmt = db.prepare('SELECT * FROM usuarios WHERE id = ?');
+  return await stmt.get(id);
 }
 
-function marcarVerificado(db, id) {
-  db
-    .prepare('UPDATE usuarios SET verificado = 1, codigoVerificacao = NULL WHERE id = ?')
-    .run(id);
+async function marcarVerificado(db, id) {
+  const stmt = db.prepare('UPDATE usuarios SET verificado = ?, codigoVerificacao = NULL WHERE id = ?');
+  await stmt.run(true, id);
 }
 
 // Marca usuário como verificado usando o e-mail
-function marcarComoVerificado(db, email) {
-  db
-    .prepare('UPDATE usuarios SET verificado = 1, codigoVerificacao = NULL WHERE email = ?')
-    .run(email);
+async function marcarComoVerificado(db, email) {
+  const stmt = db.prepare('UPDATE usuarios SET verificado = ?, codigoVerificacao = NULL WHERE email = ?');
+  await stmt.run(true, email);
 }
 
-function definirCodigo(db, id, codigo) {
-  db
-    .prepare('UPDATE usuarios SET codigoVerificacao = ? WHERE id = ?')
-    .run(codigo, id);
+async function definirCodigo(db, id, codigo) {
+  const stmt = db.prepare('UPDATE usuarios SET codigoVerificacao = ? WHERE id = ?');
+  await stmt.run(codigo, id);
 }
 
-function atualizarSenha(db, id, senha) {
-  db
-    .prepare('UPDATE usuarios SET senha = ?, codigoVerificacao = NULL WHERE id = ?')
-    .run(senha, id);
+async function atualizarSenha(db, id, senha) {
+  const stmt = db.prepare('UPDATE usuarios SET senha = ?, codigoVerificacao = NULL WHERE id = ?');
+  await stmt.run(senha, id);
 }
 
 // ==== Funções Admin ====
 
-function liberarAcesso(db, email) {
-  const result = db
-    .prepare('UPDATE usuarios SET verificado = 1 WHERE email = ?')
-    .run(email);
-
+async function liberarAcesso(db, email) {
+  const stmt = db.prepare('UPDATE usuarios SET verificado = ? WHERE email = ?');
+  const result = await stmt.run(true, email);
   return result.changes > 0;
 }
 
-function bloquearConta(db, email) {
-  const result = db
-    .prepare('UPDATE usuarios SET verificado = 0 WHERE email = ?')
-    .run(email);
-
+async function bloquearConta(db, email) {
+  const stmt = db.prepare('UPDATE usuarios SET verificado = ? WHERE email = ?');
+  const result = await stmt.run(false, email);
   return result.changes > 0;
 }
 
-function atualizarPlano(db, email, plano) {
-  const result = db
-    .prepare('UPDATE usuarios SET perfil = ? WHERE email = ?')
-    .run(plano, email);
-
+async function atualizarPlano(db, email, plano) {
+  const stmt = db.prepare('UPDATE usuarios SET perfil = ? WHERE email = ?');
+  const result = await stmt.run(plano, email);
   return result.changes > 0;
 }
 
-function excluir(db, email) {
-  const result = db
-    .prepare('DELETE FROM usuarios WHERE email = ?')
-    .run(email);
-
+async function excluir(db, email) {
+  const stmt = db.prepare('DELETE FROM usuarios WHERE email = ?');
+  const result = await stmt.run(email);
   return result.changes > 0;
 }
 
 // (Opcional) Corrige perfis antigos com valor 'usuario'
-function corrigirPerfisAntigos(db) {
-  return db
-    .prepare("UPDATE usuarios SET perfil = 'funcionario' WHERE perfil = 'usuario'")
-    .run();
+async function corrigirPerfisAntigos(db) {
+  const stmt = db.prepare("UPDATE usuarios SET perfil = 'funcionario' WHERE perfil = 'usuario'");
+  return await stmt.run();
 }
 
 module.exports = {
