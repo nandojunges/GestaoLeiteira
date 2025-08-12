@@ -6,12 +6,12 @@ const Animais = require('../models/animaisModel');
  * quando uma inseminação ou diagnóstico reprodutivo é registrado.
  * Exemplo: agenda uma tarefa de checagem futura e deduz itens do estoque.
  */
-function handleReproducao(db, dados, idProdutor) {
+async function handleReproducao(db, dados, idProdutor) {
   // Agenda uma tarefa de checar gestação 30 dias após a data informada
   if (dados.data) {
     const checkDate = new Date(dados.data);
     checkDate.setDate(checkDate.getDate() + 30);
-    Tarefas.create(
+    await Tarefas.create(
       db,
       {
         descricao: `Checar gestação do animal ${dados.numero}`,
@@ -23,7 +23,7 @@ function handleReproducao(db, dados, idProdutor) {
   }
   // Deduz do estoque os itens utilizados no protocolo (se fornecidos)
   if (Array.isArray(dados.itensUsados)) {
-    dados.itensUsados.forEach((itemUso) => {
+    for (const itemUso of dados.itensUsados) {
       const current = Estoque.getById(db, itemUso.idItem, idProdutor);
       if (current) {
         const novaQtd = current.quantidade - itemUso.quantidade;
@@ -38,12 +38,12 @@ function handleReproducao(db, dados, idProdutor) {
           idProdutor,
         );
       }
-    });
+    }
   }
 
   // Se número do animal e data da IA forem fornecidos, agenda as tarefas de secagem e pré‑parto
   if (dados.numero && dados.data) {
-    schedulePrenatalTasks(db, dados.numero, dados.data, idProdutor);
+    await schedulePrenatalTasks(db, dados.numero, dados.data, idProdutor);
   }
 }
 
@@ -53,7 +53,7 @@ function handleReproducao(db, dados, idProdutor) {
  * - Agenda secagem 60 dias antes, pré‑parto 14 dias antes e a preparação para parto 7 dias antes.
  * - Atualiza a propriedade previsaoParto do animal, se existir, para facilitar consultas.
  */
-function schedulePrenatalTasks(db, numeroAnimal, dataIA, idProdutor) {
+async function schedulePrenatalTasks(db, numeroAnimal, dataIA, idProdutor) {
   try {
     const iaDate = new Date(dataIA);
     // 283 dias de gestação para bovinos leiteiros
@@ -63,7 +63,7 @@ function schedulePrenatalTasks(db, numeroAnimal, dataIA, idProdutor) {
     // Secagem 60 dias antes do parto
     const dryingDate = new Date(dueDate);
     dryingDate.setDate(dryingDate.getDate() - 60);
-    Tarefas.create(
+    await Tarefas.create(
       db,
       {
         descricao: `Secar vaca ${numeroAnimal}`,
@@ -76,7 +76,7 @@ function schedulePrenatalTasks(db, numeroAnimal, dataIA, idProdutor) {
     // Pré‑parto 14 dias antes do parto
     const prePartoDate = new Date(dueDate);
     prePartoDate.setDate(prePartoDate.getDate() - 14);
-    Tarefas.create(
+    await Tarefas.create(
       db,
       {
         descricao: `Pré‑parto da vaca ${numeroAnimal}`,
@@ -89,7 +89,7 @@ function schedulePrenatalTasks(db, numeroAnimal, dataIA, idProdutor) {
     // Preparação para parto 7 dias antes do parto
     const partoPrepDate = new Date(dueDate);
     partoPrepDate.setDate(partoPrepDate.getDate() - 7);
-    Tarefas.create(
+    await Tarefas.create(
       db,
       {
         descricao: `Próximo parto da vaca ${numeroAnimal}`,
@@ -100,9 +100,9 @@ function schedulePrenatalTasks(db, numeroAnimal, dataIA, idProdutor) {
     );
 
     // Atualiza a previsão de parto no cadastro do animal
-    const animal = Animais.getByNumero(db, numeroAnimal, idProdutor);
+    const animal = await Animais.getByNumero(db, numeroAnimal, idProdutor);
     if (animal) {
-      Animais.update(
+      await Animais.update(
         db,
         animal.id,
         {

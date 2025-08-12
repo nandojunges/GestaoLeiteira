@@ -1,49 +1,49 @@
-function getAll(db, idProdutor) {
-  return db
+async function getAll(db, idProdutor) {
+  return await db
     .prepare('SELECT * FROM tarefas WHERE idProdutor = ?')
     .all(idProdutor);
 }
 
-function getById(db, id, idProdutor) {
-  return db
+async function getById(db, id, idProdutor) {
+  return await db
     .prepare('SELECT * FROM tarefas WHERE id = ? AND idProdutor = ?')
     .get(id, idProdutor);
 }
 
-function create(db, tarefa, idProdutor) {
+async function create(db, tarefa, idProdutor) {
   const stmt = db.prepare(`
     INSERT INTO tarefas (descricao, data, concluida, idProdutor)
     VALUES (?, ?, ?, ?)
   `);
-  const info = stmt.run(
+  const info = await stmt.run(
     tarefa.descricao,
     tarefa.data,
-    tarefa.concluida ? 1 : 0,
+    tarefa.concluida ?? false,
     idProdutor
   );
 
-  return getById(db, info.lastInsertRowid, idProdutor);
+  return await getById(db, info.lastInsertRowid, idProdutor);
 }
 
-function update(db, id, tarefa, idProdutor) {
+async function update(db, id, tarefa, idProdutor) {
   const stmt = db.prepare(`
     UPDATE tarefas
     SET descricao = ?, data = ?, concluida = ?
     WHERE id = ? AND idProdutor = ?
   `);
-  stmt.run(
+  await stmt.run(
     tarefa.descricao,
     tarefa.data,
-    tarefa.concluida ? 1 : 0,
+    tarefa.concluida ?? false,
     id,
     idProdutor
   );
 
-  return getById(db, id, idProdutor);
+  return await getById(db, id, idProdutor);
 }
 
-function remove(db, id, idProdutor) {
-  return db
+async function remove(db, id, idProdutor) {
+  return await db
     .prepare('DELETE FROM tarefas WHERE id = ? AND idProdutor = ?')
     .run(id, idProdutor);
 }

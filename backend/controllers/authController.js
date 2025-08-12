@@ -116,11 +116,11 @@ async function verificarEmail(req, res) {
     let dbExist = null;
     if (fs.existsSync(dbPath)) {
       dbExist = initDB(endereco);
-      existente = Usuario.existeNoBanco(dbExist, endereco);
+      existente = await Usuario.existeNoBanco(dbExist, endereco);
     }
     if (existente) {
       if (req.query.reset === 'true' || existente.status === 'pendente' || !existente.verificado) {
-        Usuario.excluir(dbExist, endereco);
+        await Usuario.excluir(dbExist, endereco);
       } else {
         pendentes.delete(endereco);
         return res.status(400).json({ erro: 'Email já cadastrado.' });
@@ -133,28 +133,30 @@ async function verificarEmail(req, res) {
       const perfil = tipoConta === 'admin' ? 'admin' : 'funcionario';
 
       db = initDB(endereco, true);
-      const novo = Usuario.create(db, {
+      const novo = await Usuario.create(db, {
         nome: pendente.nome,
         nomeFazenda: pendente.nomeFazenda,
         email: pendente.email,
         telefone: pendente.telefone,
         senha: pendente.senha,
-        verificado: 1,
+        verificado: true,
         codigoVerificacao: null,
         perfil,
         tipoConta,
       });
 
       const agora = new Date().toISOString();
-      db.prepare(
-        'UPDATE usuarios SET status = ?, planoSolicitado = ?, formaPagamento = ?, dataCadastro = ? WHERE id = ?'
-      ).run(
-        'pendente',
-        pendente.planoSolicitado,
-        pendente.planoSolicitado === 'teste_gratis' ? null : pendente.formaPagamento,
-        agora,
-        novo.id
-      );
+      await db
+        .prepare(
+          'UPDATE usuarios SET status = ?, planoSolicitado = ?, formaPagamento = ?, dataCadastro = ? WHERE id = ?'
+        )
+        .run(
+          'pendente',
+          pendente.planoSolicitado,
+          pendente.planoSolicitado === 'teste_gratis' ? null : pendente.formaPagamento,
+          agora,
+          novo.id
+        );
 
       pendentes.delete(endereco);
       console.log(`🔐 Código verificado com sucesso para email: ${endereco}`);
@@ -198,11 +200,11 @@ async function finalizarCadastro(req, res) {
     let dbCheck = null;
     if (fs.existsSync(dbPath)) {
       dbCheck = initDB(email);
-      existente = Usuario.existeNoBanco(dbCheck, email);
+      existente = await Usuario.existeNoBanco(dbCheck, email);
     }
     if (existente) {
       if (req.query.reset === 'true' || existente.status === 'pendente' || !existente.verificado) {
-        Usuario.excluir(dbCheck, email);
+        await Usuario.excluir(dbCheck, email);
       } else {
         return res.status(400).json({ erro: 'Email já cadastrado.' });
       }
@@ -213,22 +215,24 @@ async function finalizarCadastro(req, res) {
     const perfil = tipoConta === 'admin' ? 'admin' : 'funcionario';
 
     const db = initDB(email, true);
-    const novo = Usuario.create(db, {
+    const novo = await Usuario.create(db, {
       nome: pendente.nome,
       nomeFazenda: pendente.nomeFazenda,
       email: pendente.email,
       telefone: pendente.telefone,
       senha: pendente.senha,
-      verificado: 1,
+      verificado: true,
       codigoVerificacao: null,
       perfil,
       tipoConta,
     });
 
     const agora = new Date().toISOString();
-    db.prepare(
-      'UPDATE usuarios SET status = ?, planoSolicitado = ?, formaPagamento = ?, dataCadastro = ? WHERE id = ?'
-    ).run('pendente', plano, plano === 'teste_gratis' ? null : formaPagamento, agora, novo.id);
+    await db
+      .prepare(
+        'UPDATE usuarios SET status = ?, planoSolicitado = ?, formaPagamento = ?, dataCadastro = ? WHERE id = ?'
+      )
+      .run('pendente', plano, plano === 'teste_gratis' ? null : formaPagamento, agora, novo.id);
 
     pendentes.delete(email);
     console.log(`🔐 Código verificado com sucesso para email: ${email}`);
@@ -254,7 +258,7 @@ async function login(req, res) {
   }
 
   const db = initDB(email);
-  const usuario = Usuario.getByEmail(db, email);
+  const usuario = await Usuario.getByEmail(db, email);
 
   if (!usuario) {
     return res.status(400).json({ message: 'Usuário não encontrado.' });
@@ -289,9 +293,9 @@ async function login(req, res) {
 }
 
 // ➤ Dados do usuário logado
-function dados(req, res) {
+async function dados(req, res) {
   const db = initDB(req.user.email);
-  const usuario = Usuario.getById(db, req.user.idProdutor);
+  const usuario = await Usuario.getById(db, req.user.idProdutor);
 
   if (!usuario) return res.status(404).json({ message: 'Usuário não encontrado' });
 
@@ -308,11 +312,11 @@ function dados(req, res) {
 }
 
 // ➤ Lista todos os usuários do banco (apenas do banco do produtor)
-function listarUsuarios(req, res) {
+async function listarUsuarios(req, res) {
   const db = initDB(req.user.email);
 
   try {
-    const usuarios = Usuario.getAll(db);
+    const usuarios = await Usuario.getAll(db);
     res.json(usuarios);
   } catch (err) {
     console.error('Erro ao listar usuários:', err);
@@ -373,7 +377,7 @@ async function forgotPassword(req, res) {
     return res.status(404).json({ ok: false, message: 'Usuário não encontrado' });
   }
   const db = initDB(email);
-  const usuario = Usuario.getByEmail(db, email);
+  const usuario = await Usuario.getByEmail(db, email);
   if (!usuario) {
     return res.status(404).json({ ok: false, message: 'Usuário não encontrado' });
   }
@@ -410,7 +414,7 @@ async function resetPassword(req, res) {
   try {
     const hash = await bcrypt.hash(newPassword, 10);
     const db = initDB(data.email);
-    Usuario.atualizarSenha(db, data.userId, hash);
+    await Usuario.atualizarSenha(db, data.userId, hash);
     deleteResetToken(token);
     return res.json({ ok: true });
   } catch (err) {
@@ -443,21 +447,23 @@ async function verifyCode(req, res) {
   const senhaHasheada = registro.senha;
   const agora = new Date().toISOString();
 
-  const novo = Usuario.create(db, {
+  const novo = await Usuario.create(db, {
     nome: registro.nome,
     nomeFazenda: registro.nomeFazenda,
     email,
     telefone: registro.telefone,
     senha: senhaHasheada,
-    verificado: 1,
+    verificado: true,
     codigoVerificacao: null,
     perfil: 'funcionario',
     tipoConta: 'usuario',
   });
 
-  db.prepare(
-    'UPDATE usuarios SET status = ?, plano = ?, dataCadastro = ? WHERE id = ?'
-  ).run('ativo', 'gratis', agora, novo.id);
+  await db
+    .prepare(
+      'UPDATE usuarios SET status = ?, plano = ?, dataCadastro = ? WHERE id = ?'
+    )
+    .run('ativo', 'gratis', agora, novo.id);
 
   pendentes.delete(email);
 
@@ -480,7 +486,7 @@ module.exports = {
   inicializarAdmins,
 };
 
-function inicializarAdmins(db) {
+async function inicializarAdmins(db) {
   const adminsPadrao = [
     {
       nome: "Administrador",
@@ -493,23 +499,23 @@ function inicializarAdmins(db) {
     },
   ];
 
-  adminsPadrao.forEach((admin) => {
-    const existente = Usuario.getByEmail(db, admin.email);
+  for (const admin of adminsPadrao) {
+    const existente = await Usuario.getByEmail(db, admin.email);
     if (!existente) {
       try {
-        Usuario.create(db, { ...admin, verificado: 1 });
+        await Usuario.create(db, { ...admin, verificado: true });
         console.log(`✅ Admin criado: ${admin.email}`);
       } catch (err) {
         console.error(`❌ Erro ao criar admin ${admin.email}:`, err.message);
       }
     } else {
       if (!existente.verificado) {
-        Usuario.liberarAcesso(db, admin.email);
+        await Usuario.liberarAcesso(db, admin.email);
         console.log(`ℹ️ Admin existente atualizado como verificado: ${admin.email}`);
       } else {
         console.log(`ℹ️ Admin já existente: ${admin.email}`);
       }
     }
-  });
+  }
 }
 

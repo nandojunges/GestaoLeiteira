@@ -62,7 +62,7 @@ async function listarAnimais(req, res) {
 
   try {
     console.log('🧩 Buscando animais');
-    const animaisBrutos = Animais.getAll(db, req.user.idProdutor);
+    const animaisBrutos = await Animais.getAll(db, req.user.idProdutor);
     const animaisPadronizados = animaisBrutos
       .map((animal) => {
         try {
@@ -78,7 +78,7 @@ async function listarAnimais(req, res) {
       if (a.id) {
         const del = calcularDELParaAnimal(db, a.id, req.user.idProdutor);
         if (del !== null) {
-          Animais.setDEL(db, a.id, del, req.user.idProdutor);
+          await Animais.setDEL(db, a.id, del, req.user.idProdutor);
           a.del = del;
         }
       }
@@ -99,12 +99,12 @@ async function buscarAnimalPorId(req, res) {
   const id = req.params.id;
 
   try {
-    const bruto = Animais.getById(db, parseInt(id), req.user.idProdutor);
+    const bruto = await Animais.getById(db, parseInt(id), req.user.idProdutor);
     const animal = padronizarDadosAnimal(bruto);
     if (!animal) return res.status(404).json({ message: 'Animal não encontrado' });
     const del = calcularDELParaAnimal(db, animal.id, req.user.idProdutor);
     if (del !== null) {
-      Animais.setDEL(db, animal.id, del, req.user.idProdutor);
+      await Animais.setDEL(db, animal.id, del, req.user.idProdutor);
       animal.del = del;
     }
     res.json(animal);
@@ -120,7 +120,7 @@ async function cadastrarAnimal(req, res) {
   const novoAnimal = { ...req.body, idProdutor: req.user.idProdutor };
 
   try {
-    const criadoBruto = Animais.create(db, novoAnimal, req.user.idProdutor);
+    const criadoBruto = await Animais.create(db, novoAnimal, req.user.idProdutor);
     const animalCriado = (() => {
       try {
         return padronizarDadosAnimal(criadoBruto);
@@ -140,7 +140,12 @@ async function cadastrarAnimal(req, res) {
         },
         req.user.idProdutor,
       );
-      Animais.setDEL(db, animalCriado.id, calcularDELParaAnimal(db, animalCriado.id, req.user.idProdutor), req.user.idProdutor);
+      await Animais.setDEL(
+        db,
+        animalCriado.id,
+        calcularDELParaAnimal(db, animalCriado.id, req.user.idProdutor),
+        req.user.idProdutor,
+      );
     }
     if (req.body.ultimaIA) {
       Eventos.create(
@@ -178,7 +183,7 @@ async function editarAnimal(req, res) {
   };
 
   try {
-    const atualizadoBruto = Animais.update(db, id, dadosAtualizados, req.user.idProdutor);
+    const atualizadoBruto = await Animais.update(db, id, dadosAtualizados, req.user.idProdutor);
     const animalAtualizado = (() => {
       try {
         return padronizarDadosAnimal(atualizadoBruto);
@@ -198,7 +203,7 @@ async function editarAnimal(req, res) {
         },
         req.user.idProdutor,
       );
-      Animais.setDEL(db, id, calcularDELParaAnimal(db, id, req.user.idProdutor), req.user.idProdutor);
+      await Animais.setDEL(db, id, calcularDELParaAnimal(db, id, req.user.idProdutor), req.user.idProdutor);
     }
     if (req.body.ultimaIA) {
       Eventos.create(
@@ -225,7 +230,7 @@ async function excluirAnimal(req, res) {
   const id = req.params.id;
 
   try {
-    Animais.remove(db, id, req.user.idProdutor);
+    await Animais.remove(db, id, req.user.idProdutor);
     res.json({ message: 'Animal removido com sucesso' });
   } catch (error) {
     console.error(error);
@@ -249,8 +254,8 @@ async function aplicarSecagem(req, res) {
       },
       req.user.idProdutor
     );
-    Animais.setDEL(db, id, 0, req.user.idProdutor);
-    Animais.updateStatus(db, id, 2, req.user.idProdutor);
+    await Animais.setDEL(db, id, 0, req.user.idProdutor);
+    await Animais.updateStatus(db, id, 2, req.user.idProdutor);
     res.status(200).json({ message: 'Secagem aplicada' });
   } catch (err) {
     console.error(err);
@@ -264,9 +269,9 @@ async function registrarParto(req, res) {
   const { id } = req.params;
   const { dataParto, sexoBezerro } = req.body;
   try {
-    Animais.incrementarLactacoes(db, id, req.user.idProdutor);
-    Animais.updateStatus(db, id, 1, req.user.idProdutor);
-    const novaBezerra = Animais.createBezerra(
+    await Animais.incrementarLactacoes(db, id, req.user.idProdutor);
+    await Animais.updateStatus(db, id, 1, req.user.idProdutor);
+    const novaBezerra = await Animais.createBezerra(
       db,
       {
         nascimento: dataParto,
@@ -285,7 +290,7 @@ async function registrarParto(req, res) {
       },
       req.user.idProdutor
     );
-    Animais.setDEL(db, id, 0, req.user.idProdutor);
+    await Animais.setDEL(db, id, 0, req.user.idProdutor);
     res.status(201).json({ message: 'Parto registrado', bezerra: novaBezerra });
   } catch (err) {
     console.error(err);

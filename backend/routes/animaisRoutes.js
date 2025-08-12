@@ -14,10 +14,10 @@ router.use(authMiddleware);
 router.get('/', animaisController.listarAnimais);
 
 // 🔎 Buscar por número (deve vir antes do :id)
-router.get('/numero/:numero', (req, res) => {
+router.get('/numero/:numero', async (req, res) => {
   const db = initDB(req.user.email);
   try {
-    const animal = animaisModel.getByNumero(
+    const animal = await animaisModel.getByNumero(
       db,
       parseInt(req.params.numero),
       req.user.idProdutor
@@ -37,7 +37,7 @@ router.get('/:id', animaisController.buscarAnimalPorId);
 router.post('/', async (req, res, next) => {
   const db = initDB(req.user.email);
   const numero = parseInt(req.body.numero);
-  const existente = animaisModel.getByNumero(db, numero, req.user.idProdutor);
+  const existente = await animaisModel.getByNumero(db, numero, req.user.idProdutor);
   if (existente) {
     return res.status(400).json({ erro: 'Número já cadastrado' });
   }
