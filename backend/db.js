@@ -1,410 +1,291 @@
-const fs = require('fs');
-const path = require('path');
-const Database = require('better-sqlite3');
-
-let db;
+// backend/db.js  — versão PostgreSQL
+const { Pool } = require('pg');
 
 function sanitizeEmail(email) {
-  return email.replace(/[@.]/g, '_');
+  return String(email || '').replace(/[@.]/g, '_');
 }
 
-function getUserDir(email, forceCreate = true) {
-  const dir = path.join(__dirname, 'data', sanitizeEmail(email));
-  if (forceCreate) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  return dir;
-}
+// Pool usa variáveis de ambiente (PGHOST, PGUSER, etc.)
+const pool = new Pool({
+  // Se quiser fixar aqui em vez de usar .env, descomente:
+  // host: 'localhost',
+  // port: 5432,
+  // user: 'postgres',
+  // password: 'SuaSenhaAqui',
+  // database: 'gestao_leiteira',
+  max: 10,
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 10_000,
+});
 
-function getDBPath(email) {
-  return path.join(__dirname, 'data', sanitizeEmail(email), 'banco.sqlite');
-}
+// === MIGRATIONS (PostgreSQL) ===
+async function applyMigrations(client) {
+  // Tipos:
+  // - SERIAL PRIMARY KEY para IDs autoincrementáveis
+  // - BOOLEAN em vez de INTEGER(0/1)
+  // Mantivemos TEXT para datas para não quebrar o restante do app.
 
-const createUsuarios = `CREATE TABLE IF NOT EXISTS usuarios (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  nome TEXT,
-  nomeFazenda TEXT,
-  email TEXT UNIQUE,
-  telefone TEXT,
-  senha TEXT,
-  verificado INTEGER DEFAULT 0,
-  codigoVerificacao TEXT,
-  perfil TEXT DEFAULT 'usuario',
-  tipoConta TEXT DEFAULT 'usuario',
-  plano TEXT DEFAULT 'gratis',
-  planoSolicitado TEXT DEFAULT NULL,
-  formaPagamento TEXT DEFAULT NULL,
-  dataCadastro TEXT DEFAULT NULL,
-  metodoPagamentoId INTEGER,
-  dataLiberado TEXT DEFAULT NULL,
-  dataFimLiberacao TEXT DEFAULT NULL,
-  dataFimTeste TEXT DEFAULT NULL,
-  status TEXT DEFAULT 'ativo'
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS usuarios (
+      id SERIAL PRIMARY KEY,
+      nome TEXT,
+      nomeFazenda TEXT,
+      email TEXT UNIQUE,
+      telefone TEXT,
+      senha TEXT,
+      verificado BOOLEAN DEFAULT FALSE,
+      codigoVerificacao TEXT,
+      perfil TEXT DEFAULT 'usuario',
+      tipoConta TEXT DEFAULT 'usuario',
+      plano TEXT DEFAULT 'gratis',
+      planoSolicitado TEXT DEFAULT NULL,
+      formaPagamento TEXT DEFAULT NULL,
+      dataCadastro TEXT DEFAULT NULL,
+      metodoPagamentoId INTEGER,
+      dataLiberado TEXT DEFAULT NULL,
+      dataFimLiberacao TEXT DEFAULT NULL,
+      dataFimTeste TEXT DEFAULT NULL,
+      status TEXT DEFAULT 'ativo'
+    );
+  `);
 
-const createVerificacoesPendentes = `CREATE TABLE IF NOT EXISTS verificacoes_pendentes (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  email TEXT UNIQUE,
-  codigo TEXT,
-  nome TEXT,
-  nomeFazenda TEXT,
-  telefone TEXT,
-  senha TEXT,
-  planoSolicitado TEXT,
-  formaPagamento TEXT,
-  criado_em DATETIME
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS verificacoes_pendentes (
+      id SERIAL PRIMARY KEY,
+      email TEXT UNIQUE,
+      codigo TEXT,
+      nome TEXT,
+      nomeFazenda TEXT,
+      telefone TEXT,
+      senha TEXT,
+      planoSolicitado TEXT,
+      formaPagamento TEXT,
+      criado_em TIMESTAMP
+    );
+  `);
 
-const createProdutores = `CREATE TABLE IF NOT EXISTS produtores (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  nome TEXT,
-  email TEXT UNIQUE,
-  senha TEXT,
-  emailVerificado INTEGER DEFAULT 0,
-  codigoVerificacao TEXT,
-  status TEXT DEFAULT 'ativo'
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS produtores (
+      id SERIAL PRIMARY KEY,
+      nome TEXT,
+      email TEXT UNIQUE,
+      senha TEXT,
+      emailVerificado BOOLEAN DEFAULT FALSE,
+      codigoVerificacao TEXT,
+      status TEXT DEFAULT 'ativo'
+    );
+  `);
 
-const createFazendas = `CREATE TABLE IF NOT EXISTS fazendas (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  nome TEXT,
-  idProdutor INTEGER,
-  limiteAnimais INTEGER DEFAULT 0
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS fazendas (
+      id SERIAL PRIMARY KEY,
+      nome TEXT,
+      idProdutor INTEGER,
+      limiteAnimais INTEGER DEFAULT 0
+    );
+  `);
 
-const createAnimais = `CREATE TABLE IF NOT EXISTS animais (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  numero INTEGER,
-  brinco TEXT,
-  nascimento TEXT,
-  sexo TEXT,
-  origem TEXT,
-  categoria TEXT,
-  idade TEXT,
-  raca TEXT,
-  checklistVermifugado INTEGER DEFAULT 0,
-  checklistGrupoDefinido INTEGER DEFAULT 0,
-  fichaComplementarOK INTEGER DEFAULT 0,
-  pai TEXT,
-  mae TEXT,
-  ultimaIA TEXT,
-  diagnosticoGestacao TEXT,
-  previsaoParto TEXT,
-  parto TEXT,
-  secagem TEXT,
-  estado TEXT DEFAULT 'vazia',
-  nLactacoes INTEGER,
-  status TEXT DEFAULT 'ativo',
-  motivoSaida TEXT,
-  dataSaida TEXT,
-  valorVenda REAL,
-  observacoesSaida TEXT,
-  tipoSaida TEXT,
-  idProdutor INTEGER
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS animais (
+      id SERIAL PRIMARY KEY,
+      numero INTEGER,
+      brinco TEXT,
+      nascimento TEXT,
+      sexo TEXT,
+      origem TEXT,
+      categoria TEXT,
+      idade TEXT,
+      raca TEXT,
+      checklistVermifugado BOOLEAN DEFAULT FALSE,
+      checklistGrupoDefinido BOOLEAN DEFAULT FALSE,
+      fichaComplementarOK BOOLEAN DEFAULT FALSE,
+      pai TEXT,
+      mae TEXT,
+      ultimaIA TEXT,
+      diagnosticoGestacao TEXT,
+      previsaoParto TEXT,
+      parto TEXT,
+      secagem TEXT,
+      estado TEXT DEFAULT 'vazia',
+      nLactacoes INTEGER,
+      status TEXT DEFAULT 'ativo',
+      motivoSaida TEXT,
+      dataSaida TEXT,
+      valorVenda REAL,
+      observacoesSaida TEXT,
+      tipoSaida TEXT,
+      del INTEGER,
+      idProdutor INTEGER
+    );
+  `);
 
-const createTarefas = `CREATE TABLE IF NOT EXISTS tarefas (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  descricao TEXT NOT NULL,
-  data TEXT,
-  concluida INTEGER DEFAULT 0,
-  idProdutor INTEGER
-)`;
+  // touros
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS touros (
+      id SERIAL PRIMARY KEY,
+      nome TEXT,
+      texto TEXT,
+      arquivoBase64 TEXT,
+      dataUpload TEXT,
+      idProdutor INTEGER
+    );
+  `);
 
-const createEstoque = `CREATE TABLE IF NOT EXISTS estoque (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  item TEXT NOT NULL,
-  quantidade INTEGER,
-  unidade TEXT,
-  idProdutor INTEGER
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS tarefas (
+      id SERIAL PRIMARY KEY,
+      descricao TEXT NOT NULL,
+      data TEXT,
+      concluida BOOLEAN DEFAULT FALSE,
+      idProdutor INTEGER
+    );
+  `);
 
-const createProtocolos = `CREATE TABLE IF NOT EXISTS protocolos_reprodutivos (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  nome TEXT NOT NULL,
-  descricao TEXT,
-  idProdutor INTEGER
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS estoque (
+      id SERIAL PRIMARY KEY,
+      item TEXT NOT NULL,
+      quantidade INTEGER,
+      unidade TEXT,
+      idProdutor INTEGER
+    );
+  `);
 
-const createVacas = `CREATE TABLE IF NOT EXISTS vacas (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  nome TEXT NOT NULL,
-  idade INTEGER,
-  raca TEXT,
-  idProdutor INTEGER
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS protocolos_reprodutivos (
+      id SERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      descricao TEXT,
+      idProdutor INTEGER
+    );
+  `);
 
-const createBezerras = `CREATE TABLE IF NOT EXISTS bezerras (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  nome TEXT,
-  idProdutor INTEGER
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS vacas (
+      id SERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      idade INTEGER,
+      raca TEXT,
+      idProdutor INTEGER
+    );
+  `);
 
-const createProdutos = `CREATE TABLE IF NOT EXISTS produtos (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  dados TEXT,
-  idProdutor INTEGER
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS bezerras (
+      id SERIAL PRIMARY KEY,
+      nome TEXT,
+      idProdutor INTEGER
+    );
+  `);
 
-const createExames = `CREATE TABLE IF NOT EXISTS exames_sanitarios (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  dados TEXT,
-  idProdutor INTEGER
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS produtos (
+      id SERIAL PRIMARY KEY,
+      dados TEXT,
+      idProdutor INTEGER
+    );
+  `);
 
-const createReproducao = `CREATE TABLE IF NOT EXISTS reproducao (
-  numero TEXT PRIMARY KEY,
-  dados TEXT,
-  idProdutor INTEGER
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS exames_sanitarios (
+      id SERIAL PRIMARY KEY,
+      dados TEXT,
+      idProdutor INTEGER
+    );
+  `);
 
-const createFinanceiro = `CREATE TABLE IF NOT EXISTS financeiro (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  data TEXT,
-  descricao TEXT,
-  valor REAL,
-  tipo TEXT,
-  categoria TEXT,
-  subcategoria TEXT,
-  origem TEXT,
-  numeroAnimal TEXT,
-  centroCusto TEXT,
-  idProdutor INTEGER
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS reproducao (
+      numero TEXT PRIMARY KEY,
+      dados TEXT,
+      idProdutor INTEGER
+    );
+  `);
 
-const createEventos = `CREATE TABLE IF NOT EXISTS eventos (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  tipo TEXT,
-  title TEXT,
-  date TEXT,
-  descricao TEXT,
-  subtipo TEXT,
-  prioridadeVisual INTEGER,
-  idProdutor INTEGER
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS financeiro (
+      id SERIAL PRIMARY KEY,
+      data TEXT,
+      descricao TEXT,
+      valor REAL,
+      tipo TEXT,
+      categoria TEXT,
+      subcategoria TEXT,
+      origem TEXT,
+      numeroAnimal TEXT,
+      centroCusto TEXT,
+      idProdutor INTEGER
+    );
+  `);
 
-const createMetodosPagamento = `CREATE TABLE IF NOT EXISTS metodos_pagamento (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  nome TEXT NOT NULL,
-  tipo TEXT NOT NULL,
-  identificador TEXT,
-  ativo BOOLEAN DEFAULT 1
-)`;
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS eventos (
+      id SERIAL PRIMARY KEY,
+      tipo TEXT,
+      title TEXT,
+      date TEXT,
+      descricao TEXT,
+      subtipo TEXT,
+      prioridadeVisual INTEGER,
+      idProdutor INTEGER
+    );
+  `);
 
-function applyMigrations(database) {
-  database.exec(createAnimais);
-  // cria tabela de touros para armazenar fichas de reprodutores
-  const createTouros = `
-CREATE TABLE IF NOT EXISTS touros (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  nome TEXT,
-  texto TEXT,
-  arquivoBase64 TEXT,
-  dataUpload TEXT,
-  idProdutor INTEGER
-)`;
-  database.exec(createTouros);
-  database.exec(createUsuarios);
-  database.exec(createVerificacoesPendentes);
-  database.exec(createProdutores);
-  database.exec(createFazendas);
-  database.exec(createMetodosPagamento);
+  // Tabela de eventos historizados por animal (mantida do seu código)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS eventos_animais (
+      id SERIAL PRIMARY KEY,
+      animal_id INTEGER,
+      dataEvento TEXT,
+      tipoEvento TEXT,
+      descricao TEXT,
+      idProdutor INTEGER
+    );
+  `);
 
-  let pendCols = database.prepare('PRAGMA table_info(verificacoes_pendentes)').all();
-  if (!pendCols.some(c => c.name === 'planoSolicitado')) {
-    database.exec("ALTER TABLE verificacoes_pendentes ADD COLUMN planoSolicitado TEXT");
-  }
-  if (!pendCols.some(c => c.name === 'formaPagamento')) {
-    database.exec("ALTER TABLE verificacoes_pendentes ADD COLUMN formaPagamento TEXT");
-  }
-
-  let produtorCols = database.prepare('PRAGMA table_info(produtores)').all();
-  if (!produtorCols.some(c => c.name === 'status')) {
-    database.exec("ALTER TABLE produtores ADD COLUMN status TEXT DEFAULT 'ativo'");
-  }
-
-  let fazendaCols = database.prepare('PRAGMA table_info(fazendas)').all();
-  if (!fazendaCols.some(c => c.name === 'limiteAnimais')) {
-    database.exec('ALTER TABLE fazendas ADD COLUMN limiteAnimais INTEGER DEFAULT 0');
-  }
-
-  let info = database.prepare('PRAGMA table_info(animais)').all();
-  const existentes = info.map(c => c.name);
-  if (!existentes.includes('tipoSaida')) {
-    database.exec('ALTER TABLE animais ADD COLUMN tipoSaida TEXT');
-  }
-  if (!existentes.includes('previsaoParto')) {
-    database.exec('ALTER TABLE animais ADD COLUMN previsaoParto TEXT');
-  }
-  const createEventos = `
-  CREATE TABLE IF NOT EXISTS eventos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    animal_id INTEGER,
-    dataEvento TEXT,
-    tipoEvento TEXT,
-    descricao TEXT,
-    idProdutor INTEGER
-  )`;
-  database.exec(createEventos);
-const novasColunas = {
-    numero: 'INTEGER',
-    brinco: 'TEXT',
-    nascimento: 'TEXT',
-    sexo: 'TEXT',
-    origem: 'TEXT',
-    categoria: 'TEXT',
-    idade: 'TEXT',
-    raca: 'TEXT',
-    checklistVermifugado: 'INTEGER DEFAULT 0',
-    checklistGrupoDefinido: 'INTEGER DEFAULT 0',
-    fichaComplementarOK: 'INTEGER DEFAULT 0',
-    pai: 'TEXT',
-    mae: 'TEXT',
-    ultimaIA: 'TEXT',
-    diagnosticoGestacao: 'TEXT',
-    previsaoParto: 'TEXT',
-    parto: 'TEXT',
-    secagem: 'TEXT',
-    estado: "TEXT DEFAULT 'vazia'",
-    nLactacoes: 'INTEGER',
-    status: "TEXT DEFAULT 'ativo'",
-    motivoSaida: 'TEXT',
-    dataSaida: 'TEXT',
-    valorVenda: 'REAL',
-    observacoesSaida: 'TEXT',
-    tipoSaida: 'TEXT',
-    del: 'INTEGER',
-    idProdutor: 'INTEGER'
-  };
-  for (const [col, type] of Object.entries(novasColunas)) {
-    if (!existentes.includes(col)) {
-      database.exec(`ALTER TABLE animais ADD COLUMN ${col} ${type}`);
-    }
-  }
-
-  database.exec(createTarefas);
-  database.exec(createEstoque);
-  database.exec(createProtocolos);
-  database.exec(createVacas);
-  database.exec(createBezerras);
-  database.exec(createReproducao);
-  database.exec(createFinanceiro);
-  database.exec(createEventos);
-  database.exec(createProdutos);
-  database.exec(createExames);
-
+  // Ajustes de colunas que antes eram feitos via PRAGMA no SQLite
+  // Agora usamos "ADD COLUMN IF NOT EXISTS"
   const tabelasComProdutor = [
-    'tarefas',
-    'estoque',
-    'protocolos_reprodutivos',
-    'vacas',
-    'bezerras',
-    'reproducao',
-    'financeiro',
-    'eventos',
-    'produtos',
-    'exames_sanitarios'
+    'tarefas','estoque','protocolos_reprodutivos','vacas',
+    'bezerras','reproducao','financeiro','eventos','produtos','exames_sanitarios'
   ];
   for (const tabela of tabelasComProdutor) {
-    const cols = database.prepare(`PRAGMA table_info(${tabela})`).all();
-    if (!cols.some(c => c.name === 'idProdutor')) {
-      database.exec(`ALTER TABLE ${tabela} ADD COLUMN idProdutor INTEGER`);
-    }
+    await client.query(`ALTER TABLE ${tabela} ADD COLUMN IF NOT EXISTS idProdutor INTEGER;`);
   }
 
-  produtorCols = database.prepare('PRAGMA table_info(produtores)').all();
-  if (!produtorCols.some(c => c.name === 'status')) {
-    database.exec("ALTER TABLE produtores ADD COLUMN status TEXT DEFAULT 'ativo'");
-  }
+  // Campos extras em produtores/fazendas/usuarios (mantidos)
+  await client.query(`ALTER TABLE produtores ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'ativo';`);
+  await client.query(`ALTER TABLE fazendas ADD COLUMN IF NOT EXISTS limiteAnimais INTEGER DEFAULT 0;`);
 
-  fazendaCols = database.prepare('PRAGMA table_info(fazendas)').all();
-  if (!fazendaCols.some(c => c.name === 'limiteAnimais')) {
-    database.exec('ALTER TABLE fazendas ADD COLUMN limiteAnimais INTEGER DEFAULT 0');
-  }
-
-  let usuarioCols = database.prepare('PRAGMA table_info(usuarios)').all();
-  if (!usuarioCols.some(c => c.name === 'perfil')) {
-    database.exec("ALTER TABLE usuarios ADD COLUMN perfil TEXT DEFAULT 'usuario'");
-  }
-  usuarioCols = database.prepare('PRAGMA table_info(usuarios)').all();
-  if (!usuarioCols.some(c => c.name === 'tipoConta')) {
-    database.exec("ALTER TABLE usuarios ADD COLUMN tipoConta TEXT DEFAULT 'usuario'");
-  }
-  usuarioCols = database.prepare('PRAGMA table_info(usuarios)').all();
-  if (!usuarioCols.some(c => c.name === 'plano')) {
-    database.exec("ALTER TABLE usuarios ADD COLUMN plano TEXT DEFAULT 'gratis'");
-  }
-  if (!usuarioCols.some(c => c.name === 'planoSolicitado')) {
-    database.exec('ALTER TABLE usuarios ADD COLUMN planoSolicitado TEXT DEFAULT NULL');
-  }
-  if (!usuarioCols.some(c => c.name === 'formaPagamento')) {
-    database.exec('ALTER TABLE usuarios ADD COLUMN formaPagamento TEXT DEFAULT NULL');
-  }
-  if (!usuarioCols.some(c => c.name === 'dataCadastro')) {
-    database.exec('ALTER TABLE usuarios ADD COLUMN dataCadastro TEXT DEFAULT NULL');
-  }
-  if (!usuarioCols.some(c => c.name === 'metodoPagamentoId')) {
-    database.exec('ALTER TABLE usuarios ADD COLUMN metodoPagamentoId INTEGER');
-  }
-  if (!usuarioCols.some(c => c.name === 'dataLiberado')) {
-    database.exec('ALTER TABLE usuarios ADD COLUMN dataLiberado TEXT DEFAULT NULL');
-  }
-  if (!usuarioCols.some(c => c.name === 'dataFimLiberacao')) {
-    database.exec('ALTER TABLE usuarios ADD COLUMN dataFimLiberacao TEXT DEFAULT NULL');
-  }
-  if (!usuarioCols.some(c => c.name === 'dataFimTeste')) {
-    database.exec('ALTER TABLE usuarios ADD COLUMN dataFimTeste TEXT DEFAULT NULL');
-  }
-  if (!usuarioCols.some(c => c.name === 'status')) {
-    database.exec("ALTER TABLE usuarios ADD COLUMN status TEXT DEFAULT 'ativo'");
-  }
+  await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS perfil TEXT DEFAULT 'usuario';`);
+  await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS tipoConta TEXT DEFAULT 'usuario';`);
+  await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS plano TEXT DEFAULT 'gratis';`);
+  await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS planoSolicitado TEXT DEFAULT NULL;`);
+  await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS formaPagamento TEXT DEFAULT NULL;`);
+  await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS dataCadastro TEXT DEFAULT NULL;`);
+  await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS metodoPagamentoId INTEGER;`);
+  await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS dataLiberado TEXT DEFAULT NULL;`);
+  await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS dataFimLiberacao TEXT DEFAULT NULL;`);
+  await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS dataFimTeste TEXT DEFAULT NULL;`);
+  await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'ativo';`);
 }
 
-function backupDatabase(dir, dbPath) {
-  const hoje = new Date().toISOString().slice(0, 10);
-  const backupDir = path.join(dir, 'backups');
-  const backupFile = path.join(backupDir, `${hoje}.sqlite`);
-  if (!fs.existsSync(backupFile)) {
-    fs.mkdirSync(backupDir, { recursive: true });
-    if (fs.existsSync(dbPath)) {
-      fs.copyFileSync(dbPath, backupFile);
-    }
+// Mantemos a assinatura original para não quebrar o resto do app
+async function initDB(email, _forceCreate = true) {
+  const conn = await pool.connect();
+  try {
+    await applyMigrations(conn);
+    const who = sanitizeEmail(email || 'anon');
+    console.log(`🐘 PostgreSQL conectado. Tenant lógico: ${who}`);
+  } finally {
+    conn.release();
   }
+  return pool;
 }
 
-function initDB(email, forceCreate = true) {
-  const dir = getUserDir(email, forceCreate);
-  const dbPath = path.join(dir, 'banco.sqlite');
-
-  if (!forceCreate && !fs.existsSync(dbPath)) {
-    return null;
-  }
-
-  // Fecha conexão anterior, se houver, para evitar vazamento de descritores
-  if (db && typeof db.close === 'function') {
-    try { db.close(); } catch (_) {}
-  }
-
-  if (forceCreate && !fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  db = new Database(dbPath);
-
-  // Cria tabelas e aplica migrations sempre que um banco é carregado
-  applyMigrations(db);
-
-  // A estratégia de backup automática foi movida para um utilitário que é
-  // acionado apenas antes de operações de escrita. Assim evitamos criar
-  // cópias quando o usuário apenas consulta dados.
-
-  console.log(`📁 Banco de dados (${email}):`, dbPath);
-  return db;
-}
-
+// Compat: em vez de retornar o objeto do better-sqlite3, retornamos o pool
 function getDb() {
-  return db;
+  return pool;
 }
 
-module.exports = { initDB, getDb, getUserDir, getDBPath };
-
+module.exports = { initDB, getDb, sanitizeEmail };
