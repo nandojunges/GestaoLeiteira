@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cfg = require('./config/env');
 const dbMiddleware = require('./middleware/dbMiddleware');
 const path = require('path');
 const fs = require('fs');
@@ -25,6 +26,7 @@ const authRoutes = require('./routes/authRoutes');
 const apiV1Routes = require('./routes/apiV1');
 const maintenanceRoutes = require('./routes/maintenanceRoutes');
 const healthRoutes = require('./routes/healthRoutes');
+const healthDbRoutes = require('./routes/healthDbRoutes');
 const logger = require('./middleware/logger');
 const rateLimit = require('./middleware/rateLimit');
 const errorHandler = require('./middleware/errorHandler');
@@ -81,6 +83,7 @@ app.use('/api', adminRoutes);
 app.use(apiV1Routes);
 app.use(maintenanceRoutes);
 app.use(healthRoutes);
+app.use(healthDbRoutes);
 
 // 🧾 Servir frontend estático (build do React)
 const distPath = path.join(__dirname, '..', 'dist');
@@ -95,7 +98,7 @@ app.get('*', (req, res) => {
 app.use(errorHandler);
 
 // 🚀 Inicialização do servidor (somente se executado diretamente)
-const PORT = process.env.PORT || 3000;
+const PORT = cfg.port;
 
 if (require.main === module) {
   const enablePrePartoJob = process.env.ENABLE_PREPARTO_JOB === 'true';

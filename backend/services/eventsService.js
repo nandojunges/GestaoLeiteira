@@ -1,26 +1,25 @@
 const db = require('./dbAdapter');
-const eventosModel = require('../models/eventosModel');
 
-function registrarOcorrencia(idAnimal, dados) {
-  return eventosModel.create(
-    db.getDb(),
-    { animal_id: idAnimal, dataEvento: dados.data, tipoEvento: 'OCORRENCIA', descricao: dados.descricao || '' },
-    dados.idProdutor || null,
-  );
+async function registrarOcorrencia(idAnimal, dados) {
+  await db.run('INSERT INTO health_events (animal_id,tipo,data,payload) VALUES ($1,$2,$3,$4)', [
+    idAnimal,
+    'OCORRENCIA',
+    dados.data,
+    JSON.stringify(dados.payload || {}),
+  ]);
 }
 
-function registrarTratamento(idAnimal, dados) {
-  return eventosModel.create(
-    db.getDb(),
-    { animal_id: idAnimal, dataEvento: dados.data, tipoEvento: 'TRATAMENTO', descricao: dados.descricao || '' },
-    dados.idProdutor || null,
-  );
+async function registrarTratamento(idAnimal, dados) {
+  await db.run('INSERT INTO health_events (animal_id,tipo,data,payload) VALUES ($1,$2,$3,$4)', [
+    idAnimal,
+    'TRATAMENTO',
+    dados.data,
+    JSON.stringify(dados.payload || {}),
+  ]);
 }
 
-function listarHistorico(idAnimal) {
-  const todos = eventosModel.getByAnimal(db.getDb(), idAnimal, null);
-  const tipos = ['OCORRENCIA', 'TRATAMENTO'];
-  return todos.filter((e) => tipos.includes(e.tipoEvento));
+async function listarHistorico(idAnimal) {
+  return db.query('SELECT * FROM health_events WHERE animal_id=$1 ORDER BY data', [idAnimal]);
 }
 
 module.exports = {

@@ -1,6 +1,4 @@
 const db = require('./dbAdapter');
-const animaisModel = require('../models/animaisModel');
-const PRODUTOR_ID = 1;
 
 function addDerived(animal) {
   if (!animal) return animal;
@@ -11,12 +9,12 @@ function addDerived(animal) {
     animal.del = diff;
     const secagem = new Date(partoDate);
     secagem.setDate(secagem.getDate() + 305);
-    animal.previsaoSecagem = secagem.toISOString().slice(0, 10);
+    animal.previsao_secagem = secagem.toISOString().slice(0, 10);
   }
-  if (animal.ultimaIA && !animal.previsaoParto) {
-    const partoPrev = new Date(animal.ultimaIA);
+  if (animal.ultima_ia && !animal.previsao_parto) {
+    const partoPrev = new Date(animal.ultima_ia);
     partoPrev.setDate(partoPrev.getDate() + 280);
-    animal.previsaoParto = partoPrev.toISOString().slice(0, 10);
+    animal.previsao_parto = partoPrev.toISOString().slice(0, 10);
   }
   return animal;
 }
@@ -26,96 +24,108 @@ function applyDerivedOnArray(array) {
 }
 
 function shouldPromoteToPreParto(animal, today = new Date(), windowDays = +process.env.PREPARTO_WINDOW_DAYS || 21) {
-  if (!animal?.previsaoParto) return false;
-  const dpp = new Date(animal.previsaoParto);
+  if (!animal?.previsao_parto) return false;
+  const dpp = new Date(animal.previsao_parto);
   const limite = new Date(dpp); limite.setDate(limite.getDate() - windowDays);
   return animal.estado === 'gestante' && today >= limite;
 }
 
 async function promoteToPrePartoIfDue(id) {
-  const a = await this.getById(id); // garantir que addDerived esteja ativo
+  const a = await getById(id);
   if (!a) return {updated:false};
   if (!shouldPromoteToPreParto(a)) return {updated:false};
-  await animaisModel.updateEstado(db.getDb(), id, 'preparto');
+  await db.run('UPDATE animals SET estado=$1 WHERE id=$2', ['preparto', id]);
   return {updated:true, id};
 }
 
 async function promoteBatchPreParto(today = new Date()) {
-  const gestantes = await animaisModel.getByEstado(db.getDb(), 'gestante');
+  const gestantes = await db.query('SELECT * FROM animals WHERE estado=$1', ['gestante']);
   const ids = [];
   for (const g of gestantes) {
     if (shouldPromoteToPreParto(g, today)) {
-      await animaisModel.updateEstado(db.getDb(), g.id, 'preparto');
+      await db.run('UPDATE animals SET estado=$1 WHERE id=$2', ['preparto', g.id]);
       ids.push(g.id);
     }
   }
   return {count: ids.length, ids};
 }
 
-function list(params = {}) {
-  let animais = animaisModel.getAll(db.getDb(), PRODUTOR_ID) || [];
+async function list(params = {}) {
+  let sql = 'SELECT * FROM animals';
+  const args = [];
   if (params.estado) {
-    animais = animais.filter((a) => a.estado === params.estado);
+    args.push(params.estado);
+    sql += ' WHERE estado=$1';
   }
+  const animais = await db.query(sql, args);
   return applyDerivedOnArray(animais);
 }
 
-function getById(id) {
-  const animal = animaisModel.getById(db.getDb(), id, PRODUTOR_ID);
-  return addDerived(animal);
+async function getById(id) {
+  const rows = await db.query('SELECT * FROM animals WHERE id=$1', [id]);
+  return addDerived(rows[0]);
 }
 
-function create(animal) {
-  return animaisModel.create(db.getDb(), animal, PRODUTOR_ID);
+async function create(animal) {
+  const cols = ['numero','brinco','nascimento','raca','estado','ultima_ia','diagnostico_data','diagnostico_resultado','previsao_parto','parto','secagem'];
+  const keys = [];
+  const values = [];
+  const params = [];
+  let idx = 1;
+  for (const col of cols) {
+    if (animal[col] !== undefined) {
+      keys.push(col);
+      values.push(`$${idx++}`);
+      params.push(animal[col]);
+    }
+  }
+  const rows = await db.query(`INSERT INTO animals (${keys.join(',')}) VALUES (${values.join(',')}) RETURNING *`, params);
+  return rows[0];
 }
 
-function update(id, animal) {
-  return animaisModel.update(db.getDb(), id, animal, PRODUTOR_ID);
+async function update(id, animal) {
+  const entries = Object.entries(animal);
+  const sets = entries.map(([k], i) => `${k}=$${i+1}`);
+  const params = entries.map(([,v]) => v);
+  params.push(id);
+  await db.run(`UPDATE animals SET ${sets.join(',')} WHERE id=$${entries.length+1}`, params);
+  const rows = await db.query('SELECT * FROM animals WHERE id=$1', [id]);
+  return rows[0];
 }
 
-function remove(id) {
-  return animaisModel.remove(db.getDb(), id, PRODUTOR_ID);
+async function remove(id) {
+  await db.run('DELETE FROM animals WHERE id=$1', [id]);
 }
 
-function onInseminada(id, { data }) {
-  const atual = animaisModel.getById(db.getDb(), id, PRODUTOR_ID) || {};
-  const updateData = { ...atual, ultimaIA: data };
+async function onInseminada(id, { data }) {
+  let previsao = null;
   if (data) {
     const prev = new Date(data);
     prev.setDate(prev.getDate() + 280);
-    updateData.previsaoParto = prev.toISOString().slice(0, 10);
+    previsao = prev.toISOString().slice(0, 10);
   }
-  return animaisModel.update(db.getDb(), id, updateData, PRODUTOR_ID);
+  await db.run('UPDATE animals SET ultima_ia=$1, previsao_parto=$2 WHERE id=$3', [data, previsao, id]);
 }
 
-function onDiagnostico(id, { resultado, data }) {
-  const atual = animaisModel.getById(db.getDb(), id, PRODUTOR_ID) || {};
-  const updateData = {
-    ...atual,
-    diagnosticoGestacao: JSON.stringify({ resultado, data }),
-    estado: resultado === 'positivo' ? 'gestante' : 'vazia',
-  };
-  return animaisModel.update(db.getDb(), id, updateData, PRODUTOR_ID);
+async function onDiagnostico(id, { resultado, data }) {
+  const estado = resultado === 'positivo' ? 'gestante' : 'vazia';
+  await db.run('UPDATE animals SET diagnostico_data=$1, diagnostico_resultado=$2, estado=$3 WHERE id=$4', [data, resultado, estado, id]);
 }
 
-function onPreParto(id) {
-  const atual = animaisModel.getById(db.getDb(), id, PRODUTOR_ID) || {};
-  return animaisModel.update(db.getDb(), id, { ...atual, estado: 'preparto' }, PRODUTOR_ID);
+async function onPreParto(id) {
+  await db.run('UPDATE animals SET estado=$1 WHERE id=$2', ['preparto', id]);
 }
 
-function onParto(id, data) {
-  const atual = animaisModel.getById(db.getDb(), id, PRODUTOR_ID) || {};
-  return animaisModel.update(db.getDb(), id, { ...atual, estado: 'lactante', parto: data }, PRODUTOR_ID);
+async function onParto(id, data) {
+  await db.run('UPDATE animals SET estado=$1, parto=$2 WHERE id=$3', ['lactante', data, id]);
 }
 
-function onSecagem(id, data) {
-  const atual = animaisModel.getById(db.getDb(), id, PRODUTOR_ID) || {};
-  return animaisModel.update(db.getDb(), id, { ...atual, estado: 'seca', secagem: data }, PRODUTOR_ID);
+async function onSecagem(id, data) {
+  await db.run('UPDATE animals SET estado=$1, secagem=$2 WHERE id=$3', ['seca', data, id]);
 }
 
-function onDescartar(id) {
-  const atual = animaisModel.getById(db.getDb(), id, PRODUTOR_ID) || {};
-  return animaisModel.update(db.getDb(), id, { ...atual, estado: 'inativa' }, PRODUTOR_ID);
+async function onDescartar(id) {
+  await db.run('UPDATE animals SET estado=$1 WHERE id=$2', ['inativa', id]);
 }
 
 module.exports = {

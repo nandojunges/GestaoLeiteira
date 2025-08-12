@@ -5,3 +5,4 @@ backend/*.sqlite
 backend/*.sqlite3
 
 backend/package-lock.json
+.env
