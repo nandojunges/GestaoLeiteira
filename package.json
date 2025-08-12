@@ -11,7 +11,9 @@
     "preview": "vite preview",
     "postclean": "rm -rf node_modules package-lock.json",
     "install:ci": "bash scripts/install.sh",
-    "test": "node --test"
+    "test": "node --test",
+    "start:back": "node backend/server.js",
+    "start:all": "node scripts/start-all.js"
   },
   "dependencies": {
     "@fullcalendar/core": "6.1.11",
