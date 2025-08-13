@@ -21,6 +21,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>
 );
 // estilos FullCalendar
-import '@fullcalendar/common/main.css';
-import '@fullcalendar/daygrid/dist/index.css';
-import '@fullcalendar/timegrid/dist/index.css';
+import '@fullcalendar/core/index.css';
+import '@fullcalendar/daygrid/index.css';
+import '@fullcalendar/timegrid/index.css';
