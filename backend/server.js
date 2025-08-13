@@ -5,6 +5,7 @@ const cfg = require('./config/env');
 const dbMiddleware = require('./middleware/dbMiddleware');
 const path = require('path');
 const fs = require('fs');
+let morgan; try { morgan = require('morgan'); } catch {}
 
 const vacasRoutes = require('./routes/vacasRoutes');
 const animaisRoutes = require('./routes/animaisRoutes');
@@ -42,6 +43,15 @@ app.use(cors());
 // aumenta o limite de tamanho do JSON para aceitar PDFs codificados em Base64 (até 10 mb)
 app.use(express.json({ limit: '10mb' }));
 app.use(logger);
+if (morgan) app.use(morgan('dev'));
+
+// Health check simples (útil para ver se o proxy está batendo mesmo)
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, ts: new Date().toISOString() });
+});
+
+// Servir arquivos estáticos usados pelo front (rotativos .txt)
+app.use('/api/data', express.static(path.join(__dirname, 'data')));
 
 // 📁 Pasta para backups de dados excluídos
 fs.mkdirSync(path.join(__dirname, 'dadosExcluidos'), { recursive: true });
