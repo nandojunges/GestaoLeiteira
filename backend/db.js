@@ -3,22 +3,32 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 const { Pool } = require('pg');
 
-function sanitizeEmail(email) {
-  return String(email || '').replace(/[@.]/g, '_');
-}
-
-// Pool usa variáveis de ambiente (PGHOST, PGUSER, etc.)
-const pool = new Pool({
-  // Se quiser fixar aqui em vez de usar .env, descomente:
-  // host: 'localhost',
-  // port: 5432,
-  // user: 'postgres',
-  // password: 'SuaSenhaAqui',
-  // database: 'gestao_leiteira',
+// aceita DB_* ou PG* e garante string/number corretos
+const cfg = {
+  user: process.env.DB_USER || process.env.PGUSER || 'postgres',
+  host: process.env.DB_HOST || process.env.PGHOST || 'localhost',
+  database: process.env.DB_NAME || process.env.PGDATABASE || 'gestao_leiteira',
+  password: String(
+    process.env.DB_PASS ?? process.env.PGPASSWORD ?? ''
+  ), // << sempre string
+  port: Number(process.env.DB_PORT || process.env.PGPORT || 5432),
   max: 10,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 10_000,
-});
+};
+
+// log de diagnóstico (mascarado) — pode deixar em DEV
+if (!cfg.password) {
+  console.warn('⚠️  DB_PASS/PGPASSWORD ausente — o servidor pode recusar a conexão.');
+} else {
+  console.log('🔐 DB user:', cfg.user, 'host:', cfg.host, 'db:', cfg.database);
+}
+
+const pool = new Pool(cfg);
+
+function sanitizeEmail(email) {
+  return String(email || '').replace(/[@.]/g, '_');
+}
 
 // === MIGRATIONS (PostgreSQL) ===
 async function applyMigrations(client) {
