@@ -29,7 +29,6 @@ const healthRoutes = require('./routes/healthRoutes');
 const healthDbRoutes = require('./routes/healthDbRoutes');
 const logger = require('./middleware/logger');
 const rateLimit = require('./middleware/rateLimit');
-const errorHandler = require('./middleware/errorHandler');
 const { inicializarAdmins } = require('./controllers/authController');
 const { initDB, getDb } = require('./db');
 
@@ -95,8 +94,17 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
-// Middleware de tratamento de erros padronizado
-app.use(errorHandler);
+// Loga toda exceção não capturada em rotas
+app.use((err, req, res, next) => {
+  console.error('API ERROR:', {
+    method: req.method,
+    url: req.originalUrl,
+    body: req.body,
+    query: req.query,
+    error: err?.stack || err
+  });
+  res.status(500).json({ error: 'Internal Server Error' });
+});
 
 // 🚀 Inicialização do servidor (somente se executado diretamente)
 const PORT = cfg.port;
