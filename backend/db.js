@@ -1,4 +1,6 @@
 // backend/db.js  — versão PostgreSQL
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const { Pool } = require('pg');
 
 function sanitizeEmail(email) {
