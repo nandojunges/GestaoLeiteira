@@ -188,6 +188,47 @@ async function applyMigrations(client) {
     );
   `);
 
+  // Tabelas genéricas para features novas (evita 500 enquanto evoluímos)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS configuracao (
+      id SERIAL PRIMARY KEY,
+      idProdutor INTEGER,
+      dados JSONB DEFAULT '{}'::jsonb
+    );
+  `);
+
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS dietas (
+      id SERIAL PRIMARY KEY,
+      idProdutor INTEGER,
+      dados JSONB DEFAULT '{}'::jsonb
+    );
+  `);
+
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ciclos_limpeza (
+      id SERIAL PRIMARY KEY,
+      idProdutor INTEGER,
+      dados JSONB DEFAULT '{}'::jsonb
+    );
+  `);
+
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS manejos_sanitarios (
+      id SERIAL PRIMARY KEY,
+      idProdutor INTEGER,
+      dados JSONB DEFAULT '{}'::jsonb
+    );
+  `);
+
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ajustes_estoque (
+      id SERIAL PRIMARY KEY,
+      idProdutor INTEGER,
+      dados JSONB DEFAULT '{}'::jsonb
+    );
+  `);
+
   await client.query(`
     CREATE TABLE IF NOT EXISTS exames_sanitarios (
       id SERIAL PRIMARY KEY,
@@ -301,29 +342,54 @@ function getDbCompat() {
   const p = getPool();
   return {
     prepare(sql) {
-      const pgSql = toPgParams(sql);
+      // se for INSERT e não tiver RETURNING, adiciona RETURNING id
+      const needsReturning = /^\s*insert\s/i.test(sql) && !/returning\s/i.test(sql);
+      const finalSql = needsReturning ? `${sql} RETURNING id` : sql;
+      const pgSql = toPgParams(finalSql);
       return {
         // retorna um único registro (ou null)
         async get(...params) {
-          const { rows } = await p.query(pgSql, params);
-          return rows[0] || null;
+          try {
+            const { rows } = await p.query(pgSql, params);
+            return rows[0] || null;
+          } catch (e) {
+            console.error('DB.get error:', { sql: finalSql, params, e });
+            throw e;
+          }
         },
         // retorna lista
         async all(...params) {
-          const { rows } = await p.query(pgSql, params);
-          return rows;
+          try {
+            const { rows } = await p.query(pgSql, params);
+            return rows;
+          } catch (e) {
+            console.error('DB.all error:', { sql: finalSql, params, e });
+            throw e;
+          }
         },
         // exec sem retorno (ou com RETURNING, se seu SQL tiver)
         async run(...params) {
-          const res = await p.query(pgSql, params);
-          // compat com better-sqlite3
-          return { changes: res.rowCount, lastInsertRowid: res.rows?.[0]?.id };
+          try {
+            const res = await p.query(pgSql, params);
+            return {
+              changes: res.rowCount,
+              lastInsertRowid: res.rows?.[0]?.id ?? null
+            };
+          } catch (e) {
+            console.error('DB.run error:', { sql: finalSql, params, e });
+            throw e;
+          }
         }
       };
     },
     // compat: alguns lugares podem chamar db.exec(sql)
     async exec(sql) {
-      await p.query(sql);
+      try {
+        await p.query(sql);
+      } catch (e) {
+        console.error('DB.exec error:', { sql, e });
+        throw e;
+      }
       return { changes: 0 };
     }
   };
@@ -332,7 +398,7 @@ function getDbCompat() {
 // >>> MUDE AS EXPORTAÇÕES para expor o compat por padrão
 module.exports = {
   initDB,        // já existente no seu arquivo
-  getDb: getDbCompat, // devolve o ADAPTADOR com prepare/get/all/run
+  getDb: getDbCompat, // mantém compat
   getPool,       // caso você queira usar pool.query direto em arquivos novos
   sanitizeEmail  // se existir no seu arquivo
 };

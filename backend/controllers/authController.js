@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const Usuario = require('../models/Usuario');
-const emailUtils = require('../utils/email');
+const { tx } = require('../utils/mailer');
 const { initDB, getDBPath } = require('../db');
 const emailService = require('../services/emailService');
 const { setResetToken, getResetToken, deleteResetToken } = require('../services/userService');
@@ -76,9 +76,18 @@ async function cadastro(req, res) {
       criado_em: new Date(),
     });
 
-    emailUtils
-      .enviarCodigo(endereco, codigo)
-      .catch((err) => console.error('Erro ao enviar e-mail:', err));
+    try {
+      await tx.sendMail({
+        from: process.env.MAIL_FROM,
+        to: endereco,
+        subject: 'Código de verificação - Gestão Leiteira',
+        text: `Seu código de verificação é: ${codigo}`,
+      });
+      console.log('✅ E-mail de verificação enviado para', endereco);
+    } catch (e) {
+      console.error('✉️  Falha ao enviar e-mail de verificação:', e);
+      // não derrube o cadastro por causa do e-mail em DEV
+    }
     res.status(201).json({ message: 'Código enviado. Verifique o e-mail.' });
   } catch (error) {
     console.error('Erro no cadastro:', error);
