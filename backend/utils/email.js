@@ -1,31 +1,59 @@
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const nodemailer = require('nodemailer');
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.zoho.com',
-  port: Number(process.env.SMTP_PORT || 465),
-  secure: String(process.env.SMTP_SECURE || 'true') === 'true', // SSL no 465
-  auth: {
-    user: process.env.EMAIL_REMETENTE,
-    pass: process.env.EMAIL_SENHA_APP
+const {
+  EMAIL_SERVICE = 'Zoho',
+  EMAIL_REMETENTE,
+  EMAIL_SENHA_APP
+} = process.env;
+
+let transporter;
+
+function getTransporter() {
+  if (transporter) return transporter;
+
+  if (!EMAIL_REMETENTE || !EMAIL_SENHA_APP) {
+    throw new Error('EMAIL_REMETENTE/EMAIL_SENHA_APP não configurados');
   }
-  // logger: true,
-  // debug: true,
-});
 
-async function enviarCodigo(destino, codigo) {
-  const base = process.env.APP_BASE_URL || 'http://localhost:5173';
-  const link = `${base}/verificar?email=${encodeURIComponent(destino)}&codigo=${encodeURIComponent(codigo)}`;
+  // Zoho precisa do host explícito (evita cair em Office365)
+  if (String(EMAIL_SERVICE).toLowerCase() === 'zoho') {
+    transporter = nodemailer.createTransport({
+      host: 'smtp.zoho.com',
+      port: 587,
+      secure: false,
+      auth: { user: EMAIL_REMETENTE, pass: EMAIL_SENHA_APP }
+    });
+  } else {
+    // fallback: deixa usar "service" do nodemailer (Gmail etc)
+    transporter = nodemailer.createTransport({
+      service: EMAIL_SERVICE,
+      auth: { user: EMAIL_REMETENTE, pass: EMAIL_SENHA_APP }
+    });
+  }
 
-  const info = await transporter.sendMail({
-    from: process.env.MAIL_FROM || process.env.EMAIL_REMETENTE,
-    to: destino,
-    subject: 'Código de verificação - Gestão Leiteira',
-    html: `<p>Seu código: <b>${codigo}</b></p><p>Ou clique: <a href="${link}">${link}</a></p>`
-  });
-
-  console.log('✉️  E-mail de código enviado para', destino, 'id:', info.messageId);
+  return transporter;
 }
 
-module.exports = { enviarCodigo, transporter };
+async function enviarCodigo(destinatario, codigo, ttlMin = 3) {
+  const t = getTransporter();
+  const info = await t.sendMail({
+    from: EMAIL_REMETENTE,
+    to: destinatario,
+    subject: 'Código de verificação — Gestão Leiteira',
+    text: `Seu código é: ${codigo}. Ele expira em ${ttlMin} minutos.`,
+    html: `
+      <div style="font-family: Arial, sans-serif; font-size: 16px">
+        <p>Olá!</p>
+        <p>Seu código de verificação é:</p>
+        <p style="font-size:28px;letter-spacing:6px"><strong>${codigo}</strong></p>
+        <p>Validade: ${ttlMin} minutos.</p>
+        <p>Se não foi você, ignore este e-mail.</p>
+      </div>
+    `
+  });
+  console.log('✉️  E-mail enviado:', info.messageId, 'para', destinatario);
+  return info;
+}
+
+module.exports = { enviarCodigo, getTransporter, transporter: getTransporter() };
+
