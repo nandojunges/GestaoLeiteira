@@ -13,26 +13,39 @@ const emailSlug = (e) => String(e || '').toLowerCase().replace(/[^a-z0-9]+/g, '_
 const norm = (e) => String(e || '').trim().toLowerCase();
 const genCode = () => String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
 
-// Garante colunas/índice necessários no PG (uma vez)
+// Garante colunas/índice necessários no PG (uma única vez, com SQL válido)
 (async function ensureInfra() {
   try {
-    await pool.query(`
-      ALTER TABLE IF NOT EXISTS usuarios
-        ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE,
-        ADD COLUMN IF NOT EXISTS verification_code VARCHAR(6),
-        ADD COLUMN IF NOT EXISTS verification_expires TIMESTAMPTZ,
-        ADD COLUMN IF NOT EXISTS tenant_schema TEXT;
+    const sql = `
+      -- Campos básicos que o fluxo usa (cada ADD isolado)
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS nome_fazenda       TEXT;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS telefone           TEXT;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS senha_hash         TEXT;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS is_verified        BOOLEAN DEFAULT FALSE;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS verification_code  VARCHAR(6);
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS verification_expires TIMESTAMPTZ;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS perfil             TEXT;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS tipo_conta         TEXT;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS plano              TEXT;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS forma_pagamento    TEXT;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS tenant_schema      TEXT;
+
+      -- Índice único case-insensitive para e-mail
       DO $$
       BEGIN
         IF NOT EXISTS (
-          SELECT 1 FROM pg_indexes WHERE indexname = 'uniq_usuarios_email_ci'
+          SELECT 1
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+           WHERE c.relname = 'uniq_usuarios_email_ci'
         ) THEN
           CREATE UNIQUE INDEX uniq_usuarios_email_ci ON usuarios (LOWER(email));
         END IF;
       END $$;
-    `);
+    `;
+    await pool.query(sql);
   } catch (e) {
-    console.warn('[ensureInfra]', e.message);
+    console.warn('[ensureInfra] ', e.message);
   }
 })();
 
@@ -189,8 +202,15 @@ async function login(req, res) {
   const emailLC = norm(email);
   try {
     const { rows } = await pool.query(
-      `SELECT id, email, senha_hash, is_verified, perfil, tipo_conta
-         FROM usuarios WHERE LOWER(email)=LOWER($1) LIMIT 1`,
+      `SELECT id,
+              email,
+              COALESCE(senha_hash, senha) AS senha_hash,   -- compat com bases antigas
+              is_verified,
+              COALESCE(perfil, 'funcionario') AS perfil,
+              COALESCE(tipo_conta, 'usuario') AS tipo_conta
+         FROM usuarios
+        WHERE LOWER(email)=LOWER($1)
+        LIMIT 1`,
       [emailLC]
     );
     if (!rows.length) return res.status(400).json({ message: 'Usuário não encontrado.' });
