@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { getDb, getPool, ensureTenantSchema } = require('../db');
-const { enviarCodigoVerificacao } = require('../utils/mailer');
+const { enviarCodigo } = require('../utils/email');
 const { requireFields, isEmail } = require('../utils/validate');
 
 const SECRET = process.env.JWT_SECRET || 'segredo';
@@ -35,7 +35,7 @@ async function register(req, res, next) {
     `).run(codigo, false, email);
 
     try {
-      await enviarCodigoVerificacao(email, codigo);
+      await enviarCodigo(email, codigo);
     } catch (e) {
       console.error('✉️  Falha ao enviar e-mail:', e);
       // não derrube o cadastro em DEV
