@@ -1,313 +1,220 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { run, one } = require('../db');
-const { enviarCodigo } = require('../utils/email');
-const { ensureUserDir } = require('../utils/userStorage');
+const fs = require('fs');
+const path = require('path');
+const { pool } = require('../db');             // ← usando Postgres
+const emailUtils = require('../utils/email');  // Zoho ajustado
 
 const SECRET = process.env.JWT_SECRET || 'segredo';
 const TTL_MIN = Number(process.env.VERIFICATION_TTL_MINUTES || 3);
-const norm = (e) => String(e || '').trim().toLowerCase();
 
-// ----------------------------- CADASTRO -----------------------------
+// sanitiza e-mail para nome de schema/pasta
+const emailSlug = (e) => String(e || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g,'').slice(0,48) || 'tenant';
+const norm = (e) => String(e || '').trim().toLowerCase();
+const genCode = () => String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
+
+// Garante colunas/índice necessários no PG (uma vez)
+(async function ensureInfra() {
+  try {
+    await pool.query(`
+      ALTER TABLE IF NOT EXISTS usuarios
+        ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS verification_code VARCHAR(6),
+        ADD COLUMN IF NOT EXISTS verification_expires TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS tenant_schema TEXT;
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_indexes WHERE indexname = 'uniq_usuarios_email_ci'
+        ) THEN
+          CREATE UNIQUE INDEX uniq_usuarios_email_ci ON usuarios (LOWER(email));
+        END IF;
+      END $$;
+    `);
+  } catch (e) {
+    console.warn('[ensureInfra]', e.message);
+  }
+})();
+
+// ➤ Cadastro inicial: gera código e envia por e-mail
 async function cadastro(req, res) {
   const {
     nome,
     nomeFazenda,
-    email,
+    email: endereco,
     telefone,
     senha,
     plano: planoSolicitado,
     formaPagamento,
   } = req.body;
+  const codigo = genCode();
 
-  const endereco = String(email || '').trim().toLowerCase();
-
-  console.log('👤 [CADASTRO] payload recebido:', {
-    nome, nomeFazenda, email: endereco, telefone,
-    senhaLen: (senha || '').length, planoSolicitado, formaPagamento
-  });
-
-  if (!endereco || !endereco.includes('@')) {
-    console.log('⛔ [CADASTRO] email inválido');
+  if (!endereco || typeof endereco !== 'string') {
     return res.status(400).json({ message: 'Email inválido ou não informado.' });
   }
-  if (!senha || senha.length < 4) {
-    console.log('⛔ [CADASTRO] senha inválida');
-    return res.status(400).json({ message: 'Senha inválida.' });
-  }
+
+  const emailLC = norm(endereco);
 
   try {
-    // remove pendências expiradas
-    await run(
-      'DELETE FROM verificacoes_pendentes WHERE criado_em < NOW() - ($1 * INTERVAL "1 minute")',
-      [TTL_MIN]
+    const client = await pool.connect();
+    await client.query('BEGIN');
+
+    // Procura usuário por e-mail (case-insensitive)
+    const { rows } = await client.query(
+      `SELECT id, is_verified, verification_expires
+         FROM usuarios
+        WHERE LOWER(email) = LOWER($1)
+        LIMIT 1`,
+      [emailLC]
     );
 
-    // Já existe usuário?
-    const u = await one('SELECT 1 FROM usuarios WHERE LOWER(email)=LOWER($1) LIMIT 1', [endereco]);
-    console.log('🔎 [CADASTRO] existe em usuarios?', !!u);
-    if (u) {
-      return res.status(409).json({ message: 'Email já cadastrado.' });
-    }
-
-    // throttle de reenvio
-    const pend = await one('SELECT criado_em FROM verificacoes_pendentes WHERE email=$1', [endereco]);
-    if (pend) {
-      const elapsed = Date.now() - new Date(pend.criado_em).getTime();
-      console.log('⏱️ [CADASTRO] pendente há(ms):', elapsed);
-      if (elapsed < TTL_MIN * 60 * 1000) {
-        const retry = Math.ceil((TTL_MIN * 60 * 1000 - elapsed) / 1000);
-        return res.status(409).json({
-          message: 'Cadastro pendente de verificação.',
-          retry_after_seconds: retry,
-        });
+    if (rows.length) {
+      const u = rows[0];
+      if (u.is_verified) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ message: 'E-mail já cadastrado e verificado.' });
       }
-      await run('DELETE FROM verificacoes_pendentes WHERE email=$1', [endereco]);
+      const now = new Date();
+      if (u.verification_expires && now < u.verification_expires) {
+        const seconds = Math.max(0, Math.floor((u.verification_expires - now)/1000));
+        await client.query('ROLLBACK');
+        return res.status(409).json({ message: 'Cadastro pendente de verificação.', retry_after_seconds: seconds });
+      }
+      // Expirou → gera novo código e novo vencimento (calculado no Node, sem INTERVAL)
+      const expires = new Date(Date.now() + TTL_MIN * 60 * 1000);
+      await client.query(
+        `UPDATE usuarios
+            SET verification_code = $1,
+                verification_expires = $2
+          WHERE id = $3`,
+        [codigo, expires, u.id]
+      );
+      try {
+        await emailUtils.enviarCodigo(emailLC, codigo, TTL_MIN);
+      } catch (err) {
+        await client.query('ROLLBACK');
+        return res.status(502).json({ message: 'Falha ao enviar e-mail de verificação.' });
+      }
+      await client.query('COMMIT');
+      return res.status(200).json({ message: 'Novo código enviado.' });
     }
 
-    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
-    const senhaHash = await bcrypt.hash(senha, 10);
+    // Novo cadastro → cria usuário pendente
+    const hash = await bcrypt.hash(senha, 10);
+    const expires = new Date(Date.now() + TTL_MIN * 60 * 1000);
 
-    await run(
-      `CREATE TABLE IF NOT EXISTS verificacoes_pendentes (
-        email TEXT PRIMARY KEY,
-        codigo TEXT NOT NULL,
-        nome TEXT,
-        nome_fazenda TEXT,
-        telefone TEXT,
-        senha_hash TEXT,
-        plano_solicitado TEXT,
-        forma_pagamento TEXT,
-        criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )`
-    );
-
-    await run(
-      `INSERT INTO verificacoes_pendentes (email, codigo, nome, nome_fazenda, telefone, senha_hash, plano_solicitado, forma_pagamento, criado_em)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())
-       ON CONFLICT (email) DO UPDATE SET
-         codigo=EXCLUDED.codigo,
-         nome=EXCLUDED.nome,
-         nome_fazenda=EXCLUDED.nome_fazenda,
-         telefone=EXCLUDED.telefone,
-         senha_hash=EXCLUDED.senha_hash,
-         plano_solicitado=EXCLUDED.plano_solicitado,
-         forma_pagamento=EXCLUDED.forma_pagamento,
-         criado_em=NOW()`,
-      [endereco, codigo, nome || null, nomeFazenda || null, telefone || null, senhaHash, planoSolicitado || null, formaPagamento || null]
+    const ins = await client.query(
+      `INSERT INTO usuarios
+         (nome, nome_fazenda, email, telefone, senha_hash, is_verified, verification_code, verification_expires, plano, forma_pagamento)
+       VALUES ($1,$2,$3,$4,$5,false,$6,$7,$8,$9)
+       RETURNING id`,
+      [nome || null, nomeFazenda || null, emailLC, telefone || null, hash, codigo, expires, planoSolicitado || null, formaPagamento || null]
     );
 
     try {
-      await enviarCodigo(endereco, codigo, TTL_MIN);
-      console.log('✉️  [CADASTRO] e-mail enviado para', endereco);
-    } catch (e) {
-      await run('DELETE FROM verificacoes_pendentes WHERE email=$1', [endereco]);
-      console.error('✉️  [CADASTRO] falha ao enviar e-mail:', e.message || e);
+      await emailUtils.enviarCodigo(emailLC, codigo, TTL_MIN);
+    } catch (err) {
+      await client.query('ROLLBACK');
       return res.status(502).json({ message: 'Falha ao enviar e-mail de verificação.' });
     }
 
-    return res.status(201).json({ message: 'Código enviado. Verifique o e-mail.' });
+    await client.query('COMMIT');
+    return res.status(201).json({ message: 'Código enviado. Verifique o e-mail.', userId: ins.rows[0].id });
   } catch (error) {
     console.error('💥 [CADASTRO] erro inesperado:', error);
     return res.status(500).json({ error: 'Erro ao cadastrar usuário.' });
   }
 }
 
-// ----------------------------- VERIFICAR CÓDIGO -----------------------------
+// ➤ Verifica o código enviado por e-mail e cria o usuário
 async function verificarEmail(req, res) {
-  const endereco = norm(req.body.email);
-  const codigoDigitado = String(req.body.codigoDigitado || req.body.codigo || '').trim();
+  const { email: endereco, codigoDigitado } = req.body;
 
-  if (!endereco || !codigoDigitado) return res.status(400).json({ erro: 'Email ou código inválido.' });
+  if (!endereco || typeof endereco !== 'string') {
+    return res.status(400).json({ erro: 'Email inválido.' });
+  }
 
   try {
-    const pend = await one('SELECT * FROM verificacoes_pendentes WHERE email=$1', [endereco]);
-    if (!pend) return res.status(400).json({ erro: 'Código não encontrado. Faça o cadastro novamente.' });
+    const emailLC = norm(endereco);
+    const client = await pool.connect();
+    await client.query('BEGIN');
 
-    const expirado = Date.now() - new Date(pend.criado_em).getTime() > TTL_MIN * 60 * 1000;
-    if (expirado) {
-      await run('DELETE FROM verificacoes_pendentes WHERE email=$1', [endereco]);
-      return res.status(400).json({ erro: 'Código expirado. Faça o cadastro novamente.' });
-    }
-
-    if (pend.codigo !== codigoDigitado) return res.status(400).json({ erro: 'Código incorreto.' });
-
-    const listaAdmins = require('../config/admins');
-    const tipoConta = (listaAdmins || []).includes(endereco) ? 'admin' : 'usuario';
-    const perfil = tipoConta === 'admin' ? 'admin' : 'funcionario';
-    const nowIso = new Date().toISOString();
-
-    const novo = await one(
-      `INSERT INTO usuarios (nome, nomefazenda, email, telefone, senha, verificado, codigoverificacao,
-                             perfil, tipoconta, plano, planosolicitado, formapagamento, datacadastro, status)
-       VALUES ($1,$2,$3,$4,$5,true,null,$6,$7,'gratis',$8,$9,$10,'ativo')
-       RETURNING id`,
-      [
-        pend.nome || '',
-        pend.nome_fazenda || '',
-        endereco,
-        pend.telefone || '',
-        pend.senha_hash,
-        perfil,
-        tipoConta,
-        pend.plano_solicitado || null,
-        pend.forma_pagamento || null,
-        nowIso
-      ]
+    const { rows } = await client.query(
+      `SELECT id, is_verified, verification_code, verification_expires, tenant_schema
+         FROM usuarios
+        WHERE LOWER(email) = LOWER($1)
+        LIMIT 1`,
+      [emailLC]
     );
+    if (!rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ erro: 'Usuário não encontrado.' }); }
 
-    await run('DELETE FROM verificacoes_pendentes WHERE email=$1', [endereco]);
+    const u = rows[0];
+    if (u.is_verified) { await client.query('ROLLBACK'); return res.status(400).json({ erro: 'Usuário já verificado.' }); }
+    if (!u.verification_code || !u.verification_expires) { await client.query('ROLLBACK'); return res.status(400).json({ erro: 'Código não gerado.' }); }
 
-    const dir = ensureUserDir(endereco);
-    console.log('📁 Pasta do usuário pronta:', dir);
+    const now = new Date();
+    if (now > u.verification_expires) { await client.query('ROLLBACK'); return res.status(400).json({ erro: 'Código expirado. Faça o cadastro novamente.' }); }
+    if (String(codigoDigitado).trim() !== u.verification_code) { await client.query('ROLLBACK'); return res.status(400).json({ erro: 'Código incorreto.' }); }
 
-    return res.json({ sucesso: true, id: novo.id });
-  } catch (err) {
-    console.error('Erro na verificação:', err);
-    return res.status(500).json({ erro: 'Erro interno no servidor.' });
-  }
-}
-
-// ----------------------------- FINALIZAR CADASTRO (opcional) -----------------------------
-async function finalizarCadastro(req, res) {
-  const { token, plano, formaPagamento } = req.body;
-  if (!token || !plano) return res.status(400).json({ erro: 'Dados inválidos.' });
-
-  let payload;
-  try {
-    payload = jwt.verify(token, SECRET);
-  } catch {
-    return res.status(400).json({ erro: 'Token inválido.' });
-  }
-
-  const email = norm(payload.email);
-  try {
-    const u = await one('SELECT id FROM usuarios WHERE LOWER(email)=LOWER($1)', [email]);
-    if (!u) return res.status(400).json({ erro: 'Usuário não encontrado.' });
-
-    await run(
+    // Marca como verificado
+    await client.query(
       `UPDATE usuarios
-         SET plano=$1,
-             formapagamento=CASE WHEN $1='teste_gratis' THEN NULL ELSE $2 END
-       WHERE id=$3`,
-      [plano, formaPagamento || null, u.id]
+          SET is_verified = true,
+              verification_code = NULL,
+              verification_expires = NULL
+        WHERE id = $1`,
+      [u.id]
     );
 
-    return res.json({ sucesso: true });
+    // Cria schema + pasta de backup por e-mail (nomeada pelo slug do e-mail)
+    const schemaName = `t_${emailSlug(emailLC)}`;
+    await client.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
+    await client.query(`UPDATE usuarios SET tenant_schema = $1 WHERE id = $2`, [schemaName, u.id]);
+    const backupRoot = process.env.BACKUP_ROOT || path.resolve('./backups');
+    const backupDir = path.join(backupRoot, emailSlug(emailLC));
+    fs.mkdirSync(backupDir, { recursive: true });
+
+    await client.query('COMMIT');
+    console.log(`🔐 Verificação OK: ${emailLC} | schema=${schemaName} | backup=${backupDir}`);
+    return res.json({ sucesso: true, tenant_schema: schemaName });
   } catch (err) {
-    console.error('Erro ao finalizar cadastro:', err);
+    console.error('💥 [VERIFICAR] erro inesperado:', err);
     return res.status(500).json({ erro: 'Erro interno no servidor.' });
   }
 }
 
-// ----------------------------- LOGIN -----------------------------
+// ➤ Login e geração do token JWT
 async function login(req, res) {
-  const email = norm(req.body.email);
-  const senha = String(req.body.senha || '');
-
+  const { email, senha } = req.body;
+  const emailLC = norm(email);
   try {
-    const usuario = await one('SELECT * FROM usuarios WHERE LOWER(email)=LOWER($1)', [email]);
-    if (!usuario) return res.status(400).json({ message: 'Usuário não encontrado.' });
-    if (!usuario.verificado) return res.status(403).json({ erro: 'Usuário não verificado. Confirme seu e-mail.' });
-
-    const ok = await bcrypt.compare(senha, usuario.senha);
+    const { rows } = await pool.query(
+      `SELECT id, email, senha_hash, is_verified, perfil, tipo_conta
+         FROM usuarios WHERE LOWER(email)=LOWER($1) LIMIT 1`,
+      [emailLC]
+    );
+    if (!rows.length) return res.status(400).json({ message: 'Usuário não encontrado.' });
+    const u = rows[0];
+    if (!u.is_verified) return res.status(403).json({ erro: 'Usuário não verificado. Confirme seu e-mail.' });
+    const ok = await bcrypt.compare(senha, u.senha_hash);
     if (!ok) return res.status(400).json({ message: 'Senha incorreta.' });
-
     const token = jwt.sign(
-      { email, idProdutor: usuario.id, perfil: usuario.perfil, tipoConta: usuario.tipoconta },
+      { email: u.email, idProdutor: u.id, perfil: u.perfil || 'funcionario', tipoConta: u.tipo_conta || 'usuario' },
       SECRET,
       { expiresIn: '2h' }
     );
-
     return res.status(200).json({ token });
-  } catch (err) {
-    console.error('Erro no login:', err);
-    return res.status(500).json({ message: 'Erro no login.' });
-  }
-}
-
-// ----------------------------- DADOS/LISTAGEM -----------------------------
-async function dados(req, res) {
-  try {
-    const usuario = await one('SELECT id, nome, nomefazenda, email, telefone, perfil FROM usuarios WHERE id=$1', [req.user.idProdutor]);
-    if (!usuario) return res.status(404).json({ message: 'Usuário não encontrado' });
-
-    res.json({
-      usuario: {
-        id: usuario.id,
-        nome: usuario.nome,
-        nomeFazenda: usuario.nomefazenda,
-        email: usuario.email,
-        telefone: usuario.telefone,
-        isAdmin: (req.user.perfil === 'admin'),
-      }
-    });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ message: 'Erro ao carregar dados.' });
+    console.error('💥 [LOGIN] erro:', e);
+    return res.status(500).json({ message: 'Erro ao efetuar login.' });
   }
-}
-
-async function listarUsuarios(req, res) {
-  try {
-    const rows = await run('SELECT id, nome, nomefazenda, email, telefone, perfil FROM usuarios ORDER BY id DESC', []);
-    res.json(rows);
-  } catch (err) {
-    console.error('Erro ao listar usuários:', err);
-    res.status(500).json({ error: 'Erro ao listar usuários' });
-  }
-}
-
-// ----------------------------- RESET DE SENHA -----------------------------
-async function solicitarReset(req, res) {
-  const email = norm(req.body.email);
-  if (!email) return res.status(400).json({ message: 'Email inválido.' });
-
-  const usuario = await one('SELECT id FROM usuarios WHERE LOWER(email)=LOWER($1)', [email]);
-  if (!usuario) return res.status(404).json({ message: 'Usuário não encontrado.' });
-
-  const codigo = Math.floor(100000 + Math.random() * 900000).toString();
-
-  await run(
-    `INSERT INTO verificacoes_pendentes (email, codigo, criado_em)
-     VALUES ($1,$2,NOW())
-     ON CONFLICT (email) DO UPDATE SET codigo=EXCLUDED.codigo, criado_em=NOW()`,
-    [email, codigo]
-  );
-
-  try {
-    await enviarCodigo(email, codigo);
-    res.json({ message: 'Código enviado ao e-mail.' });
-  } catch (err) {
-    console.error('Erro ao enviar e-mail:', err);
-    res.status(500).json({ message: 'Erro ao enviar código.' });
-  }
-}
-
-async function resetarSenha(req, res) {
-  const email = norm(req.body.email);
-  const codigo = String(req.body.codigo || '').trim();
-  const senha = String(req.body.senha || '');
-
-  if (!email || !codigo || !senha) return res.status(400).json({ message: 'Dados inválidos.' });
-
-  const pend = await one('SELECT codigo FROM verificacoes_pendentes WHERE email=$1', [email]);
-  if (!pend || pend.codigo !== codigo) return res.status(400).json({ message: 'Código inválido.' });
-
-  const hash = await bcrypt.hash(senha, 10);
-  await run('UPDATE usuarios SET senha=$1 WHERE LOWER(email)=LOWER($2)', [hash, email]);
-  await run('DELETE FROM verificacoes_pendentes WHERE email=$1', [email]);
-
-  res.json({ message: 'Senha atualizada com sucesso.' });
 }
 
 module.exports = {
   cadastro,
   verificarEmail,
-  finalizarCadastro,
   login,
-  dados,
-  listarUsuarios,
-  solicitarReset,
-  resetarSenha,
+  // compatibilidade se o frontend chama /verify-code
+  verifyCode: verificarEmail,
 };
+

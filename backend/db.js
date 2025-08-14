@@ -453,6 +453,7 @@ function getDbCompat() {
 
 // >>> MUDE AS EXPORTAÇÕES para expor o compat por padrão
 module.exports = {
+  pool,
   initDB,        // já existente no seu arquivo
   getDb: getDbCompat, // mantém compat
   getPool,       // caso você queira usar pool.query direto em arquivos novos
