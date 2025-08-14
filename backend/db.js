@@ -26,8 +26,45 @@ if (!cfg.password) {
 
 const pool = new Pool(cfg);
 
+// --- Helpers de tenant (schema por usuário) ---
 function sanitizeEmail(email) {
-  return String(email || '').replace(/[@.]/g, '_');
+  return String(email).toLowerCase().replace(/[@.]/g, '_').replace(/[^a-z0-9_]/g, '_');
+}
+
+function schemaFromIdentifier(identifier) {
+  return `tenant_${sanitizeEmail(identifier)}`;
+}
+
+async function ensureTenantsTable() {
+  const p = getPool();
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS public.tenants (
+      id SERIAL PRIMARY KEY,
+      email TEXT UNIQUE,
+      user_id INTEGER UNIQUE,
+      schema_name TEXT UNIQUE
+    )
+  `);
+}
+
+async function ensureTenantSchema(identifier, userId = null) {
+  const p = getPool();
+  const schema = schemaFromIdentifier(identifier);
+  // cria schema seguro (identificador só com [a-z0-9_])
+  await p.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
+  await ensureTenantsTable();
+  // mapeia email -> schema (e user_id se informado)
+  await p.query(
+    `
+      INSERT INTO public.tenants (email, user_id, schema_name)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (email)
+      DO UPDATE SET user_id = COALESCE(EXCLUDED.user_id, tenants.user_id),
+                    schema_name = EXCLUDED.schema_name
+    `,
+    [String(identifier).toLowerCase(), userId, schema]
+  );
+  return schema;
 }
 
 // === MIGRATIONS (PostgreSQL) ===
@@ -202,7 +239,7 @@ async function applyMigrations(client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS configuracao (
       id SERIAL PRIMARY KEY,
-      idProdutor INTEGER,
+      idProdutor INTEGER UNIQUE,
       dados JSONB DEFAULT '{}'::jsonb
     );
   `);
@@ -410,5 +447,6 @@ module.exports = {
   initDB,        // já existente no seu arquivo
   getDb: getDbCompat, // mantém compat
   getPool,       // caso você queira usar pool.query direto em arquivos novos
-  sanitizeEmail  // se existir no seu arquivo
+  sanitizeEmail,
+  ensureTenantSchema
 };

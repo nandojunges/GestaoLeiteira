@@ -31,7 +31,7 @@ const healthDbRoutes = require('./routes/healthDbRoutes');
 const logger = require('./middleware/logger');
 const rateLimit = require('./middleware/rateLimit');
 const { inicializarAdmins } = require('./controllers/authController');
-const { initDB, getDb } = require('./db');
+const { initDB, getDb, getPool } = require('./db');
 
 (async () => {
   await initDB('system@gestao'); // roda applyMigrations/abre pool
@@ -52,6 +52,31 @@ app.get('/api/health', (req, res) => {
 
 // Servir arquivos estáticos usados pelo front (rotativos .txt)
 app.use('/api/data', express.static(path.join(__dirname, 'data')));
+
+// rotas de configuração (simples, sem autenticação por enquanto)
+app.get('/api/configuracao', async (req, res, next) => {
+  try {
+    const userId = null; // se tiver auth, substitua por req.user.id
+    const { rows } = await getPool().query(
+      'SELECT dados FROM configuracao WHERE idProdutor IS NOT DISTINCT FROM $1',
+      [userId]
+    );
+    res.json(rows[0]?.dados || {});
+  } catch (e) { next(e); }
+});
+
+app.post('/api/configuracao', async (req, res, next) => {
+  try {
+    const userId = null; // se tiver auth, substitua por req.user.id
+    await getPool().query(
+      `INSERT INTO configuracao (idProdutor, dados)
+       VALUES ($1, $2)
+       ON CONFLICT (idProdutor) DO UPDATE SET dados = EXCLUDED.dados`,
+      [userId, req.body]
+    );
+    res.status(204).end();
+  } catch (e) { next(e); }
+});
 
 // 📁 Pasta para backups de dados excluídos
 fs.mkdirSync(path.join(__dirname, 'dadosExcluidos'), { recursive: true });
