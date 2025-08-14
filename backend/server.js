@@ -23,19 +23,15 @@ const racasRoutes = require('./routes/racasRoutes');
 const mockRoutes = require('./routes/mockRoutes');
 const rotasExtras = require('./routes/rotasExtras');
 const adminRoutes = require('./routes/adminRoutes');
-const authRoutes = require('./routes/authRoutes');
 const apiV1Routes = require('./routes/apiV1');
 const maintenanceRoutes = require('./routes/maintenanceRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 const healthDbRoutes = require('./routes/healthDbRoutes');
 const logger = require('./middleware/logger');
-const rateLimit = require('./middleware/rateLimit');
-const { inicializarAdmins } = require('./controllers/authController');
-const { initDB, getDb, getPool } = require('./db');
+const { initDB, getPool } = require('./db');
 
 (async () => {
   await initDB('system@gestao'); // roda applyMigrations/abre pool
-  inicializarAdmins(getDb());
 })();
 
 const app = express();
@@ -107,11 +103,7 @@ app.use('/api/touros', authMiddleware, dbMiddleware, tourosRoutes);
 // mantendo também a rota sem prefixo para compatibilidade com alguns pontos do front-end
 // Rotas não protegidas (mock e auth) não devem exigir token nem acessar banco
 app.use('/', mockRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/v1/auth/send-code', rateLimit);
-app.use('/api/v1/auth/forgot-password', rateLimit);
-app.use('/api/v1/auth/login', rateLimit);
-app.use('/api/v1/auth', authRoutes);
+app.use('/api/auth', require('./routes/auth'));
 app.use('/api', rotasExtras);
 app.use('/api', adminRoutes);
 // Rotas v1 com services reestruturados

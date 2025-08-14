@@ -26,6 +26,16 @@ if (!cfg.password) {
 
 const pool = new Pool(cfg);
 
+async function run(text, params = []) {
+  const { rows } = await pool.query(text, params);
+  return rows;
+}
+
+async function one(text, params = []) {
+  const { rows } = await pool.query(text, params);
+  return rows[0] || null;
+}
+
 // --- Helpers de tenant (schema por usuário) ---
 function sanitizeEmail(email) {
   return String(email).toLowerCase().replace(/[@.]/g, '_').replace(/[^a-z0-9_]/g, '_');
@@ -100,17 +110,16 @@ async function applyMigrations(client) {
 
   await client.query(`
     CREATE TABLE IF NOT EXISTS verificacoes_pendentes (
-      id SERIAL PRIMARY KEY,
-      email TEXT UNIQUE,
-      codigo TEXT,
+      email TEXT PRIMARY KEY,
+      codigo TEXT NOT NULL,
       nome TEXT,
-      nomeFazenda TEXT,
+      nome_fazenda TEXT,
       telefone TEXT,
-      senha TEXT,
-      planoSolicitado TEXT,
-      formaPagamento TEXT,
-      criado_em TIMESTAMP
-    );
+      senha_hash TEXT,
+      plano_solicitado TEXT,
+      forma_pagamento TEXT,
+      criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
   `);
 
   await client.query(`
@@ -448,5 +457,7 @@ module.exports = {
   getDb: getDbCompat, // mantém compat
   getPool,       // caso você queira usar pool.query direto em arquivos novos
   sanitizeEmail,
-  ensureTenantSchema
+  ensureTenantSchema,
+  run,
+  one
 };
