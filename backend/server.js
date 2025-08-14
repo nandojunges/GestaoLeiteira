@@ -41,6 +41,22 @@ app.use(express.json({ limit: '10mb' }));
 app.use(logger);
 if (morgan) app.use(morgan('dev'));
 
+// Logger focado só em /api/auth/*
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    if (!/^\/api\/auth(\/|$)/.test(req.originalUrl)) return;
+    console.log(JSON.stringify({
+      tag: 'AUTH',
+      method: req.method,
+      url: req.originalUrl,
+      status: res.statusCode,
+      duration: Date.now() - start
+    }));
+  });
+  next();
+});
+
 // Health check simples (útil para ver se o proxy está batendo mesmo)
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, ts: new Date().toISOString() });
