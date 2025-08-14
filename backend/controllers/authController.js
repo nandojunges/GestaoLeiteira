@@ -9,18 +9,45 @@ const norm = (e) => String(e || '').trim().toLowerCase();
 
 // ----------------------------- CADASTRO -----------------------------
 async function cadastro(req, res) {
-  const { nome, nomeFazenda, email, telefone, senha, plano: planoSolicitado, formaPagamento } = req.body;
-  const endereco = norm(email);
-  if (!endereco) return res.status(400).json({ message: 'Email inválido ou não informado.' });
-  if (!senha || senha.length < 4) return res.status(400).json({ message: 'Senha inválida.' });
+  const {
+    nome,
+    nomeFazenda,
+    email,
+    telefone,
+    senha,
+    plano: planoSolicitado,
+    formaPagamento,
+  } = req.body;
+
+  const endereco = String(email || '').trim().toLowerCase();
+
+  console.log('👤 [CADASTRO] payload recebido:', {
+    nome, nomeFazenda, email: endereco, telefone,
+    senhaLen: (senha || '').length, planoSolicitado, formaPagamento
+  });
+
+  if (!endereco || !endereco.includes('@')) {
+    console.log('⛔ [CADASTRO] email inválido');
+    return res.status(400).json({ message: 'Email inválido ou não informado.' });
+  }
+  if (!senha || senha.length < 4) {
+    console.log('⛔ [CADASTRO] senha inválida');
+    return res.status(400).json({ message: 'Senha inválida.' });
+  }
 
   try {
+    // Já existe usuário?
     const u = await one('SELECT 1 FROM usuarios WHERE LOWER(email)=LOWER($1) LIMIT 1', [endereco]);
-    if (u) return res.status(400).json({ message: 'Email já cadastrado.' });
+    console.log('🔎 [CADASTRO] existe em usuarios?', !!u);
+    if (u) {
+      return res.status(400).json({ message: 'Email já cadastrado.' });
+    }
 
+    // throttle de reenvio
     const pend = await one('SELECT criado_em FROM verificacoes_pendentes WHERE email=$1', [endereco]);
     if (pend) {
       const ago = Date.now() - new Date(pend.criado_em).getTime();
+      console.log('⏱️ [CADASTRO] pendente há(ms):', ago);
       if (ago < 3 * 60 * 1000) {
         return res.status(400).json({ message: 'Código já enviado recentemente. Aguarde alguns minutos.' });
       }
@@ -28,6 +55,20 @@ async function cadastro(req, res) {
 
     const codigo = Math.floor(100000 + Math.random() * 900000).toString();
     const senhaHash = await bcrypt.hash(senha, 10);
+
+    await run(
+      `CREATE TABLE IF NOT EXISTS verificacoes_pendentes (
+        email TEXT PRIMARY KEY,
+        codigo TEXT NOT NULL,
+        nome TEXT,
+        nome_fazenda TEXT,
+        telefone TEXT,
+        senha_hash TEXT,
+        plano_solicitado TEXT,
+        forma_pagamento TEXT,
+        criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`
+    );
 
     await run(
       `INSERT INTO verificacoes_pendentes (email, codigo, nome, nome_fazenda, telefone, senha_hash, plano_solicitado, forma_pagamento, criado_em)
@@ -46,13 +87,15 @@ async function cadastro(req, res) {
 
     try {
       await enviarCodigo(endereco, codigo);
+      console.log('✉️  [CADASTRO] e-mail enviado para', endereco);
     } catch (e) {
-      console.error('✉️  Falha ao enviar e-mail:', e);
+      console.error('✉️  [CADASTRO] falha ao enviar e-mail:', e);
+      // não derruba o fluxo de cadastro; cliente verá msg de "código enviado"
     }
 
     return res.status(201).json({ message: 'Código enviado. Verifique o e-mail.' });
-  } catch (err) {
-    console.error('Erro no cadastro:', err);
+  } catch (error) {
+    console.error('💥 [CADASTRO] erro inesperado:', error);
     return res.status(500).json({ error: 'Erro ao cadastrar usuário.' });
   }
 }

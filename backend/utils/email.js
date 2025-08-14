@@ -5,7 +5,7 @@ const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.zoho.com',
   port: Number(process.env.SMTP_PORT || 465),
-  secure: String(process.env.SMTP_SECURE || 'true') === 'true', // SSL
+  secure: String(process.env.SMTP_SECURE || 'true') === 'true', // SSL no 465
   auth: {
     user: process.env.EMAIL_REMETENTE,
     pass: process.env.EMAIL_SENHA_APP
