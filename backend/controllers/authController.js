@@ -5,6 +5,7 @@ const { enviarCodigo } = require('../utils/email');
 const { ensureUserDir } = require('../utils/userStorage');
 
 const SECRET = process.env.JWT_SECRET || 'segredo';
+const TTL_MIN = Number(process.env.VERIFICATION_TTL_MINUTES || 3);
 const norm = (e) => String(e || '').trim().toLowerCase();
 
 // ----------------------------- CADASTRO -----------------------------
@@ -36,21 +37,32 @@ async function cadastro(req, res) {
   }
 
   try {
+    // remove pendências expiradas
+    await run(
+      'DELETE FROM verificacoes_pendentes WHERE criado_em < NOW() - ($1 * INTERVAL "1 minute")',
+      [TTL_MIN]
+    );
+
     // Já existe usuário?
     const u = await one('SELECT 1 FROM usuarios WHERE LOWER(email)=LOWER($1) LIMIT 1', [endereco]);
     console.log('🔎 [CADASTRO] existe em usuarios?', !!u);
     if (u) {
-      return res.status(400).json({ message: 'Email já cadastrado.' });
+      return res.status(409).json({ message: 'Email já cadastrado.' });
     }
 
     // throttle de reenvio
     const pend = await one('SELECT criado_em FROM verificacoes_pendentes WHERE email=$1', [endereco]);
     if (pend) {
-      const ago = Date.now() - new Date(pend.criado_em).getTime();
-      console.log('⏱️ [CADASTRO] pendente há(ms):', ago);
-      if (ago < 3 * 60 * 1000) {
-        return res.status(400).json({ message: 'Código já enviado recentemente. Aguarde alguns minutos.' });
+      const elapsed = Date.now() - new Date(pend.criado_em).getTime();
+      console.log('⏱️ [CADASTRO] pendente há(ms):', elapsed);
+      if (elapsed < TTL_MIN * 60 * 1000) {
+        const retry = Math.ceil((TTL_MIN * 60 * 1000 - elapsed) / 1000);
+        return res.status(409).json({
+          message: 'Cadastro pendente de verificação.',
+          retry_after_seconds: retry,
+        });
       }
+      await run('DELETE FROM verificacoes_pendentes WHERE email=$1', [endereco]);
     }
 
     const codigo = Math.floor(100000 + Math.random() * 900000).toString();
@@ -86,11 +98,12 @@ async function cadastro(req, res) {
     );
 
     try {
-      await enviarCodigo(endereco, codigo);
+      await enviarCodigo(endereco, codigo, TTL_MIN);
       console.log('✉️  [CADASTRO] e-mail enviado para', endereco);
     } catch (e) {
-      console.error('✉️  [CADASTRO] falha ao enviar e-mail:', e);
-      // não derruba o fluxo de cadastro; cliente verá msg de "código enviado"
+      await run('DELETE FROM verificacoes_pendentes WHERE email=$1', [endereco]);
+      console.error('✉️  [CADASTRO] falha ao enviar e-mail:', e.message || e);
+      return res.status(502).json({ message: 'Falha ao enviar e-mail de verificação.' });
     }
 
     return res.status(201).json({ message: 'Código enviado. Verifique o e-mail.' });
@@ -111,7 +124,7 @@ async function verificarEmail(req, res) {
     const pend = await one('SELECT * FROM verificacoes_pendentes WHERE email=$1', [endereco]);
     if (!pend) return res.status(400).json({ erro: 'Código não encontrado. Faça o cadastro novamente.' });
 
-    const expirado = Date.now() - new Date(pend.criado_em).getTime() > 10 * 60 * 1000;
+    const expirado = Date.now() - new Date(pend.criado_em).getTime() > TTL_MIN * 60 * 1000;
     if (expirado) {
       await run('DELETE FROM verificacoes_pendentes WHERE email=$1', [endereco]);
       return res.status(400).json({ erro: 'Código expirado. Faça o cadastro novamente.' });
