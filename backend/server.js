@@ -49,31 +49,6 @@ app.get('/api/health', (req, res) => {
 // Servir arquivos estáticos usados pelo front (rotativos .txt)
 app.use('/api/data', express.static(path.join(__dirname, 'data')));
 
-// rotas de configuração (simples, sem autenticação por enquanto)
-app.get('/api/configuracao', async (req, res, next) => {
-  try {
-    const userId = null; // se tiver auth, substitua por req.user.id
-    const { rows } = await getPool().query(
-      'SELECT dados FROM configuracao WHERE idProdutor IS NOT DISTINCT FROM $1',
-      [userId]
-    );
-    res.json(rows[0]?.dados || {});
-  } catch (e) { next(e); }
-});
-
-app.post('/api/configuracao', async (req, res, next) => {
-  try {
-    const userId = null; // se tiver auth, substitua por req.user.id
-    await getPool().query(
-      `INSERT INTO configuracao (idProdutor, dados)
-       VALUES ($1, $2)
-       ON CONFLICT (idProdutor) DO UPDATE SET dados = EXCLUDED.dados`,
-      [userId, req.body]
-    );
-    res.status(204).end();
-  } catch (e) { next(e); }
-});
-
 // 📁 Pasta para backups de dados excluídos
 fs.mkdirSync(path.join(__dirname, 'dadosExcluidos'), { recursive: true });
 
@@ -116,9 +91,32 @@ app.use(healthDbRoutes);
 const distPath = path.join(__dirname, '..', 'dist');
 app.use(express.static(distPath));
 
-// 🎯 Redirecionamento de SPA (React Router)
+// ⛳ STUB temporário: não persistir config, só responder OK
+app.post('/api/configuracao', (req, res) => {
+  try {
+    // console.log('🛠️ [STUB CONFIG] ignorando payload', req.body);
+    return res.status(204).end();
+  } catch (e) {
+    return res.status(204).end();
+  }
+});
+
+// Não deixe rotas /api/* caírem no SPA:
+app.use('/api/data/rotativos', (req, res) => {
+  return res.status(404).json({ error: 'Arquivo não encontrado (dev)' });
+});
+
+// Fallback do SPA protegido
 app.get('*', (req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API route não encontrada' });
+  }
+  const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+  // Em dev (vite) não tem dist; evita ENOENT
+  return res.status(200).send('<!doctype html><html><body><h1>Dev server ativo</h1></body></html>');
 });
 
 // Loga toda exceção não capturada em rotas
