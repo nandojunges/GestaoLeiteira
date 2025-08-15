@@ -7,6 +7,9 @@ const path = require('path');
 const fs = require('fs');
 let morgan; try { morgan = require('morgan'); } catch {}
 
+const authCtrl = require('./controllers/authController');
+const autenticarToken = require('./middlewares/autenticarToken');
+
 const vacasRoutes = require('./routes/vacasRoutes');
 const animaisRoutes = require('./routes/animaisRoutes');
 const tarefasRoutes = require('./routes/tarefasRoutes');
@@ -94,7 +97,6 @@ app.use('/api/touros', authMiddleware, dbMiddleware, tourosRoutes);
 // mantendo também a rota sem prefixo para compatibilidade com alguns pontos do front-end
 // Rotas não protegidas (mock e auth) não devem exigir token nem acessar banco
 app.use('/', mockRoutes);
-app.use('/api/auth', require('./routes/auth'));
 app.use('/api', rotasExtras);
 app.use('/api', adminRoutes);
 // Rotas v1 com services reestruturados
@@ -146,6 +148,49 @@ app.use((err, req, res, next) => {
   });
   res.status(500).json({ error: 'Internal Server Error' });
 });
+
+/* ===== [AUTH WIRED] rotas de autenticação ===== */
+if (!global.__AUTH_ROUTES_WIRED__) {
+  const appRef = (typeof app !== "undefined") ? app : (global.app || null);
+  if (!appRef) { throw new Error("app (express) não encontrado para ligar rotas de auth"); }
+  const c = authCtrl;
+
+  // cadastra e envia código por e-mail
+  if (!appRef._router || !appRef._router.stack.some(s => s.route && s.route.path === "/api/auth/register")) {
+    appRef.post("/api/auth/register", c.cadastro);
+  }
+  // verificar código (cadastro) OU reset de senha (o controller decide)
+  if (!appRef._router || !appRef._router.stack.some(s => s.route && s.route.path === "/api/auth/verify")) {
+    appRef.post("/api/auth/verify", c.verificarCodigo);
+  }
+  // login
+  if (!appRef._router || !appRef._router.stack.some(s => s.route && s.route.path === "/api/auth/login")) {
+    appRef.post("/api/auth/login", c.login);
+  }
+  // dados do usuário logado
+  if (!appRef._router || !appRef._router.stack.some(s => s.route && s.route.path === "/api/auth/me")) {
+    appRef.get("/api/auth/me", autenticarToken, c.dados);
+  }
+  // recuperação de senha: solicitar código
+  if (!appRef._router || !appRef._router.stack.some(s => s.route && s.route.path === "/api/auth/forgot")) {
+    appRef.post("/api/auth/forgot", c.solicitarReset);
+  }
+  // recuperação de senha: redefinir
+  if (!appRef._router || !appRef._router.stack.some(s => s.route && s.route.path === "/api/auth/reset")) {
+    appRef.post("/api/auth/reset", c.resetarSenha);
+  }
+  // finalizar cadastro (escolha de plano)
+  if (!appRef._router || !appRef._router.stack.some(s => s.route && s.route.path === "/api/auth/finalizar")) {
+    appRef.post("/api/auth/finalizar", c.finalizarCadastro);
+  }
+  // lista de usuários do produtor
+  if (!appRef._router || !appRef._router.stack.some(s => s.route && s.route.path === "/api/usuarios")) {
+    appRef.get("/api/usuarios", autenticarToken, c.listarUsuarios);
+  }
+
+  global.__AUTH_ROUTES_WIRED__ = true;
+}
+/* ===== [/AUTH WIRED] ===== */
 
 // 🚀 Inicialização do servidor (somente se executado diretamente)
 const PORT = cfg.port;
