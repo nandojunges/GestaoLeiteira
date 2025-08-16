@@ -1,51 +1,81 @@
+// backend/utils/email.js
 const nodemailer = require('nodemailer');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
-// --- Config padrão para Zoho ---
-const SMTP_HOST = process.env.SMTP_HOST || 'smtp.zoho.com';
-const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
-const SMTP_SECURE = String(process.env.SMTP_SECURE || 'true') === 'true';
-const SMTP_USER = process.env.EMAIL_REMETENTE; // ex.: gestaoleiteirasmartcow@zohomail.com
-const SMTP_PASS = process.env.EMAIL_SENHA_APP; // App Password gerada no Zoho
-const MAIL_FROM = process.env.MAIL_FROM || SMTP_USER;
-const TTL_MIN = Number(process.env.VERIFICATION_TTL_MINUTES || 3);
+const cfg = {
+  host: process.env.SMTP_HOST || 'smtp.zoho.com',
+  port: Number(process.env.SMTP_PORT || 465),
+  secure: String(process.env.SMTP_SECURE || 'true').toLowerCase() === 'true',
+  auth: {
+    user: process.env.EMAIL_REMETENTE,
+    pass: process.env.EMAIL_SENHA_APP,
+  },
+};
 
-if (!SMTP_USER || !SMTP_PASS) {
-  console.warn('⚠️  [MAIL] EMAIL_REMETENTE/EMAIL_SENHA_APP ausentes no .env');
+const MAIL_FROM = process.env.MAIL_FROM || process.env.EMAIL_REMETENTE || '';
+
+function logCfg() {
+  // mostra só o começo da senha pra evitar vazar tudo
+  const passSample =
+    process.env.EMAIL_SENHA_APP ? process.env.EMAIL_SENHA_APP.slice(0, 3) + '***' : '(vazio)';
+  console.log('[MAIL] config efetiva:', {
+    host: cfg.host,
+    port: cfg.port,
+    secure: cfg.secure,
+    user: cfg.auth.user,
+    from: MAIL_FROM,
+    senha_len: process.env.EMAIL_SENHA_APP ? process.env.EMAIL_SENHA_APP.length : 0,
+    senha_ini: passSample,
+  });
 }
 
-const transporter = nodemailer.createTransport({
-  host: SMTP_HOST,
-  port: SMTP_PORT,
-  secure: SMTP_SECURE, // Zoho usa SSL na 465
-  auth: { user: SMTP_USER, pass: SMTP_PASS },
-});
+const transporter = nodemailer.createTransport(cfg);
 
+async function verificarSMTP() {
+  try {
+    await transporter.verify();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e };
+  }
+}
+
+/**
+ * Envia o código de verificação por e-mail via Zoho
+ * Lança erro com prefixo SMTP_AUTH_FAIL/SEND_FAIL para o controlador traduzir em 502.
+ */
 async function enviarCodigo(destino, codigo) {
+  logCfg();
+
+  // 1) testa autenticação antes de tentar enviar
+  const vr = await verificarSMTP();
+  if (!vr.ok) {
+    console.error('❌ [MAIL] verify falhou:', vr.error?.message || vr.error);
+    const err = new Error(`SMTP_AUTH_FAIL: ${vr.error?.message || vr.error}`);
+    err.code = 'SMTP_AUTH_FAIL';
+    throw err;
+  }
+
   const mensagem = {
     from: MAIL_FROM,
     to: destino,
     subject: 'Código de verificação - Gestão Leiteira',
-    text: `Seu código de verificação é: ${codigo}\nValidade: ${TTL_MIN} minuto(s).`,
+    text: `Seu código de verificação é: ${codigo}`,
     headers: { 'X-Mailer': 'GestaoLeiteira' },
     replyTo: MAIL_FROM,
   };
 
-  console.log(`✉️  [MAIL] tentando enviar para ${destino} (TTL ${TTL_MIN} min)`);
   try {
-    await transporter.verify(); // garante login/porta/ssl
     const info = await transporter.sendMail(mensagem);
-    console.log(`✔️  [MAIL] enviado: ${info.messageId}`);
-    return true;
-  } catch (err) {
-    console.error(`❌ [MAIL] falha ao enviar para ${destino}: ${err?.message || err}`);
-    if (err?.response) console.error('[MAIL] response:', err.response);
-    if (process.env.MAIL_DEV_ECHO_CODE === 'true') {
-      console.log(`🔎 [DEV] Código para ${destino}: ${codigo}`);
-    }
+    console.log('✔️  E-mail enviado com sucesso:', info.messageId);
+    return info;
+  } catch (e) {
+    console.error('❌ [MAIL] falha ao enviar para ' + destino + ':', e.message);
+    const err = new Error(`SEND_FAIL: ${e.message}`);
+    err.code = 'SEND_FAIL';
     throw err;
   }
 }
 
-module.exports = { enviarCodigo, transporter };
-
+module.exports = { enviarCodigo, verificarSMTP };
