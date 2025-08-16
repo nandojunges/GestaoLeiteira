@@ -141,7 +141,11 @@ async function cadastro(req, res) {
 
 // ➤ Verifica o código enviado por e-mail e cria o usuário
 async function verificarEmail(req, res) {
-  const { email: endereco, codigoDigitado } = req.body;
+  // aceita codigoDigitado, codigo ou code
+  const endereco = (req.body.email || req.body.endereco || '').toLowerCase().trim();
+  const codigoDigitado = ((req.body.codigoDigitado ?? req.body.codigo ?? req.body.code) || '')
+    .toString()
+    .trim();
 
   if (!endereco || typeof endereco !== 'string') {
     return res.status(400).json({ erro: 'Email inválido.' });
@@ -167,7 +171,7 @@ async function verificarEmail(req, res) {
 
     const now = new Date();
     if (now > u.verification_expires) { await client.query('ROLLBACK'); return res.status(400).json({ erro: 'Código expirado. Faça o cadastro novamente.' }); }
-    if (String(codigoDigitado).trim() !== u.verification_code) { await client.query('ROLLBACK'); return res.status(400).json({ erro: 'Código incorreto.' }); }
+    if (codigoDigitado !== u.verification_code) { await client.query('ROLLBACK'); return res.status(400).json({ erro: 'Código incorreto.' }); }
 
     // Marca como verificado
     await client.query(
