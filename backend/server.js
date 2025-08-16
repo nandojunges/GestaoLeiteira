@@ -1,6 +1,7 @@
 const path = require('path');
+// Carrega variáveis do backend/.env e, se existir, também do .env da raiz
 require('dotenv').config(); // backend/.env
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') }); // fallback: .env da raiz
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') }); // fallback raiz
 const express = require('express');
 const cors = require('cors');
 const cfg = require('./config/env');
