@@ -1,48 +1,30 @@
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import SistemaBase from './layout/SistemaBase';
-import Login from './pages/Auth/Login';
-import Inicio from './pages/Inicio'; // substitua pelo seu componente correto
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import jwtDecode from 'jwt-decode';
-function AppRoutes() {
-  const navigate = useNavigate();
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import SistemaBase from "./layout/SistemaBase";
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    try {
-      const decoded = jwtDecode(token);
-      if (!decoded || !decoded.idProdutor) {
-        localStorage.removeItem('token');
-        navigate('/login');
-      }
-    } catch (e) {
-      localStorage.removeItem('token');
-      navigate('/login');
-    }
-  }, [navigate]);
+import Inicio from "./pages/AppTarefas";
+import Animais from "./pages/Animais";
+import Ajustes from "./pages/Ajustes";
+import Admin from "./pages/Admin/Admin";
 
-  return (
-    <Routes>
-      {/* Login fora do layout principal */}
-      <Route path="/login" element={<Login />} />
-
-      {/* Todo o resto usa o layout SistemaBase */}
-      <Route path="/" element={<SistemaBase />}>
-        <Route path="inicio" element={<Inicio />} />
-        {/* Aqui você pode adicionar outras páginas depois */}
-      </Route>
-    </Routes>
-  );
-}
+const Stub = (t) => () => <div style={{ padding: 16 }}>Página {t}</div>;
 
 export default function App() {
   return (
     <BrowserRouter>
-      <AppRoutes />
-      <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar={false} pauseOnHover theme="light" />
+      <Routes>
+        <Route path="/" element={<SistemaBase />}>
+          <Route index element={<Navigate to="/inicio" replace />} />
+          <Route path="inicio" element={<Inicio />} />
+          <Route path="animais" element={<Animais />} />
+          <Route path="leite" element={<Stub t="Leite" />} />
+          <Route path="reproducao" element={<Stub t="Reprodução" />} />
+          <Route path="bezerras" element={<Stub t="Bezerras" />} />
+          <Route path="financeiro" element={<Stub t="Financeiro" />} />
+          <Route path="ajustes" element={<Ajustes />} />
+          <Route path="admin" element={<Admin />} />
+          <Route path="*" element={<Navigate to="/inicio" replace />} />
+        </Route>
+      </Routes>
     </BrowserRouter>
   );
 }

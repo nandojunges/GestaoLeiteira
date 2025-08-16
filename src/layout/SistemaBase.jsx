@@ -1,25 +1,14 @@
-import { useEffect } from 'react';
-import NavegacaoPrincipal from './NavegacaoPrincipal';
-import { Outlet } from 'react-router-dom';
-import executarDescontoDiario from '../utils/descontoDiario';
-import "../styles/botoes.css";
-import "../styles/tabelaModerna.css";
+import { Outlet } from "react-router-dom";
+import NavegacaoPrincipal from "./NavegacaoPrincipal";
 
 export default function SistemaBase() {
-  useEffect(() => {
-    executarDescontoDiario();
-  }, []);
-
+  if (import.meta.env.DEV) console.log("[LAYOUT] SistemaBase montou");
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100 font-sans">
-      <header
-        className="bg-[#1e3a8a] w-full shadow-md flex items-center justify-center"
-        style={{ minHeight: '130px' }}
-      >
-        <NavegacaoPrincipal contextoAzul />
+    <div className="min-h-screen bg-[#f7f8fb]">
+      <header className="bg-[#173d8f] text-white">
+        <NavegacaoPrincipal />
       </header>
-
-      <main className="flex flex-1 overflow-hidden">
+      <main className="p-4 max-w-7xl mx-auto">
         <Outlet />
       </main>
     </div>
