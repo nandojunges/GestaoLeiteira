@@ -52,6 +52,11 @@ const routes = createRoutesFromElements(
       <Route path="calendario" element={<RotaProtegida><Calendario /></RotaProtegida>} />
       <Route path="ajustes" element={<RotaProtegida><Ajustes /></RotaProtegida>} />
       <Route path="relatorios" element={<RotaProtegida><Relatorios /></RotaProtegida>} />
+      <Route path="admin" element={<RotaAdmin><Admin /></RotaAdmin>} />
+      <Route path="admin/usuarios" element={<RotaAdmin><ListaUsuarios /></RotaAdmin>} />
+      <Route path="painel-aprovacao-admin" element={<RotaAdmin><PainelAprovacaoAdmin /></RotaAdmin>} />
+      <Route path="relatorio-admin" element={<RotaAdmin><RelatorioAdmin /></RotaAdmin>} />
+      <Route path="admin/aprovacoes" element={<RotaAdmin><PainelAprovacoesPendentes /></RotaAdmin>} />
       <Route index element={<RotaProtegida><Navigate to="/inicio" replace /></RotaProtegida>} />
       <Route path="*" element={<Navigate to="/inicio" replace />} />
     </Route>
@@ -65,11 +70,6 @@ const routes = createRoutesFromElements(
     <Route path="/esqueci-senha" element={<EsqueciSenha />} />
     <Route path="/bemvindo" element={<BemVindo />} />
 
-    <Route path="/admin" element={<RotaAdmin><Admin /></RotaAdmin>} />
-    <Route path="/admin/usuarios" element={<RotaAdmin><ListaUsuarios /></RotaAdmin>} />
-    <Route path="/painel-aprovacao-admin" element={<RotaAdmin><PainelAprovacaoAdmin /></RotaAdmin>} />
-    <Route path="/relatorio-admin" element={<RotaAdmin><RelatorioAdmin /></RotaAdmin>} />
-    <Route path="/admin/aprovacoes" element={<RotaAdmin><PainelAprovacoesPendentes /></RotaAdmin>} /> {/* ✅ Nova rota */}
 
     <Route path="/fazenda" element={<Fazenda />} />
     <Route path="/painel" element={<Fazenda />} />
