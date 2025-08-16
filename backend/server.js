@@ -1,9 +1,10 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config(); // backend/.env
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') }); // fallback: .env da raiz
 const express = require('express');
 const cors = require('cors');
 const cfg = require('./config/env');
 const dbMiddleware = require('./middleware/dbMiddleware');
-const path = require('path');
 const fs = require('fs');
 let morgan; try { morgan = require('morgan'); } catch {}
 

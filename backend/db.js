@@ -1,30 +1,34 @@
 // backend/db.js  — versão PostgreSQL
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+// Carrega .env do backend e, como fallback, o .env da raiz do projeto
+require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const { Pool } = require('pg');
 
-// aceita DB_* ou PG* e garante string/number corretos
-const cfg = {
-  user: process.env.DB_USER || process.env.PGUSER || 'postgres',
-  host: process.env.DB_HOST || process.env.PGHOST || 'localhost',
-  database: process.env.DB_NAME || process.env.PGDATABASE || 'gestao_leiteira',
-  password: String(
-    process.env.DB_PASS ?? process.env.PGPASSWORD ?? ''
-  ), // << sempre string
-  port: Number(process.env.DB_PORT || process.env.PGPORT || 5432),
+// Normalizador de valores de .env (remove aspas e espaços)
+const norm = (v) => (v ?? '').toString().replace(/^"(.*)"$/, '$1').trim();
+
+const PGHOST = process.env.PGHOST || 'localhost';
+const PGPORT = Number(process.env.PGPORT) || 5432;
+const PGUSER = process.env.PGUSER || 'postgres';
+const PGDATABASE = process.env.PGDATABASE || 'gestao_leiteira';
+const PGPASS = process.env.PGPASSWORD ?? process.env.DB_PASS ?? process.env.DB_PASSWORD;
+
+if (!PGPASS) {
+  console.error('❌ PGPASSWORD/DB_PASS não definido. Defina a senha do Postgres em backend/.env ou no .env da raiz.');
+  process.exit(1);
+}
+
+const pool = new Pool({
+  host: PGHOST,
+  port: PGPORT,
+  user: PGUSER,
+  database: PGDATABASE,
+  password: norm(PGPASS),
   max: 10,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 10_000,
-};
-
-// log de diagnóstico (mascarado) — pode deixar em DEV
-if (!cfg.password) {
-  console.warn('⚠️  DB_PASS/PGPASSWORD ausente — o servidor pode recusar a conexão.');
-} else {
-  console.log('🔐 DB user:', cfg.user, 'host:', cfg.host, 'db:', cfg.database);
-}
-
-const pool = new Pool(cfg);
+});
 
 async function run(text, params = []) {
   const { rows } = await pool.query(text, params);
