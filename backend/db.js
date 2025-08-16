@@ -1,24 +1,45 @@
 // backend/db.js  — versão PostgreSQL
 const path = require('path');
-// Carrega .env do backend e, como fallback, o .env da raiz do projeto
-require('dotenv').config();
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+// Carrega variáveis do backend/.env e, se existir, também do .env da raiz
+require('dotenv').config(); // backend/.env
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') }); // fallback raiz
 const { Pool } = require('pg');
 
 // Normalizador de valores de .env (remove aspas e espaços)
 const norm = (v) => (v ?? '').toString().replace(/^"(.*)"$/, '$1').trim();
 
-const PGHOST = process.env.PGHOST || 'localhost';
+// Lê variáveis do Postgres
+const PGHOST = norm(process.env.PGHOST) || 'localhost';
 const PGPORT = Number(process.env.PGPORT) || 5432;
-const PGUSER = process.env.PGUSER || 'postgres';
-const PGDATABASE = process.env.PGDATABASE || 'gestao_leiteira';
-const PGPASS = process.env.PGPASSWORD ?? process.env.DB_PASS ?? process.env.DB_PASSWORD;
+const PGUSER = norm(process.env.PGUSER) || 'postgres';
+const PGDATABASE = norm(process.env.PGDATABASE) || 'gestao_leiteira';
+const PGPASS =
+  norm(process.env.PGPASSWORD) ||
+  norm(process.env.DB_PASS) ||
+  norm(process.env.DB_PASSWORD) ||
+  '';
 
+// Diagnóstico claro (sem revelar a senha)
 if (!PGPASS) {
-  console.error('❌ PGPASSWORD/DB_PASS não definido. Defina a senha do Postgres em backend/.env ou no .env da raiz.');
+  console.error('❌ PGPASSWORD/DB_PASS não definido.');
+  console.error('   Verifique se existe backend/.env ou .env na raiz com PGPASSWORD=... (sem aspas).');
+  console.error('   Lidos:', {
+    PGHOST,
+    PGPORT,
+    PGUSER,
+    PGDATABASE,
+    PGPASS_len: 0,
+  });
   process.exit(1);
+} else {
+  console.log('🐘 Postgres env OK:', {
+    PGHOST,
+    PGPORT,
+    PGUSER,
+    PGDATABASE,
+    PGPASS_len: PGPASS.length,
+  });
 }
-
 const pool = new Pool({
   host: PGHOST,
   port: PGPORT,
