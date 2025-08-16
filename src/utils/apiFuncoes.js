@@ -11,17 +11,12 @@ async function fetchJson(url, options = {}) {
       ...(options.headers || {})
     };
     const res = await fetch(url, options);
-    if (!res.ok) {
-      if (res.status === 404) {
-        return [];
-      }
-      throw new Error(`Erro ${res.status}: ${res.statusText}`);
-    }
+    if (!res.ok) throw new Error(`Erro ${res.status}: ${res.statusText}`);
     return await res.json();
   } catch (err) {
     console.error('Erro ao buscar dados:', err);
     toast.error('Erro ao conectar com o servidor.');
-    return [];
+    return null; // evita travar os componentes
   }
 }
 
