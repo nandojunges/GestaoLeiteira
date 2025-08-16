@@ -73,6 +73,9 @@ export async function getAlertasCriticos() {
 
 export async function contagemStatusVacas() {
   const animais = await buscarAnimais();
+  if (!Array.isArray(animais)) {
+    return { lactacao: 0, pev: 0, negativas: 0, preParto: 0 };
+  }
   const lactacao = animais.filter((v) => v.status === 'lactacao').length;
   const diasPEV = obterAjustePEV();
   let pev = 0;
