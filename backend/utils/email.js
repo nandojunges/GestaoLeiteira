@@ -1,48 +1,63 @@
-require("dotenv").config();
-const nodemailer = require("nodemailer");
+const nodemailer = require('nodemailer');
 
-let host = process.env.SMTP_HOST || process.env.EMAIL_HOST || "smtp.zoho.com";
-let port = Number(process.env.SMTP_PORT || 465);
-let secure = (String(process.env.SMTP_SECURE || "true").toLowerCase() !== "false");
-const user = process.env.EMAIL_REMETENTE;
-const pass = process.env.EMAIL_SENHA_APP;
-const from = process.env.MAIL_FROM || user;
+// ==== Leitura de ENV ====
+const TTL_MIN = Number(process.env.VERIFICATION_TTL_MINUTES || 3);
+const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
+const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
+const SMTP_SECURE = String(process.env.SMTP_SECURE || 'true') === 'true';
 
-// auto-correct: Gmail user com host Zoho -> usa Gmail SMTP
-if (/@gmail\.com$/i.test(user) && /zoho/i.test(host)) {
-  host = "smtp.gmail.com";
-  port = 465;
-  secure = true;
+// Login do SMTP (pode ser diferente do e-mail do From em cenários Zoho)
+const SMTP_USER = process.env.SMTP_USER || process.env.EMAIL_REMETENTE;
+const SMTP_PASS = process.env.SMTP_PASS || process.env.EMAIL_SENHA_APP;
+
+// From que aparecerá para o destinatário (pode ser Gmail mesmo autenticando no Zoho)
+const MAIL_FROM = process.env.MAIL_FROM || process.env.EMAIL_REMETENTE || SMTP_USER;
+
+// ==== Transporter SEM 'service' (não força Gmail) ====
+const transporter = nodemailer.createTransport({
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: SMTP_SECURE,                      // true: 465 (SSL); false: 587 (STARTTLS)
+  auth: { user: SMTP_USER, pass: SMTP_PASS },
+  requireTLS: !SMTP_SECURE,                 // porta 587 normalmente
+  tls: { minVersion: 'TLSv1.2', servername: SMTP_HOST },
+});
+
+function logConfig() {
+  console.log('[MAIL] config efetiva:', {
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE,
+    user: SMTP_USER,
+    from: MAIL_FROM,
+  });
 }
 
-const transporter = nodemailer.createTransport({ host, port, secure, auth: { user, pass } });
-
-function logCfg() {
-  console.log("[MAIL] config efetiva:", { host, port, secure, user, from });
-}
-
-async function enviarCodigo(to, codigo, ttlMin = Number(process.env.VERIFICATION_TTL_MINUTES || 3)) {
-  logCfg();
+async function verifyConnection() {
+  logConfig();
   try {
     await transporter.verify();
-  } catch (err) {
-    console.error("❌ [MAIL] verify falhou:", err.message);
-    throw err;
+    console.log('✅ [MAIL] Login SMTP OK');
+    return true;
+  } catch (e) {
+    console.log(`❌ [MAIL] verify falhou: ${e.response || e.message}`);
+    throw e;
   }
-
-  const message = {
-    from,
-    to,
-    subject: "Código de verificação - Gestão Leiteira",
-    text: `Seu código de verificação é: ${codigo}\n\nValidade: ${ttlMin} minuto(s).`,
-    headers: { "X-Mailer": "GestaoLeiteira" },
-    replyTo: "no-reply@gestaoleiteira.com",
-  };
-
-  console.log(`✉️  [MAIL] tentando enviar para ${to} (TTL ${ttlMin} min)`);
-  const info = await transporter.sendMail(message);
-  console.log("✔️ [MAIL] enviado:", info.messageId);
-  return info;
 }
 
-module.exports = { enviarCodigo };
+async function enviarCodigo(destino, codigo) {
+  await verifyConnection();
+  const msg = {
+    from: MAIL_FROM,
+    to: destino,
+    subject: 'Código de verificação - Gestão Leiteira',
+    text: `Seu código de verificação é: ${codigo}\n\nEste código expira em ${TTL_MIN} minuto(s).`,
+    headers: { 'X-Mailer': 'GestaoLeiteira' },
+    replyTo: MAIL_FROM,
+  };
+  const info = await transporter.sendMail(msg);
+  console.log('✔️ [MAIL] enviado:', info.messageId);
+}
+
+module.exports = { enviarCodigo, verifyConnection };
+
